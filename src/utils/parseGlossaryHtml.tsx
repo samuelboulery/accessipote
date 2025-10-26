@@ -1,5 +1,6 @@
 import { createElement } from 'react';
 import DOMPurify from 'dompurify';
+import type { Config } from 'dompurify';
 import { CRITERIA_ID_PATTERN } from '../constants';
 
 interface ParseGlossaryHtmlOptions {
@@ -10,7 +11,7 @@ interface ParseGlossaryHtmlOptions {
 /**
  * Configuration stricte de DOMPurify pour la sécurité
  */
-const DOMPurifyConfig: DOMPurify.Config = {
+const DOMPurifyConfig: Config = {
   ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'hr'],
   ALLOWED_ATTR: ['href', 'title', 'target', 'rel', 'class'],
   ALLOW_DATA_ATTR: false,

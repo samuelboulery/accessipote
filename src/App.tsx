@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import type { Progress, CriteriaFilters, GlossaryTerm } from './types';
+import type { Progress, CriteriaFilters, GlossaryTerm, ClassicStatus, CriteriaRawData } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import { useFilters } from './hooks/useFilters';
 import { useProgress } from './hooks/useProgress';
@@ -19,7 +19,7 @@ import { BookOpen } from 'lucide-react';
 
 function App() {
   const criteriaList = useMemo(() => {
-    return transformCriteriaData(criteriaRawData);
+    return transformCriteriaData(criteriaRawData as CriteriaRawData);
   }, []);
 
   // Charger le glossaire
@@ -36,17 +36,24 @@ function App() {
   const [progress, setProgress] = useLocalStorage<Progress>(LOCAL_STORAGE_KEY, {
     classic: {},
     designSystem: {},
-  }, (oldValue) => {
+  }, (oldValue: unknown): Progress => {
     // Migration des anciennes données vers le nouveau format
     if (oldValue && typeof oldValue === 'object' && 'criteria' in oldValue) {
       // Si on a l'ancien format avec 'criteria'
       const oldProgressValue = oldValue as OldProgressFormat;
+      // Conversion des anciens statuts vers ClassicStatus
+      const classicProgress: Progress['classic'] = {};
+      for (const [key, value] of Object.entries(oldProgressValue.criteria)) {
+        if (['conforme', 'non-conforme', 'non-applicable'].includes(value.status)) {
+          classicProgress[key] = { status: value.status as ClassicStatus };
+        }
+      }
       return {
-        classic: oldProgressValue.criteria,
+        classic: classicProgress,
         designSystem: {},
       };
     }
-    return oldValue;
+    return oldValue as Progress;
   });
   
   const [filters, setFilters] = useState<CriteriaFilters>({
