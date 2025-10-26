@@ -52,6 +52,6 @@
     "vitest": "^4.0.3"
   },
   "overrides": {
-    "happy-dom": "^20.0.8"
+    "happy-dom": "^14.0.0"
   }
 }
