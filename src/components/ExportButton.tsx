@@ -4,6 +4,14 @@ import { exportClassicMarkdown, exportDesignSystemMarkdown } from '../utils/expo
 import { PDF_Y_POS_LIMIT, PDF_START_Y_POS, PDF_HEADER_Y_POS, PDF_FILENAME } from '../constants';
 import { cleanCriteriaTitle } from '../utils/stripMarkdown';
 import { Download, Copy } from 'lucide-react';
+import type jsPDF from 'jspdf';
+
+// Interface pour étendre jsPDF avec autoTable
+interface JSPDFWithAutoTable extends jsPDF {
+  lastAutoTable?: {
+    finalY: number;
+  };
+}
 
 interface ExportButtonProps {
   mode: Mode;
@@ -56,7 +64,7 @@ export default function ExportButton({ mode, progress, criteriaList }: ExportBut
         const autoTable = autoTableModule.default;
         const classicCriteria = criteriaList.filter(c => progress.classic[c.id]);
         
-        const doc = new jsPDF();
+        const doc = new jsPDF() as JSPDFWithAutoTable;
         
         doc.setFontSize(16);
         doc.text('Rapport de Conformité RGAA - Accessipote', 14, 20);
@@ -105,7 +113,7 @@ export default function ExportButton({ mode, progress, criteriaList }: ExportBut
             headStyles: { fillColor: [66, 139, 202], textColor: 255 },
           });
 
-          const finalY = (doc as any).lastAutoTable?.finalY;
+          const finalY = doc.lastAutoTable?.finalY;
           yPos = finalY ? finalY + 15 : yPos + 15;
         };
 

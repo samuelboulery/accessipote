@@ -23,8 +23,11 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock de ResizeObserver qui n'est pas implémenté dans jsdom
-(window as any).ResizeObserver = class ResizeObserver {
+class MockResizeObserver implements ResizeObserver {
   observe() {}
   unobserve() {}
   disconnect() {}
-} as any;
+  static readonly length = 0;
+}
+
+window.ResizeObserver = MockResizeObserver;

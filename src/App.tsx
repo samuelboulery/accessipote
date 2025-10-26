@@ -19,7 +19,7 @@ import { BookOpen } from 'lucide-react';
 
 function App() {
   const criteriaList = useMemo(() => {
-    return transformCriteriaData(criteriaRawData as any);
+    return transformCriteriaData(criteriaRawData);
   }, []);
 
   // Charger le glossaire
@@ -29,16 +29,20 @@ function App() {
 
   
   const [mode, setMode] = useState<'classic' | 'design-system'>('classic');
+  interface OldProgressFormat {
+    criteria: Record<string, { status: string }>;
+  }
+
   const [progress, setProgress] = useLocalStorage<Progress>(LOCAL_STORAGE_KEY, {
     classic: {},
     designSystem: {},
   }, (oldValue) => {
     // Migration des anciennes données vers le nouveau format
-    if (oldValue && (oldValue as any).criteria) {
+    if (oldValue && typeof oldValue === 'object' && 'criteria' in oldValue) {
       // Si on a l'ancien format avec 'criteria'
-      const oldCriteria = (oldValue as any).criteria;
+      const oldProgressValue = oldValue as OldProgressFormat;
       return {
-        classic: oldCriteria,
+        classic: oldProgressValue.criteria,
         designSystem: {},
       };
     }

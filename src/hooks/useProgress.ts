@@ -56,7 +56,8 @@ export function useProgress(
     
     const newCriteria = { ...progress[modeKey] };
     filteredCriteria.forEach(criterion => {
-      newCriteria[criterion.id] = { status: status as any }; // Force type assertion here since we validated above
+      // Type narrowing garanti par les validations ci-dessus
+      newCriteria[criterion.id] = { status: status as CriteriaStatus };
     });
     setProgress({ ...progress, [modeKey]: newCriteria });
   }, [progress, setProgress, modeKey, filteredCriteria]);

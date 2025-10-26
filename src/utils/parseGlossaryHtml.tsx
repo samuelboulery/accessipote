@@ -10,7 +10,7 @@ interface ParseGlossaryHtmlOptions {
 /**
  * Configuration stricte de DOMPurify pour la sécurité
  */
-const DOMPurifyConfig: any = {
+const DOMPurifyConfig: DOMPurify.Config = {
   ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'hr'],
   ALLOWED_ATTR: ['href', 'title', 'target', 'rel', 'class'],
   ALLOW_DATA_ATTR: false,
@@ -123,7 +123,7 @@ export function parseGlossaryHtml(
       }
       
       // Autres éléments HTML
-      const props: any = { key: key };
+      const props: Record<string, unknown> & { key?: string } = { key: key };
       
       // Copier uniquement les attributs autorisés (whitelist pour sécurité)
       Array.from(element.attributes).forEach(attr => {

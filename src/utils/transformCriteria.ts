@@ -30,7 +30,7 @@ function transformTests(tests?: { [key: string]: string[] | undefined }): Test[]
   if (!tests) return [];
   
   return Object.entries(tests)
-    .filter(([_, questions]) => questions !== undefined)
+    .filter(([, questions]) => questions !== undefined)
     .map(([id, questions]) => ({
       id,
       questions: questions!,
@@ -95,7 +95,7 @@ export function transformCriteriaData(data: CriteriaRawData): CriteriaRGAA[] {
           tests: transformTests(tests),
           references: transformReferences(references),
           technicalNote: technicalNote,
-          particularCases: particularCases as any,
+          particularCases: particularCases as string[],
         };
         
         result.push(transformedCriterion);

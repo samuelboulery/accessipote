@@ -91,7 +91,12 @@ describe('useLocalStorage', () => {
   it('devrait utiliser la fonction de migration', () => {
     localStorage.setItem('test-key', JSON.stringify({ old: true }));
 
-    const migrationFn = (oldValue: any) => ({ ...oldValue, migrated: true });
+    const migrationFn = (oldValue: unknown) => {
+      if (typeof oldValue === 'object' && oldValue !== null) {
+        return { ...(oldValue as Record<string, unknown>), migrated: true };
+      }
+      return { default: true };
+    };
 
     const { result } = renderHook(() =>
       useLocalStorage('test-key', { default: true }, migrationFn)

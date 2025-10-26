@@ -49,7 +49,7 @@ function validateStoredData<T>(value: unknown, initialValue: T): T {
   return value as T;
 }
 
-function useLocalStorage<T>(key: string, initialValue: T, migrationFn?: (oldValue: any) => T) {
+function useLocalStorage<T>(key: string, initialValue: T, migrationFn?: (oldValue: unknown) => T) {
   // State to store our value
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === 'undefined') {
