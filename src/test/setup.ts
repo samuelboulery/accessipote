@@ -23,11 +23,12 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock de ResizeObserver qui n'est pas implémenté dans jsdom
-class MockResizeObserver implements ResizeObserver {
+// @ts-expect-error - Mocking ResizeObserver for jsdom environment
+class MockResizeObserver {
   observe() {}
   unobserve() {}
   disconnect() {}
-  static readonly length = 0;
 }
 
+// @ts-expect-error - Assigning mock to window.ResizeObserver
 window.ResizeObserver = MockResizeObserver;
