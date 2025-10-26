@@ -8,9 +8,6 @@ interface ParseMarkdownLinksOptions {
   onCriteriaClick?: (criteriaId: string) => void;
 }
 
-// Compiler la regex une seule fois au niveau module pour optimiser les performances
-const MARKDOWN_LINK_REGEX = new RegExp(MARKDOWN_LINK_PATTERN);
-
 /**
  * Parse les liens markdown dans un texte et les transforme en éléments React cliquables
  * @param text - Le texte contenant des liens markdown
@@ -23,9 +20,12 @@ export function parseMarkdownLinks(
 ): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
+  
+  // Créer une nouvelle instance de la regex pour éviter les problèmes avec lastIndex global
+  const regex = new RegExp(MARKDOWN_LINK_PATTERN);
   let match;
   
-  while ((match = MARKDOWN_LINK_REGEX.exec(text)) !== null) {
+  while ((match = regex.exec(text)) !== null) {
     const [, linkText, linkTarget] = match;
     const matchIndex = match.index;
     
@@ -72,7 +72,7 @@ export function parseMarkdownLinks(
       );
     }
     
-    lastIndex = MARKDOWN_LINK_REGEX.lastIndex;
+    lastIndex = regex.lastIndex;
   }
   
   // Ajouter le texte restant

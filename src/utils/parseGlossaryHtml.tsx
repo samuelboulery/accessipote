@@ -90,6 +90,7 @@ export function parseGlossaryHtml(
           } 
           // C'est un lien vers un terme du glossaire
           else if (anchor) {
+            // L'ancre est déjà un slug correct qui correspond au titre normalisé
             return createElement(
               'button',
               {

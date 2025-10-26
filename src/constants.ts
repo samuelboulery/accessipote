@@ -28,5 +28,5 @@ export const PDF_FILENAME = 'rapport-rgaa.pdf';
 
 // Regex patterns
 export const CRITERIA_ID_PATTERN = /^\d+\.\d+$/;
-export const MARKDOWN_LINK_PATTERN = /\[([^\]]+)\]\([^)]+\)/g;
+export const MARKDOWN_LINK_PATTERN = /\[([^\]]+)\]\(([^)]+)\)/g;
 

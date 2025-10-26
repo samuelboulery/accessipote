@@ -101,6 +101,32 @@ function App() {
     currentProgress,
   } = useProgress(progress, setProgress, mode, filteredCriteria);
 
+  // Gérer le clic sur un critère depuis le glossaire
+  const handleCriteriaClick = useCallback((criteriaId: string) => {
+    // Trouver le critère dans la liste complète
+    const criterion = criteriaList.find(c => c.id === criteriaId);
+    if (!criterion) return;
+    
+    // Vérifier si le critère est dans la liste filtrée
+    const isVisible = filteredCriteria.some(c => c.id === criteriaId);
+    
+    if (!isVisible) {
+      // Le critère n'est pas visible, réinitialiser les filtres de thème
+      setFilters(prev => ({
+        ...prev,
+        themes: [],
+      }));
+      // Sauvegarder l'ID pour le scroll différé
+      setTargetCriteriaId(criteriaId);
+    } else {
+      // Le critère est visible, scroller immédiatement
+      const element = document.getElementById(`criteria-${criteriaId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [criteriaList, filteredCriteria]);
+
   // Gérer le scroll différé vers un critère cible
   useEffect(() => {
     if (targetCriteriaId) {
@@ -183,30 +209,7 @@ function App() {
         width={glossaryWidth}
         onWidthChange={setGlossaryWidth}
         onGlossaryClick={handleGlossaryClick}
-        onCriteriaClick={useCallback((criteriaId: string) => {
-          // Trouver le critère dans la liste complète
-          const criterion = criteriaList.find(c => c.id === criteriaId);
-          if (!criterion) return;
-          
-          // Vérifier si le critère est dans la liste filtrée
-          const isVisible = filteredCriteria.some(c => c.id === criteriaId);
-          
-          if (!isVisible) {
-            // Le critère n'est pas visible, réinitialiser les filtres de thème
-            setFilters(prev => ({
-              ...prev,
-              themes: [],
-            }));
-            // Sauvegarder l'ID pour le scroll différé
-            setTargetCriteriaId(criteriaId);
-          } else {
-            // Le critère est visible, scroller immédiatement
-            const element = document.getElementById(`criteria-${criteriaId}`);
-            if (element) {
-              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          }
-        }, [criteriaList, filteredCriteria])}
+        onCriteriaClick={handleCriteriaClick}
       />
     </div>
   );
