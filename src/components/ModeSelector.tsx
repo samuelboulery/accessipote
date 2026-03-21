@@ -8,19 +8,19 @@ interface ModeSelectorProps {
 
 function ModeSelector({ mode, onModeChange }: ModeSelectorProps) {
   return (
-    <div className="border border-gray-200 bg-white rounded-lg shadow-sm p-6 mb-6">
+    <div className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Mode de vérification</h2>
-          <p className="text-sm text-gray-600">
-            {mode === 'classic' 
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Mode de vérification</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {mode === 'classic'
               ? 'Conforme / Non conforme / Non applicable'
-              : 'Conforme par défaut / À mettre en place'
+              : 'Conforme par défaut / À mettre en place / Non applicable'
             }
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className={`text-sm font-medium ${mode === 'classic' ? 'text-gray-900' : 'text-gray-500'}`}>
+          <span className={`text-sm font-medium ${mode === 'classic' ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
             Classique
           </span>
           <button
@@ -29,16 +29,16 @@ function ModeSelector({ mode, onModeChange }: ModeSelectorProps) {
             aria-checked={mode === 'design-system'}
             onClick={() => onModeChange(mode === 'classic' ? 'design-system' : 'classic')}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              mode === 'design-system' ? 'bg-black' : 'bg-gray-300'
+              mode === 'design-system' ? 'bg-black dark:bg-white' : 'bg-gray-300 dark:bg-gray-600'
             }`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 transition-transform ${
                 mode === 'design-system' ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
           </button>
-          <span className={`text-sm font-medium ${mode === 'design-system' ? 'text-gray-900' : 'text-gray-500'}`}>
+          <span className={`text-sm font-medium ${mode === 'design-system' ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
             Design System
           </span>
         </div>

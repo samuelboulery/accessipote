@@ -34,13 +34,14 @@ function BulkActions({
       : [
           { value: 'default-compliant', label: 'Conforme par défaut' },
           { value: 'project-implementation', label: 'À mettre en place' },
+          { value: 'non-applicable', label: 'Non applicable' },
         ];
 
   return (
-    <div className="border border-blue-200 bg-blue-50 rounded-lg shadow-sm p-4 mb-6">
+    <div className="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 rounded-lg shadow-sm p-4 mb-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-700">
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
             Actions en masse ({displayedCriteriaCount} critères) :
           </span>
         </div>
@@ -49,7 +50,7 @@ function BulkActions({
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value as CriteriaStatus)}
-            className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400"
           >
             {statusOptions.map(opt => (
               <option key={opt.value} value={opt.value}>

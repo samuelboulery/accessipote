@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type React from 'react';
 import type { Mode, Progress, CriteriaRGAA } from '../types';
 import { exportClassicMarkdown, exportDesignSystemMarkdown } from '../utils/exportMarkdown';
 import { PDF_Y_POS_LIMIT, PDF_START_Y_POS, PDF_HEADER_Y_POS, PDF_FILENAME } from '../constants';
@@ -18,9 +19,10 @@ interface ExportButtonProps {
   progress: Progress;
   criteriaList: CriteriaRGAA[];
   onShowToast: (message: string, type: 'success' | 'error') => void;
+  exportMarkdownButtonRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
-export default function ExportButton({ mode, progress, criteriaList, onShowToast }: ExportButtonProps) {
+export default function ExportButton({ mode, progress, criteriaList, onShowToast, exportMarkdownButtonRef }: ExportButtonProps) {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   const handleExportMarkdown = () => {
@@ -132,9 +134,11 @@ export default function ExportButton({ mode, progress, criteriaList, onShowToast
   };
 
   return (
-    <div className="border border-gray-200 bg-white rounded-lg shadow-sm p-6 flex gap-4 justify-center mb-6">
+    <div className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 flex gap-4 justify-center mb-6">
       <button
+        ref={exportMarkdownButtonRef}
         onClick={handleExportMarkdown}
+        aria-keyshortcuts="Control+e Meta+e"
         className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
       >
         <Copy className="w-5 h-5" />

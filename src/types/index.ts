@@ -50,7 +50,7 @@ export interface CriteriaRawData {
 }
 
 export type ClassicStatus = 'conforme' | 'non-conforme' | 'non-applicable';
-export type DesignSystemStatus = 'default-compliant' | 'project-implementation';
+export type DesignSystemStatus = 'default-compliant' | 'project-implementation' | 'non-applicable';
 
 export type CriteriaStatus = ClassicStatus | DesignSystemStatus;
 
@@ -85,4 +85,11 @@ export interface ToastMessage {
   id: string;
   message: string;
   type: ToastType;
+}
+
+export interface KeyboardShortcut {
+  keys: string[];
+  description: string;
+  category: 'navigation' | 'export' | 'help';
+  action: string;
 }

@@ -31,3 +31,14 @@ dist-ssr
 
 # Coverage reports
 coverage
+
+# Sessions Claude Code (contexte local, non partageable)
+.claude/.sessions/*.md
+!.claude/.sessions/_template.md
+
+# Fichiers Claude Code locaux (permissions et rapports personnels)
+.claude/settings.local.json
+.claude/*.md
+
+# Fichiers de planning locaux
+CLAUDE_CODE_PLAN.md

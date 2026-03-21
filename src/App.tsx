@@ -1,10 +1,12 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { Progress, CriteriaFilters, GlossaryTerm, ClassicStatus, CriteriaRawData } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import { useFilters } from './hooks/useFilters';
 import { useProgress } from './hooks/useProgress';
 import { useDebounce } from './hooks/useDebounce';
 import useToast from './hooks/useToast';
+import { useDarkMode } from './hooks/useDarkMode';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { LOCAL_STORAGE_KEY, DEFAULT_PANEL_WIDTH } from './constants';
 import ModeSelector from './components/ModeSelector';
 import SearchFilters from './components/SearchFilters';
@@ -14,6 +16,9 @@ import ProgressBar from './components/ProgressBar';
 import GlossarySidePanel from './components/GlossarySidePanel';
 import BulkActions from './components/BulkActions';
 import Toast from './components/Toast';
+import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
+import DarkModeToggle from './components/DarkModeToggle';
+import SummaryTab from './components/SummaryTab';
 import criteriaRawData from './data/criteria.json';
 import glossaryRawData from './data/glossary.json';
 import { transformCriteriaData } from './utils/transformCriteria';
@@ -29,10 +34,19 @@ function App() {
     return glossaryRawData.glossary as GlossaryTerm[];
   }, []);
 
+  // Refs pour les raccourcis clavier
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const exportMarkdownButtonRef = useRef<HTMLButtonElement>(null);
+
   // Toast notifications
   const { toasts, showToast, hideToast } = useToast();
 
+  // Dark mode
+  const { isDark, toggle: toggleDarkMode } = useDarkMode();
+
   const [mode, setMode] = useState<'classic' | 'design-system'>('classic');
+  const [activeTab, setActiveTab] = useState<'audit' | 'synthese'>('audit');
+
   interface OldProgressFormat {
     criteria: Record<string, { status: string }>;
   }
@@ -92,6 +106,16 @@ function App() {
   const handleCloseGlossary = useCallback(() => {
     setGlossaryOpen(false);
   }, []);
+
+  const handleGlossaryToggle = useCallback(() => {
+    setGlossaryOpen(prev => !prev);
+  }, []);
+
+  const { shortcuts, isHelpModalOpen, closeHelpModal } = useKeyboardShortcuts({
+    searchInputRef,
+    exportMarkdownButtonRef,
+    onGlossaryToggle: handleGlossaryToggle,
+  });
 
   const handleModeChange = useCallback((newMode: 'classic' | 'design-system') => {
     setMode(newMode);
@@ -157,63 +181,108 @@ function App() {
   }, [targetCriteriaId, filteredCriteria]);
 
   return (
-    <div className="h-screen bg-gray-50 flex overflow-hidden">
+    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex overflow-hidden">
       <div className="flex-1 overflow-y-auto">
         <div className="container mx-auto px-4 py-8 max-w-7xl">
           <header className="mb-12">
             <div className="flex items-end justify-between">
               <div>
-                <h1 className="text-4xl font-bold text-gray-900 mb-2" style={{ fontFamily: "'Chelsea Market', cursive" }}>
+                <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 font-chelsea-market">
                   Accessipote
                 </h1>
-                <p className="text-gray-600 text-base">
+                <p className="text-gray-600 dark:text-gray-400 text-base">
                   Ton meilleur pote pour vérifier la conformité aux critères d'accessibilité RGAA !
                 </p>
               </div>
-              <button
-                onClick={() => setGlossaryOpen(prev => !prev)}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all shadow-sm hover:shadow font-medium"
-              >
-                <BookOpen className="w-5 h-5" />
-                Glossaire
-              </button>
+              <div className="flex items-center gap-3">
+                <DarkModeToggle isDark={isDark} onToggle={toggleDarkMode} />
+                <button
+                  onClick={handleGlossaryToggle}
+                  aria-keyshortcuts="g"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-all shadow-sm hover:shadow font-medium"
+                >
+                  <BookOpen className="w-5 h-5" />
+                  Glossaire
+                </button>
+              </div>
             </div>
           </header>
 
           <ModeSelector mode={mode} onModeChange={handleModeChange} />
-          
+
           <ProgressBar progress={progressPercentage} />
 
-          <SearchFilters
-            filters={filters}
-            onFiltersChange={setFilters}
-            themes={uniqueThemes}
-            mode={mode}
-          />
+          {/* Tab navigation */}
+          <div className="flex gap-4 my-8 border-b border-gray-300 dark:border-gray-700">
+            <button
+              onClick={() => setActiveTab('audit')}
+              className={`px-4 py-3 font-medium transition-all ${
+                activeTab === 'audit'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+              }`}
+            >
+              Audit
+            </button>
+            <button
+              onClick={() => setActiveTab('synthese')}
+              className={`px-4 py-3 font-medium transition-all ${
+                activeTab === 'synthese'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+              }`}
+            >
+              Synthèse
+            </button>
+          </div>
 
-          {filteredCriteria.length > 0 && (
-            <BulkActions
-              mode={mode}
-              displayedCriteriaCount={filteredCriteria.length}
-              onSelectAll={handleSelectAll}
-              onDeselectAll={handleDeselectAll}
-            />
+          {/* Audit tab content */}
+          {activeTab === 'audit' && (
+            <>
+              <SearchFilters
+                filters={filters}
+                onFiltersChange={setFilters}
+                themes={uniqueThemes}
+                mode={mode}
+                inputRef={searchInputRef}
+              />
+
+              {filteredCriteria.length > 0 && (
+                <BulkActions
+                  mode={mode}
+                  displayedCriteriaCount={filteredCriteria.length}
+                  onSelectAll={handleSelectAll}
+                  onDeselectAll={handleDeselectAll}
+                />
+              )}
+
+              <CriteriaList
+                criteria={filteredCriteria}
+                mode={mode}
+                progress={currentProgress}
+                onStatusChange={handleCriteriaStatusChange}
+                onGlossaryClick={handleGlossaryClick}
+              />
+
+              <ExportButton
+                mode={mode}
+                progress={progress}
+                criteriaList={criteriaList}
+                onShowToast={showToast}
+                exportMarkdownButtonRef={exportMarkdownButtonRef}
+              />
+            </>
           )}
 
-          <CriteriaList
-            criteria={filteredCriteria}
-            mode={mode}
-            progress={currentProgress}
-            onStatusChange={handleCriteriaStatusChange}
-            onGlossaryClick={handleGlossaryClick}
-          />
-
-          <ExportButton
-            mode={mode}
-            progress={progress}
-            criteriaList={criteriaList}
-            onShowToast={showToast}
-          />
+          {/* Synthèse tab content */}
+          {activeTab === 'synthese' && (
+            <SummaryTab
+              criteriaList={criteriaList}
+              progress={progress}
+              mode={mode}
+              isDark={isDark}
+            />
+          )}
         </div>
       </div>
 
@@ -229,6 +298,12 @@ function App() {
       />
 
       <Toast toasts={toasts} onDismiss={hideToast} />
+
+      <KeyboardShortcutsModal
+        isOpen={isHelpModalOpen}
+        shortcuts={shortcuts}
+        onClose={closeHelpModal}
+      />
     </div>
   );
 }

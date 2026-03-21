@@ -25,20 +25,20 @@ function ThemeSelector({
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <label className="block text-sm font-bold text-black">
+        <label className="block text-sm font-bold text-black dark:text-gray-100">
           Thèmes ({selectedThemes.length}/{availableThemes.length})
         </label>
         <div className="flex gap-2">
           <button
             onClick={selectAll}
-            className="text-xs text-black hover:underline font-semibold"
+            className="text-xs text-black dark:text-gray-100 hover:underline font-semibold"
           >
             Tout sélectionner
           </button>
           {selectedThemes.length > 0 && (
             <button
               onClick={clearAll}
-              className="text-xs text-black hover:underline font-semibold"
+              className="text-xs text-black dark:text-gray-100 hover:underline font-semibold"
             >
               Tout effacer
             </button>
@@ -56,7 +56,7 @@ function ThemeSelector({
                 px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow
                 ${isSelected 
                   ? 'bg-black text-white border-black' 
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                  : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
                 }
               `}
             >

@@ -49,7 +49,7 @@ export function useProgress(
       }
     } else {
       // S'assurer que le statut est un DesignSystemStatus
-      if (!['default-compliant', 'project-implementation'].includes(status)) {
+      if (!['default-compliant', 'project-implementation', 'non-applicable'].includes(status)) {
         return;
       }
     }
