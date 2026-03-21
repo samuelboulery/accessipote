@@ -4,6 +4,7 @@ import useLocalStorage from './hooks/useLocalStorage';
 import { useFilters } from './hooks/useFilters';
 import { useProgress } from './hooks/useProgress';
 import { useDebounce } from './hooks/useDebounce';
+import useToast from './hooks/useToast';
 import { LOCAL_STORAGE_KEY, DEFAULT_PANEL_WIDTH } from './constants';
 import ModeSelector from './components/ModeSelector';
 import SearchFilters from './components/SearchFilters';
@@ -12,6 +13,7 @@ import ExportButton from './components/ExportButton';
 import ProgressBar from './components/ProgressBar';
 import GlossarySidePanel from './components/GlossarySidePanel';
 import BulkActions from './components/BulkActions';
+import Toast from './components/Toast';
 import criteriaRawData from './data/criteria.json';
 import glossaryRawData from './data/glossary.json';
 import { transformCriteriaData } from './utils/transformCriteria';
@@ -27,7 +29,9 @@ function App() {
     return glossaryRawData.glossary as GlossaryTerm[];
   }, []);
 
-  
+  // Toast notifications
+  const { toasts, showToast, hideToast } = useToast();
+
   const [mode, setMode] = useState<'classic' | 'design-system'>('classic');
   interface OldProgressFormat {
     criteria: Record<string, { status: string }>;
@@ -207,8 +211,9 @@ function App() {
           <ExportButton
             mode={mode}
             progress={progress}
-          criteriaList={criteriaList}
-        />
+            criteriaList={criteriaList}
+            onShowToast={showToast}
+          />
         </div>
       </div>
 
@@ -222,6 +227,8 @@ function App() {
         onGlossaryClick={handleGlossaryClick}
         onCriteriaClick={handleCriteriaClick}
       />
+
+      <Toast toasts={toasts} onDismiss={hideToast} />
     </div>
   );
 }

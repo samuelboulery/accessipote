@@ -78,3 +78,11 @@ export interface GlossaryTerm {
   title: string;
   body: string; // HTML content
 }
+
+export type ToastType = 'success' | 'error' | 'info';
+
+export interface ToastMessage {
+  id: string;
+  message: string;
+  type: ToastType;
+}

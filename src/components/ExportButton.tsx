@@ -17,9 +17,10 @@ interface ExportButtonProps {
   mode: Mode;
   progress: Progress;
   criteriaList: CriteriaRGAA[];
+  onShowToast: (message: string, type: 'success' | 'error') => void;
 }
 
-export default function ExportButton({ mode, progress, criteriaList }: ExportButtonProps) {
+export default function ExportButton({ mode, progress, criteriaList, onShowToast }: ExportButtonProps) {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   const handleExportMarkdown = () => {
@@ -35,7 +36,7 @@ export default function ExportButton({ mode, progress, criteriaList }: ExportBut
 
     // Copier le contenu dans le presse-papiers
     navigator.clipboard.writeText(content).then(() => {
-      alert('Contenu copié dans le presse-papiers !');
+      onShowToast('Contenu copié dans le presse-papiers !', 'success');
     }).catch(() => {
       // Fallback: télécharger le fichier si la copie échoue
       const blob = new Blob([content], { type: 'text/markdown' });
@@ -122,9 +123,8 @@ export default function ExportButton({ mode, progress, criteriaList }: ExportBut
         addSection('Critères Non Applicables', groupedCriteria['non-applicable']);
 
         doc.save(PDF_FILENAME);
-      } catch (error) {
-        console.error('Erreur lors de l\'export PDF:', error);
-        alert('Erreur lors de l\'export PDF. Veuillez réessayer.');
+      } catch {
+        onShowToast('Erreur lors de l\'export PDF. Veuillez réessayer.', 'error');
       } finally {
         setIsExportingPDF(false);
       }

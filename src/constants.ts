@@ -30,3 +30,5 @@ export const PDF_FILENAME = 'rapport-rgaa.pdf';
 export const CRITERIA_ID_PATTERN = /^\d+\.\d+$/;
 export const MARKDOWN_LINK_PATTERN = /\[([^\]]+)\]\(([^)]+)\)/g;
 
+// Toast notifications
+export const TOAST_AUTO_DISMISS_MS = 3000;
