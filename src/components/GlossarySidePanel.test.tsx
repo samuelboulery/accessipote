@@ -17,6 +17,9 @@ const defaultProps = {
   onWidthChange: vi.fn(),
 };
 
+// JSDOM ne supporte pas scrollTo sur les éléments DOM
+Element.prototype.scrollTo = vi.fn();
+
 describe('GlossarySidePanel — recherche debouncée', () => {
   beforeEach(() => {
     vi.useFakeTimers();
