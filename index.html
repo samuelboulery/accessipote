@@ -4,30 +4,27 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/accessibility-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Google Fonts - Chelsea Market -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Chelsea+Market&display=swap" rel="stylesheet">
     <!--
       Content Security Policy stricte — sans 'unsafe-inline' ni 'unsafe-eval'
+      Police Chelsea Market auto-hébergée dans /public/fonts/ (pas de dépendance Google Fonts)
 
-      default-src 'self'          : par défaut, uniquement les assets locaux
-      script-src 'self'           : scripts Vite uniquement (app.js avec hash) — React 19 ne génère pas de code inline
-      style-src 'self' ...        : CSS Tailwind (app.css) + Google Fonts — aucun style inline (extrait dans index.css)
-      font-src 'self' data: ...   : polices locales + data: URIs + Google Fonts (gstatic.com)
-      img-src 'self' data: blob:  : assets locaux + data URIs + blob: URLs (jsPDF pour les exports PDF)
-      connect-src 'self'          : pas de requêtes vers des API externes
-      base-uri 'self'             : empêche les injections de base URL
-      form-action 'self'          : soumettre les formulaires uniquement en local
-      object-src 'none'           : bloque les plugins legacy (Flash, Java)
-      upgrade-insecure-requests   : force HTTPS en production
+      default-src 'self'         : par défaut, uniquement les assets locaux
+      script-src 'self'          : scripts Vite uniquement — React 19 ne génère pas de code inline
+      style-src 'self'           : CSS Tailwind compilé (app.css) + @font-face local dans index.css
+      font-src 'self'            : polices locales uniquement (/fonts/*.woff2)
+      img-src 'self' data: blob: : assets locaux + data URIs + blob: (jsPDF)
+      connect-src 'self'         : pas de requêtes vers des API externes
+      base-uri 'self'            : empêche les injections de base URL
+      form-action 'self'         : soumettre les formulaires uniquement en local
+      object-src 'none'          : bloque les plugins legacy (Flash, Java)
+      upgrade-insecure-requests  : force HTTPS en production
       Note: frame-ancestors doit être défini via HTTP headers, pas via meta
     -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
       script-src 'self';
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-      font-src 'self' data: https://fonts.gstatic.com;
+      style-src 'self';
+      font-src 'self';
       img-src 'self' data: blob:;
       connect-src 'self';
       base-uri 'self';

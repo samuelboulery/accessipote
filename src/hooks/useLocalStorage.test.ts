@@ -136,4 +136,69 @@ describe('useLocalStorage', () => {
 
     expect(result.current[0]).toBe('default-value');
   });
+
+  it('devrait retourner la valeur par défaut si la migration échoue', () => {
+    localStorage.setItem('test-key', JSON.stringify({ old: true }));
+
+    const migrationFn = () => {
+      throw new Error('Erreur de migration');
+    };
+
+    const { result } = renderHook(() =>
+      useLocalStorage('test-key', { default: true }, migrationFn)
+    );
+
+    expect(result.current[0]).toEqual({ default: true });
+  });
+
+  it('devrait retourner la valeur initiale si la valeur stockée n\'est pas un objet valide', () => {
+    // Stocker un tableau alors que la valeur initiale est un objet
+    localStorage.setItem('test-key', JSON.stringify([1, 2, 3]));
+
+    const { result } = renderHook(() =>
+      useLocalStorage('test-key', { default: true })
+    );
+
+    expect(result.current[0]).toEqual({ default: true });
+  });
+
+  it('devrait gérer l\'erreur de sauvegarde gracieusement', () => {
+    const { result } = renderHook(() =>
+      useLocalStorage('test-key', 'default-value')
+    );
+
+    // Simuler une erreur lors de setItem
+    const originalSetItem = localStorage.setItem;
+    localStorage.setItem = () => { throw new Error('Storage full'); };
+
+    act(() => {
+      result.current[1]('new-value');
+    });
+
+    // Restaurer
+    localStorage.setItem = originalSetItem;
+
+    // La valeur en mémoire est mise à jour même si la sauvegarde échoue
+    expect(result.current[0]).toBe('new-value');
+  });
+
+  it('devrait accepter une valeur primitive directe', () => {
+    localStorage.setItem('test-key', JSON.stringify(42));
+
+    const { result } = renderHook(() =>
+      useLocalStorage('test-key', 0)
+    );
+
+    expect(result.current[0]).toBe(42);
+  });
+
+  it('devrait retourner la valeur initiale si le type primitif ne correspond pas', () => {
+    localStorage.setItem('test-key', JSON.stringify('une chaine'));
+
+    const { result } = renderHook(() =>
+      useLocalStorage('test-key', 0)
+    );
+
+    expect(result.current[0]).toBe(0);
+  });
 });

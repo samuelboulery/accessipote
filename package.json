@@ -17,7 +17,7 @@
   "dependencies": {
     "@tanstack/react-virtual": "^3.13.23",
     "dompurify": "^3.3.0",
-    "jspdf": "^3.0.3",
+    "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.548.0",
     "react": "^19.1.1",

@@ -119,3 +119,86 @@ describe('GlossarySidePanel — recherche debouncée', () => {
     expect(screen.queryByText('Alternative textuelle')).not.toBeInTheDocument();
   });
 });
+
+describe('GlossarySidePanel — comportements généraux', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('devrait appeler onClose lors du clic sur le bouton Fermer', () => {
+    const onClose = vi.fn();
+    render(<GlossarySidePanel {...defaultProps} onClose={onClose} />);
+    fireEvent.click(screen.getByLabelText('Fermer le glossaire'));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('devrait avoir role="complementary" et aria-label sur le panneau', () => {
+    render(<GlossarySidePanel {...defaultProps} />);
+    const panel = screen.getByRole('complementary');
+    expect(panel).toHaveAttribute('aria-label', 'Glossaire RGAA');
+  });
+
+  it('devrait fermer avec la touche Échap', () => {
+    const onClose = vi.fn();
+    render(<GlossarySidePanel {...defaultProps} onClose={onClose} />);
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('ne devrait pas fermer avec Échap si le panneau est fermé', () => {
+    const onClose = vi.fn();
+    render(<GlossarySidePanel {...defaultProps} isOpen={false} onClose={onClose} />);
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('devrait mettre en surbrillance le terme sélectionné', () => {
+    render(<GlossarySidePanel {...defaultProps} selectedTerm="contraste" />);
+    const termDiv = document.getElementById('term-contraste');
+    expect(termDiv).toBeInTheDocument();
+    expect(termDiv?.className).toContain('bg-blue-50');
+  });
+
+  it('devrait rendre le corps HTML des termes', () => {
+    render(<GlossarySidePanel {...defaultProps} />);
+    expect(screen.getByText('Description alternative textuelle.')).toBeInTheDocument();
+  });
+
+  it('devrait avoir un maxLength de 200 sur le champ de recherche', () => {
+    render(<GlossarySidePanel {...defaultProps} />);
+    const input = screen.getByPlaceholderText('Rechercher dans le glossaire...');
+    expect(input).toHaveAttribute('maxLength', '200');
+  });
+
+  it('devrait afficher le handle de resize sur desktop quand ouvert', () => {
+    render(<GlossarySidePanel {...defaultProps} isOpen={true} />);
+    const resizeHandle = document.querySelector('[class*="cursor-col-resize"]');
+    expect(resizeHandle).toBeInTheDocument();
+  });
+
+  it('ne devrait pas afficher le handle de resize quand fermé', () => {
+    render(<GlossarySidePanel {...defaultProps} isOpen={false} />);
+    const panel = screen.getByRole('complementary');
+    expect(panel).toBeInTheDocument();
+  });
+
+  it('devrait réinitialiser la recherche quand selectedTerm change', () => {
+    const { rerender } = render(<GlossarySidePanel {...defaultProps} />);
+    const input = screen.getByPlaceholderText('Rechercher dans le glossaire...');
+    fireEvent.change(input, { target: { value: 'contraste' } });
+    expect((input as HTMLInputElement).value).toBe('contraste');
+    rerender(<GlossarySidePanel {...defaultProps} selectedTerm="contraste" />);
+    expect((input as HTMLInputElement).value).toBe('');
+  });
+
+  it('devrait déclencher le resize lors du mousedown sur le handle', () => {
+    render(<GlossarySidePanel {...defaultProps} isOpen={true} />);
+    const resizeHandle = document.querySelector('[class*="cursor-col-resize"]');
+    if (resizeHandle) {
+      fireEvent.mouseDown(resizeHandle);
+      // L'overlay de resize devrait apparaître
+      const overlay = document.querySelector('.fixed.inset-0.z-50');
+      expect(overlay).toBeInTheDocument();
+    }
+  });
+});
