@@ -42,7 +42,7 @@ function DonutChart(props: DonutChartProps) {
     rate = dsDenominator === 0 ? null : Math.round((covered / dsDenominator) * 100);
     segmentsData = [
       { value: defaultCompliant, color: '#22c55e', label: 'Par défaut' },
-      { value: projectImplementation, color: '#0d9488', label: 'Implémentation projet' },
+      { value: projectImplementation, color: '#f59e0b', label: 'À mettre en place' },
       { value: nonApplicable, color: '#9ca3af', label: 'N/A' },
       { value: notEvaluated, color: '#e5e7eb', label: 'Non évalué' },
     ];

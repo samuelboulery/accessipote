@@ -283,7 +283,7 @@ describe('ThemeSummaryTable', () => {
 
       const text = container.textContent;
       expect(text).toContain('Par défaut');
-      expect(text).toContain('Implémentation');
+      expect(text).toContain('À mettre en place');
     });
 
     it('should display DS stats in design-system mode', () => {

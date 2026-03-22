@@ -94,9 +94,9 @@ function SummaryTab({
                 </div>
               </div>
 
-              <div className="bg-teal-50 dark:bg-teal-900 dark:bg-opacity-20 rounded-lg p-4 border border-teal-200 dark:border-teal-800">
-                <div className="text-sm text-gray-600 dark:text-gray-400">Implémentation projet</div>
-                <div className="text-2xl sm:text-3xl font-bold text-teal-600 dark:text-teal-400">
+              <div className="bg-amber-50 dark:bg-amber-900 dark:bg-opacity-20 rounded-lg p-4 border border-amber-200 dark:border-amber-800">
+                <div className="text-sm text-gray-600 dark:text-gray-400">À mettre en place</div>
+                <div className="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400">
                   {stats.projectImplementation}
                 </div>
               </div>

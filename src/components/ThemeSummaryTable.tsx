@@ -44,7 +44,7 @@ function ThemeSummaryTable({ themes, mode }: ThemeSummaryTableProps) {
                   scope="col"
                   className="text-center px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-900 dark:text-white"
                 >
-                  Implémentation
+                  À mettre en place
                 </th>
               </>
             )}
@@ -85,7 +85,7 @@ function ThemeSummaryTable({ themes, mode }: ThemeSummaryTableProps) {
                   <td className="text-center px-2 sm:px-4 py-2 sm:py-3 text-green-600 dark:text-green-400 font-semibold">
                     {theme.defaultCompliant}
                   </td>
-                  <td className="text-center px-2 sm:px-4 py-2 sm:py-3 text-teal-600 dark:text-teal-400 font-semibold">
+                  <td className="text-center px-2 sm:px-4 py-2 sm:py-3 text-amber-600 dark:text-amber-400 font-semibold">
                     {theme.projectImplementation}
                   </td>
                 </>
