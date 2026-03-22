@@ -64,7 +64,7 @@ export default function KeyboardShortcutsModal({
                   {categoryShortcuts.map((shortcut) => (
                     <li
                       key={shortcut.action}
-                      className="flex items-center justify-between gap-4"
+                      className="flex items-center justify-between gap-2 sm:gap-4"
                     >
                       <span className="text-sm text-gray-700 dark:text-gray-300">
                         {shortcut.description}

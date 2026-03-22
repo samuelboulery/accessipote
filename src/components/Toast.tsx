@@ -47,7 +47,7 @@ export default function Toast({ toasts, onDismiss }: ToastProps) {
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm"
+      className="fixed bottom-2 right-2 sm:bottom-4 sm:right-4 z-50 flex flex-col gap-2 max-w-xs sm:max-w-sm"
     >
       {toastList.map(toast => {
         const styles = getToastStyles(toast.type);

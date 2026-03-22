@@ -39,7 +39,7 @@ function BulkActions({
 
   return (
     <div className="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 rounded-lg shadow-sm p-4 mb-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
             Actions en masse ({displayedCriteriaCount} critères) :
@@ -61,7 +61,7 @@ function BulkActions({
 
           <button
             onClick={() => onSelectAll(selectedStatus)}
-            className="flex items-center gap-2 px-4 py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
+            className="flex items-center gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
           >
             <CheckSquare className="w-4 h-4" />
             Appliquer à tous
@@ -69,7 +69,7 @@ function BulkActions({
 
           <button
             onClick={onDeselectAll}
-            className="flex items-center gap-2 px-4 py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
+            className="flex items-center gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
           >
             <XSquare className="w-4 h-4" />
             Tout effacer

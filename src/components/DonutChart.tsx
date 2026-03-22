@@ -118,7 +118,7 @@ function DonutChart(props: DonutChartProps) {
 
         {/* Center text */}
         <div className="absolute flex flex-col items-center justify-center">
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+          <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
             {rate === null ? '–' : `${rate}%`}
           </div>
         </div>

@@ -41,7 +41,7 @@ export default class ErrorBoundary extends Component<Props, State> {
       // UI de fallback par défaut
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8">
+          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-4 sm:p-8">
             <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
               <svg
                 className="w-8 h-8 text-red-600"
@@ -58,7 +58,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-center text-gray-900 mb-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-900 mb-2">
               Une erreur s'est produite
             </h1>
             <p className="text-center text-gray-600 mb-6">

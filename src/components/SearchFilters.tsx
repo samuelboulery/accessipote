@@ -28,7 +28,7 @@ export default function SearchFilters({
 
   return (
     <div className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Filtres de recherche</h2>
+      <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Filtres de recherche</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Recherche textuelle */}
@@ -44,7 +44,7 @@ export default function SearchFilters({
             placeholder="ID, titre, description..."
             maxLength={200}
             aria-keyshortcuts="Control+f Meta+f"
-            className="w-full px-3 h-[42px] border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 text-sm"
+            className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 text-sm"
           />
         </div>
 
@@ -56,7 +56,7 @@ export default function SearchFilters({
           <select
             value={filters.status}
             onChange={(e) => handleFilterChange('status', e.target.value)}
-            className="w-full px-3 h-[42px] border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 text-sm"
+            className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 text-sm"
           >
             <option value="">Tous les statuts</option>
             {statusOptions.map((status) => (

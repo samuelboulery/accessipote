@@ -53,7 +53,7 @@ function ThemeSelector({
               key={theme}
               onClick={() => toggleTheme(theme)}
               className={`
-                px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow
+                px-2 sm:px-3 py-1 sm:py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-sm hover:shadow
                 ${isSelected 
                   ? 'bg-black text-white border-black' 
                   : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'

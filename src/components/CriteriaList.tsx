@@ -59,7 +59,7 @@ export default function CriteriaList({
       <div
         ref={scrollContainerRef}
         data-testid="criteria-scroll-container"
-        className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-y-auto h-[calc(100vh-16rem)] min-h-[400px]"
+        className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-y-auto h-[calc(100vh-20rem)] sm:h-[calc(100vh-16rem)] min-h-[400px]"
       >
         <div
           style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}

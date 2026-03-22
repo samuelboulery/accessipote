@@ -35,8 +35,8 @@ function CriteriaItem({
   );
 
   return (
-    <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-6">
-      <div className="flex items-stretch gap-4">
+    <div className="border-b border-gray-200 dark:border-gray-700 px-3 sm:px-6 py-4 sm:py-6">
+      <div className="flex flex-col md:flex-row items-stretch gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-4">
             <span className="inline-flex items-center px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold text-sm rounded-md">
@@ -64,7 +64,7 @@ function CriteriaItem({
               </span>
             )}
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
             {parsedTitle}
           </h3>
           {criterion.description && (
@@ -191,7 +191,7 @@ function CriteriaItem({
           )}
         </div>
 
-        <div className="flex-shrink-0 w-52 border-l border-gray-200 dark:border-gray-700 pl-6">
+        <div className="w-full md:flex-shrink-0 md:w-52 border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 pt-4 md:pt-0 md:pl-6">
           {mode === 'classic' ? (
             <div className="h-full flex flex-col justify-start gap-2">
               <label className={`flex items-center justify-start gap-3 px-4 py-6 rounded-lg cursor-pointer transition-all ${
