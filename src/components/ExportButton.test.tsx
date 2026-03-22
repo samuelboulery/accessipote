@@ -166,10 +166,9 @@ describe('ExportButton', () => {
 
   it('devrait afficher "Export en cours..." pendant l\'export PDF', async () => {
     // Retarder la résolution pour capturer l'état intermédiaire
-    let resolveJsPDF!: () => void;
     vi.mocked(await import('jspdf')).default = vi.fn(() => {
-      return new Promise<void>((resolve) => {
-        resolveJsPDF = resolve;
+      return new Promise<void>(() => {
+        // Promise volontairement non résolue pour tester l'état de chargement
       }) as unknown as ReturnType<typeof mockJsPDFInstance.constructor>;
     }) as never;
 
