@@ -39,12 +39,12 @@ function BulkActions({
 
   return (
     <div className="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 rounded-lg shadow-sm p-4 mb-6">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="flex flex-col lg:flex-row lg:items-center gap-3">
         <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 shrink-0">
           Actions en masse ({displayedCriteriaCount} critères) :
         </span>
 
-        <div className="flex flex-col sm:flex-row gap-2 sm:items-center flex-1">
+        <div className="flex flex-col lg:flex-row gap-2 lg:items-center flex-1">
           <fieldset className="flex flex-wrap gap-x-4 gap-y-1.5">
             <legend className="sr-only">Choisir un statut</legend>
             {statusOptions.map(opt => (
@@ -65,7 +65,7 @@ function BulkActions({
           <div className="flex gap-2">
             <button
               onClick={() => onSelectAll(selectedStatus)}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
+              className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-3 py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
             >
               <CheckSquare className="w-4 h-4" />
               Appliquer à tous
@@ -73,7 +73,7 @@ function BulkActions({
 
             <button
               onClick={onDeselectAll}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
+              className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-3 py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
             >
               <XSquare className="w-4 h-4" />
               Tout effacer

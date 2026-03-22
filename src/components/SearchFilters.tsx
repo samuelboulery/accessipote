@@ -61,19 +61,15 @@ export default function SearchFilters({
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Statut
           </label>
-          <div
-            className="flex flex-wrap gap-1 items-center w-full px-3 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md"
-            role="group"
-            aria-label="Filtrer par statut"
-          >
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrer par statut">
             {[{ value: '', label: 'Tous' }, ...statusOptions].map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => handleFilterChange('status', opt.value)}
-                className={`px-2.5 py-0.5 text-sm rounded transition-colors ${
+                className={`px-3 py-2 sm:py-2.5 text-sm border rounded-md transition-colors ${
                   filters.status === opt.value
-                    ? 'bg-black text-white dark:bg-white dark:text-black'
-                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600'
+                    ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
                 }`}
               >
                 {opt.label}
