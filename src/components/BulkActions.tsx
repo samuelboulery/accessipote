@@ -45,21 +45,22 @@ function BulkActions({
         </span>
 
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center flex-1">
-          <div className="flex flex-wrap gap-1" role="group" aria-label="Choisir un statut">
+          <fieldset className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <legend className="sr-only">Choisir un statut</legend>
             {statusOptions.map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => setSelectedStatus(opt.value as CriteriaStatus)}
-                className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
-                  selectedStatus === opt.value
-                    ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
-                }`}
-              >
-                {opt.label}
-              </button>
+              <label key={opt.value} className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="radio"
+                  name="bulk-status"
+                  value={opt.value}
+                  checked={selectedStatus === opt.value}
+                  onChange={() => setSelectedStatus(opt.value as CriteriaStatus)}
+                  className="w-4 h-4 accent-black dark:accent-white cursor-pointer"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">{opt.label}</span>
+              </label>
             ))}
-          </div>
+          </fieldset>
 
           <div className="flex gap-2">
             <button
