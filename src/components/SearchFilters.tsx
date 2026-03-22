@@ -23,8 +23,16 @@ export default function SearchFilters({
 
   const statusOptions =
     mode === 'classic'
-      ? ['conforme', 'non-conforme', 'non-applicable']
-      : ['default-compliant', 'project-implementation', 'non-applicable'];
+      ? [
+          { value: 'conforme', label: 'Conforme' },
+          { value: 'non-conforme', label: 'Non conf.' },
+          { value: 'non-applicable', label: 'N/A' },
+        ]
+      : [
+          { value: 'default-compliant', label: 'Par défaut' },
+          { value: 'project-implementation', label: 'À impl.' },
+          { value: 'non-applicable', label: 'N/A' },
+        ];
 
   return (
     <div className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
@@ -53,18 +61,31 @@ export default function SearchFilters({
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Statut
           </label>
-          <select
-            value={filters.status}
-            onChange={(e) => handleFilterChange('status', e.target.value)}
-            className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 text-sm"
-          >
-            <option value="">Tous les statuts</option>
-            {statusOptions.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
+          <div className="flex flex-wrap gap-1" role="group" aria-label="Filtrer par statut">
+            <button
+              onClick={() => handleFilterChange('status', '')}
+              className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+                filters.status === ''
+                  ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
+              }`}
+            >
+              Tous
+            </button>
+            {statusOptions.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => handleFilterChange('status', opt.value)}
+                className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+                  filters.status === opt.value
+                    ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
+                }`}
+              >
+                {opt.label}
+              </button>
             ))}
-          </select>
+          </div>
         </div>
       </div>
 
