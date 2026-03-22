@@ -185,7 +185,7 @@ function App() {
       <div className="flex-1 overflow-y-auto">
         <div className="container mx-auto px-4 py-8 max-w-7xl">
           <header className="mb-4 sm:mb-12 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900 py-4 sm:py-0 -mx-4 px-4 sm:mx-0 sm:px-0">
-            <div className="flex items-end justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
               <div>
                 <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 font-chelsea-market">
                   Accessipote
