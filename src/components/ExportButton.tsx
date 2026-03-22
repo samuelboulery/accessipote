@@ -134,26 +134,51 @@ export default function ExportButton({ mode, progress, criteriaList, onShowToast
   };
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-6">
-      <button
-        ref={exportMarkdownButtonRef}
-        onClick={handleExportMarkdown}
-        aria-keyshortcuts="Control+e Meta+e"
-        className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
-      >
-        <Copy className="w-5 h-5" />
-        Copier en Markdown
-      </button>
-      {mode === 'classic' && (
+    <>
+      {/* Rendu in-flow (desktop uniquement) */}
+      <div className="hidden sm:flex border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 flex-row gap-4 justify-center mb-6">
         <button
-          onClick={handleExportPDF}
-          disabled={isExportingPDF}
-          className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
+          ref={exportMarkdownButtonRef}
+          onClick={handleExportMarkdown}
+          aria-keyshortcuts="Control+e Meta+e"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
         >
-          <Download className="w-5 h-5" />
-          {isExportingPDF ? 'Export en cours...' : 'Exporter en PDF'}
+          <Copy className="w-5 h-5" />
+          Copier en Markdown
         </button>
-      )}
-    </div>
+        {mode === 'classic' && (
+          <button
+            onClick={handleExportPDF}
+            disabled={isExportingPDF}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
+          >
+            <Download className="w-5 h-5" />
+            {isExportingPDF ? 'Export en cours...' : 'Exporter en PDF'}
+          </button>
+        )}
+      </div>
+
+      {/* Barre fixe mobile uniquement */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-20 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex gap-3 shadow-lg">
+        <button
+          onClick={handleExportMarkdown}
+          aria-keyshortcuts="Control+e Meta+e"
+          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all font-semibold text-sm"
+        >
+          <Copy className="w-4 h-4" />
+          Markdown
+        </button>
+        {mode === 'classic' && (
+          <button
+            onClick={handleExportPDF}
+            disabled={isExportingPDF}
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="w-4 h-4" />
+            {isExportingPDF ? 'Export...' : 'PDF'}
+          </button>
+        )}
+      </div>
+    </>
   );
 }

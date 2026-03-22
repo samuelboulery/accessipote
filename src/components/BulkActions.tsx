@@ -39,29 +39,27 @@ function BulkActions({
 
   return (
     <div className="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 rounded-lg shadow-sm p-4 mb-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-            Actions en masse ({displayedCriteriaCount} critères) :
-          </span>
-        </div>
+      <div className="flex flex-col gap-3">
+        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          Actions en masse ({displayedCriteriaCount} critères) :
+        </span>
 
-        <div className="flex items-center gap-2">
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value as CriteriaStatus)}
-            className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400"
-          >
-            {statusOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+        <select
+          value={selectedStatus}
+          onChange={(e) => setSelectedStatus(e.target.value as CriteriaStatus)}
+          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400"
+        >
+          {statusOptions.map(opt => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
 
+        <div className="flex gap-2">
           <button
             onClick={() => onSelectAll(selectedStatus)}
-            className="flex items-center gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
           >
             <CheckSquare className="w-4 h-4" />
             Appliquer à tous
@@ -69,7 +67,7 @@ function BulkActions({
 
           <button
             onClick={onDeselectAll}
-            className="flex items-center gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
           >
             <XSquare className="w-4 h-4" />
             Tout effacer

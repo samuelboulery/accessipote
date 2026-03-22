@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDebounce } from '../hooks/useDebounce';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { X, Search } from 'lucide-react';
 import type { GlossaryTerm } from '../types';
 import { titleToSlug } from '../utils/transformGlossary';
@@ -27,6 +28,7 @@ export default function GlossarySidePanel({
   onGlossaryClick,
   onCriteriaClick,
 }: GlossarySidePanelProps) {
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 200);
   const selectedRef = useRef<HTMLDivElement>(null);
@@ -122,19 +124,32 @@ export default function GlossarySidePanel({
   }, [isResizing, onWidthChange]);
 
   return (
-    <div
-      className={`
-        fixed right-0 top-0 bottom-0 bg-white dark:bg-gray-800 shadow-2xl
-        flex-shrink-0 flex flex-col relative
-        transition-all duration-300 ease-in-out
-        overflow-hidden
-      `}
-      style={{ width: isOpen ? `${width}px` : '0px' }}
-      role="complementary"
-      aria-label="Glossaire RGAA"
-    >
-        {/* Resize Handle */}
-        {isOpen && (
+    <>
+      {/* Backdrop mobile */}
+      {isMobile && isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30"
+          onClick={onClose}
+        />
+      )}
+
+      <div
+        className={
+          isMobile
+            ? `fixed bottom-0 left-0 right-0 z-40 h-[80vh] rounded-t-2xl bg-white dark:bg-gray-800 shadow-2xl flex flex-col overflow-hidden transition-transform duration-300 ${isOpen ? 'translate-y-0' : 'translate-y-full'}`
+            : `fixed right-0 top-0 bottom-0 bg-white dark:bg-gray-800 shadow-2xl flex-shrink-0 flex flex-col relative overflow-hidden transition-all duration-300 ease-in-out`
+        }
+        style={!isMobile ? { width: isOpen ? `${width}px` : '0px' } : undefined}
+        role="complementary"
+        aria-label="Glossaire RGAA"
+      >
+        {/* Indicateur drag mobile */}
+        {isMobile && (
+          <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mt-3 mb-1 flex-shrink-0" />
+        )}
+
+        {/* Resize Handle (desktop uniquement) */}
+        {!isMobile && isOpen && (
           <div
             ref={resizeHandleRef}
             onMouseDown={() => setIsResizing(true)}
@@ -225,7 +240,8 @@ export default function GlossarySidePanel({
             )}
           </div>
         </div>
-    </div>
+      </div>
+    </>
   );
 }
 
