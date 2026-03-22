@@ -87,13 +87,15 @@ function CriteriaItem({
             <div className="mt-4">
               <button
                 onClick={() => setShowTests(!showTests)}
+                aria-expanded={showTests}
+                aria-controls={`tests-${criterion.id}`}
                 className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100"
               >
-                {showTests ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                {showTests ? <ChevronUp className="w-4 h-4" aria-hidden="true" /> : <ChevronDown className="w-4 h-4" aria-hidden="true" />}
                 Voir les tests ({criterion.tests.length})
               </button>
               {showTests && (
-                <div className="mt-3 pl-4 border-l-2 border-blue-200 dark:border-blue-800">
+                <div id={`tests-${criterion.id}`} className="mt-3 pl-4 border-l-2 border-blue-200 dark:border-blue-800">
                   {criterion.tests.map((test) => (
                     <div key={test.id} className="mb-3">
                       <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-1">
@@ -132,13 +134,15 @@ function CriteriaItem({
             <div className="mt-4">
               <button
                 onClick={() => setShowReferences(!showReferences)}
+                aria-expanded={showReferences}
+                aria-controls={`references-${criterion.id}`}
                 className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100"
               >
-                {showReferences ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                {showReferences ? <ChevronUp className="w-4 h-4" aria-hidden="true" /> : <ChevronDown className="w-4 h-4" aria-hidden="true" />}
                 Références
               </button>
               {showReferences && (
-                <div className="mt-3 pl-4 border-l-2 border-green-200 dark:border-green-800">
+                <div id={`references-${criterion.id}`} className="mt-3 pl-4 border-l-2 border-green-200 dark:border-green-800">
                   {criterion.references.wcag && criterion.references.wcag.length > 0 && (
                     <div className="mb-2">
                       <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-1">WCAG:</p>

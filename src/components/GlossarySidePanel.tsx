@@ -33,6 +33,9 @@ export default function GlossarySidePanel({
   const debouncedSearchQuery = useDebounce(searchQuery, 200);
   const selectedRef = useRef<HTMLDivElement>(null);
   const resizeHandleRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const [isResizing, setIsResizing] = useState(false);
 
   // Filtrer les termes selon la recherche debouncée
@@ -84,10 +87,46 @@ export default function GlossarySidePanel({
         onClose();
       }
     };
-    
+
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
+
+  // Déplace le focus sur le champ de recherche à l'ouverture, le restitue à la fermeture
+  useEffect(() => {
+    if (!isOpen) {
+      previousFocusRef.current?.focus();
+      previousFocusRef.current = null;
+      return;
+    }
+
+    previousFocusRef.current = document.activeElement as HTMLElement;
+
+    if (isMobile) {
+      // Mobile : animation translate-y, setTimeout suffit
+      const id = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, ANIMATION_DELAY_MS);
+      return () => clearTimeout(id);
+    }
+
+    // Desktop : attendre la fin de la transition width avant de focus
+    const panel = panelRef.current;
+    if (!panel) {
+      const id = setTimeout(() => searchInputRef.current?.focus(), ANIMATION_DELAY_MS);
+      return () => clearTimeout(id);
+    }
+
+    let focused = false;
+    const onTransitionEnd = (e: TransitionEvent) => {
+      if (e.propertyName === 'width' && !focused) {
+        focused = true;
+        searchInputRef.current?.focus();
+      }
+    };
+    panel.addEventListener('transitionend', onTransitionEnd);
+    return () => panel.removeEventListener('transitionend', onTransitionEnd);
+  }, [isOpen, isMobile]);
 
   // Gérer le resize
   useEffect(() => {
@@ -134,6 +173,7 @@ export default function GlossarySidePanel({
       )}
 
       <div
+        ref={panelRef}
         className={
           isMobile
             ? `fixed bottom-0 left-0 right-0 z-40 h-[80vh] rounded-t-2xl bg-white dark:bg-gray-800 shadow-2xl flex flex-col overflow-hidden transition-transform duration-300 ${isOpen ? 'translate-y-0' : 'translate-y-full'}`
@@ -183,6 +223,7 @@ export default function GlossarySidePanel({
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <input
+                ref={searchInputRef}
                 type="text"
                 placeholder="Rechercher dans le glossaire..."
                 value={searchQuery}

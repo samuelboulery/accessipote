@@ -213,8 +213,20 @@ function App() {
           <ProgressBar progress={progressPercentage} />
 
           {/* Tab navigation */}
-          <div className="flex gap-4 my-8 border-b border-gray-300 dark:border-gray-700">
+          <div
+            role="tablist"
+            aria-label="Navigation principale"
+            className="flex gap-4 my-8 border-b border-gray-300 dark:border-gray-700"
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowRight') setActiveTab('synthese');
+              else if (e.key === 'ArrowLeft') setActiveTab('audit');
+            }}
+          >
             <button
+              role="tab"
+              id="tab-audit"
+              aria-selected={activeTab === 'audit'}
+              aria-controls="panel-audit"
               onClick={() => setActiveTab('audit')}
               className={`px-4 py-3 font-medium transition-all ${
                 activeTab === 'audit'
@@ -225,6 +237,10 @@ function App() {
               Audit
             </button>
             <button
+              role="tab"
+              id="tab-synthese"
+              aria-selected={activeTab === 'synthese'}
+              aria-controls="panel-synthese"
               onClick={() => setActiveTab('synthese')}
               className={`px-4 py-3 font-medium transition-all ${
                 activeTab === 'synthese'
@@ -238,7 +254,12 @@ function App() {
 
           {/* Audit tab content */}
           {activeTab === 'audit' && (
-            <div className="pb-20 sm:pb-0">
+            <div
+              role="tabpanel"
+              id="panel-audit"
+              aria-labelledby="tab-audit"
+              className="pb-20 sm:pb-0"
+            >
               <SearchFilters
                 filters={filters}
                 onFiltersChange={setFilters}
@@ -276,12 +297,18 @@ function App() {
 
           {/* Synthèse tab content */}
           {activeTab === 'synthese' && (
-            <SummaryTab
-              criteriaList={criteriaList}
-              progress={progress}
-              mode={mode}
-              isDark={isDark}
-            />
+            <div
+              role="tabpanel"
+              id="panel-synthese"
+              aria-labelledby="tab-synthese"
+            >
+              <SummaryTab
+                criteriaList={criteriaList}
+                progress={progress}
+                mode={mode}
+                isDark={isDark}
+              />
+            </div>
           )}
         </div>
       </div>
