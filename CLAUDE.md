@@ -31,26 +31,30 @@ URL dev : http://localhost:5173
 - `src/data/` → JSON statiques (source de vérité RGAA)
 - `src/types/index.ts` → Source de vérité pour tous les types
 
-## Format de réponse API (si futur backend)
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
-
 ## Commandes disponibles
 - npm run dev → serveur de développement (port 5173)
 - npm run build → build TypeScript + Vite
-- npm run test → Vitest
+- npm run test:run → tests unitaires (non-watch, pour CI)
+- npm run test → Vitest (watch)
 - npm run test:coverage → rapport de couverture
 - npm run lint → ESLint
 - npm run scrape:wcag → mise à jour des ancres WCAG
+
+## Pièges connus
+- CSP : `index.html` a une CSP stricte sans `'unsafe-inline'`. En dev, le plugin `devCspPlugin`
+  dans `vite.config.ts` l'assouplit via `transformIndexHtml`. Ne pas supprimer ce plugin.
+- `coverage/` doit être dans `globalIgnores` de `eslint.config.js` (fichiers générés).
+- Tests de performance dans `CriteriaList.test.tsx` : seuils à 2000ms (pas 200ms) car les
+  runners CI sont plus lents qu'en local.
+- `src/data/criteria.json` et `glossary.json` : ne jamais modifier (données RGAA officielles).
 
 ## Subagents disponibles
 - /tdd → écriture test-first
 - /code-review → review qualité et sécurité
 - /plan → décomposition de feature
 - /build-fix → résolution erreurs build TypeScript
+- /pre-commit → vérification avant commit (lint + build + tests)
+- /audit-a11y → audit accessibilité des composants
 
 ## Contexte métier
 - RGAA = Référentiel Général d'Amélioration de l'Accessibilité (France)
