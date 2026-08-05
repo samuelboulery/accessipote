@@ -1,4 +1,5 @@
 {
+  "packageManager": "pnpm@10.12.1",
   "name": "outil-checklist-rgaa",
   "private": true,
   "version": "0.0.0",
