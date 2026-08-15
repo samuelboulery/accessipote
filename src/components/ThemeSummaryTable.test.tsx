@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import ThemeSummaryTable from './ThemeSummaryTable';
 import type { ThemeStats, SummaryStats } from '../utils/calculateSummaryStats';
 
@@ -92,6 +92,18 @@ describe('ThemeSummaryTable', () => {
   });
 
   describe('Accessibilité', () => {
+    // WCAG 2.1.1 : une zone qui défile doit pouvoir défiler au clavier. Sans
+    // tabindex, les colonnes hors cadre étaient hors d'atteinte à la souris près.
+    it('devrait rendre la zone de défilement atteignable au clavier', () => {
+      const byTheme = [createThemeStats('Images', 5, 2, 1, 0, 0, 71.43)];
+      const stats = createStats(5, 2, 1, 0, 0, 62.5, byTheme);
+
+      render(<ThemeSummaryTable byTheme={byTheme} mode="classic" stats={stats} />);
+
+      const region = screen.getByRole('region', { name: /Répartition par thème/ });
+      expect(region).toHaveAttribute('tabindex', '0');
+    });
+
     it('devrait avoir scope="col" sur les en-têtes de colonnes', () => {
       const byTheme = [createThemeStats('Images', 5, 2, 1, 0, 0, 71.43)];
       const stats = createStats(5, 2, 1, 0, 0, 62.5, byTheme);

@@ -1,14 +1,10 @@
 import { memo } from 'react';
 import { Home, List, BarChart3, BookOpen } from 'lucide-react';
 import type { View } from './Sidebar';
-import DarkModeToggle from './DarkModeToggle';
-import type { ThemeMode } from '../hooks/useDarkMode';
 
 interface MobileTabBarProps {
   view: View;
   onNavigate: (view: View) => void;
-  themeMode: ThemeMode;
-  onCycleTheme: () => void;
 }
 
 const TABS: Array<{ view: View; label: string; Icon: typeof Home }> = [
@@ -19,10 +15,16 @@ const TABS: Array<{ view: View; label: string; Icon: typeof Home }> = [
 ];
 
 /** Cibles à 48px : 44px est le plancher desktop, 48 le plancher tactile. */
-function MobileTabBar({ view, onNavigate, themeMode, onCycleTheme }: MobileTabBarProps) {
+function MobileTabBar({ view, onNavigate }: MobileTabBarProps) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-20 flex items-center gap-2 border-t border-separator bg-surface p-2">
-      <nav aria-label="Navigation principale" className="flex flex-1">
+    // Le padding bas suit l'indicateur d'accueil iOS quand il existe, et retombe
+    // sur 8px partout ailleurs — sinon la dernière rangée d'onglets passe dessous.
+    //
+    // Rien d'autre que des destinations ici : la bascule de thème est passée dans
+    // la barre supérieure, un contrôle sans page n'a pas sa place au milieu d'une
+    // navigation.
+    <div className="fixed inset-x-0 bottom-0 z-20 border-t border-separator bg-surface px-2 pt-2 pb-[max(8px,env(safe-area-inset-bottom))]">
+      <nav aria-label="Navigation principale" className="flex">
         {TABS.map(({ view: target, label, Icon }) => {
           const isActive = view === target;
           return (
@@ -42,10 +44,6 @@ function MobileTabBar({ view, onNavigate, themeMode, onCycleTheme }: MobileTabBa
           );
         })}
       </nav>
-
-      {/* Hors du <nav> : ce n'est pas une destination, elle ne doit pas être
-          annoncée comme telle. */}
-      <DarkModeToggle mode={themeMode} onCycle={onCycleTheme} />
     </div>
   );
 }

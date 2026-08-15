@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import { ChevronLeft, Search } from 'lucide-react';
 import type { CriteriaRGAA, GlossaryTerm } from '../types';
 import { useDebounce } from '../hooks/useDebounce';
 import { titleToSlug } from '../utils/transformGlossary';
@@ -12,7 +12,8 @@ interface GlossaryScreenProps {
   glossary: GlossaryTerm[];
   criteriaList: CriteriaRGAA[];
   selectedSlug?: string;
-  onSelectTerm: (slug: string) => void;
+  /** `undefined` referme le détail et rend la main à la liste en écran étroit. */
+  onSelectTerm: (slug: string | undefined) => void;
   onCriteriaClick: (criteriaId: string) => void;
 }
 
@@ -75,6 +76,17 @@ export default function GlossaryScreen({
     [glossary],
   );
 
+  /**
+   * Sous 1100px les deux volets s'empilent, et la liste des 119 termes fait
+   * 8600px de haut : la définition se retrouvait enterrée dessous, si bas qu'un
+   * clic semblait sans effet. On montre donc l'un ou l'autre, comme l'écran
+   * d'audit le fait déjà entre sa liste et le détail d'un critère.
+   *
+   * Au-delà du seuil les deux volets cohabitent, et `selected` retombe sur le
+   * premier terme filtré : le panneau n'est jamais vide à côté de la liste.
+   */
+  const isDetailOpen = selectedSlug != null;
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -111,8 +123,14 @@ export default function GlossaryScreen({
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">
-        <div className="flex min-h-0 w-full flex-col lg:w-[320px] lg:border-r lg:border-separator lg:pr-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 wide:flex-row">
+        <div
+          data-volet="liste"
+          className={[
+            'w-full flex-col wide:flex wide:min-h-0 wide:w-[320px] wide:border-r wide:border-separator wide:pr-4',
+            isDetailOpen ? 'hidden' : 'flex',
+          ].join(' ')}
+        >
           <div className="relative">
             <Search
               size={16}
@@ -134,7 +152,10 @@ export default function GlossaryScreen({
             {filtered.length} terme{filtered.length > 1 ? 's' : ''} sur {glossary.length}
           </p>
 
-          <ul className="min-h-0 flex-1 overflow-y-auto">
+          {/* En colonne, les deux panneaux suivent le défilement de la page :
+              deux zones scrollables imbriquées dans un `main` déjà scrollable
+              obligent à viser la bonne au pouce. */}
+          <ul className="wide:min-h-0 wide:flex-1 wide:overflow-y-auto">
             {filtered.map(term => {
               const slug = titleToSlug(term.title);
               const isSelected = selected != null && titleToSlug(selected.title) === slug;
@@ -161,7 +182,24 @@ export default function GlossaryScreen({
           </ul>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div
+          data-volet="detail"
+          className={[
+            'flex-1 wide:block wide:min-h-0 wide:overflow-y-auto',
+            isDetailOpen ? 'block' : 'hidden',
+          ].join(' ')}
+        >
+          {isDetailOpen && (
+            <button
+              type="button"
+              onClick={() => onSelectTerm(undefined)}
+              className="target-44 mb-4 flex h-ctrl items-center gap-2 rounded-ctrl border-1 border-border bg-surface px-3 text-body wide:hidden"
+            >
+              <ChevronLeft size={16} aria-hidden="true" />
+              Retour à la liste
+            </button>
+          )}
+
           {selected ? (
             <article>
               <p className="font-mono text-meta uppercase tracking-[0.08em] text-ink-muted">

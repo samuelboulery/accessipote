@@ -134,6 +134,46 @@ describe('SummaryTab', () => {
     });
   });
 
+  // Un audit qu'on vient de créer affichait un tableau de zéros et un taux « – » :
+  // beaucoup de chiffres pour dire qu'il n'y en a aucun.
+  describe('Audit sans critère évalué', () => {
+    const criteria = [createMockCriteria('1.1', 'Images'), createMockCriteria('2.1', 'Cadres')];
+    const empty: Progress = { classic: {}, designSystem: {} };
+
+    it('devrait remplacer les compteurs par un état vide', () => {
+      render(<SummaryTab criteriaList={criteria} progress={empty} mode="classic" />);
+
+      expect(screen.getByText('Synthèse')).toBeTruthy();
+      expect(screen.getByRole('heading', { name: /Aucun critère évalué/ })).toBeInTheDocument();
+      expect(screen.queryByText('Détail par thème')).not.toBeInTheDocument();
+    });
+
+    it('devrait masquer les actions d\'export', () => {
+      render(
+        <SummaryTab
+          criteriaList={criteria}
+          progress={empty}
+          mode="classic"
+          actions={<button type="button">Exporter</button>}
+        />
+      );
+
+      expect(screen.queryByRole('button', { name: 'Exporter' })).not.toBeInTheDocument();
+    });
+
+    it('devrait afficher la synthèse dès un seul critère évalué', () => {
+      const progress: Progress = {
+        classic: { '1.1': { status: 'conforme' } },
+        designSystem: {},
+      };
+
+      render(<SummaryTab criteriaList={criteria} progress={progress} mode="classic" />);
+
+      expect(screen.queryByRole('heading', { name: /Aucun critère évalué/ })).not.toBeInTheDocument();
+      expect(screen.getByText('Détail par thème')).toBeInTheDocument();
+    });
+  });
+
   describe('Mode design system', () => {
     it('devrait fonctionner en mode design-system', () => {
       const criteria = [
@@ -282,7 +322,7 @@ describe('SummaryTab', () => {
       expect(container).toBeTruthy();
     });
 
-    it('devrait gérer aucun critère évalué', () => {
+    it('devrait gérer aucun critère évalué sans planter', () => {
       const criteria = [
         createMockCriteria('1.1', 'Images'),
         createMockCriteria('1.2', 'Images'),
@@ -293,9 +333,10 @@ describe('SummaryTab', () => {
         <SummaryTab criteriaList={criteria} progress={progress} mode="classic" />
       );
 
-      const text = container.textContent;
-      expect(text).toContain('0');
-      expect(text).toContain('2');
+      // Les compteurs à zéro ont laissé place à l'état vide — voir la section
+      // « Audit sans critère évalué » pour le comportement attendu.
+      expect(container).toBeTruthy();
+      expect(screen.getByText('Synthèse')).toBeInTheDocument();
     });
 
     it('devrait afficher – quand aucun critère tranché', () => {

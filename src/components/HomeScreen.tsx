@@ -91,13 +91,18 @@ export default function HomeScreen({
                       <button
                         type="button"
                         onClick={() => onOpenAudit(audit.id)}
-                        className="grid min-w-0 flex-1 grid-cols-[48px_1fr_auto] items-center gap-4 text-left"
+                        className="grid min-w-0 flex-1 grid-cols-[1fr_auto] items-center gap-4 text-left sm:grid-cols-[48px_1fr_auto]"
                       >
-                        <AuditRing
-                          size={48}
-                          segments={[{ key: 'evalues', share, color: 'var(--a-ink)' }]}
-                          label={`${percentage} % évalué`}
-                        />
+                        {/* Sur téléphone l'anneau part : il redit le pourcentage
+                            écrit juste à côté, et ses 48px manquaient au nom de
+                            l'audit, tronqué dès le deuxième mot. */}
+                        <span className="hidden sm:block">
+                          <AuditRing
+                            size={48}
+                            segments={[{ key: 'evalues', share, color: 'var(--a-ink)' }]}
+                            label={`${percentage} % évalué`}
+                          />
+                        </span>
                         <span className="min-w-0">
                           <span className="block truncate text-lead font-semibold">
                             {audit.name}
@@ -132,7 +137,7 @@ export default function HomeScreen({
         ) : (
           // Au premier lancement, la liste absente laissait un creux là où il
           // fallait justement guider.
-          <div className="rounded-card border-1 border-dashed border-dashed p-6">
+          <div className="rounded-card border-1 border-dashed p-6">
             <p className="text-lead font-semibold">Aucun audit pour l'instant.</p>
             <p className="mt-2 text-body text-ink-muted">
               Un audit, c'est les {criteriaCount} critères à statuer, que tu remplis à ton rythme.

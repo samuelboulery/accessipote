@@ -257,6 +257,31 @@ describe('GlossaryPopover', () => {
       expect(parseInt(popover.style.left, 10)).toBe(8);
     });
 
+    // Sous 336px de large, la borne droite (innerWidth − 320 − 8) passait sous
+    // la borne gauche : le popover sortait de l'écran au lieu d'y rester.
+    it('reste dans la fenêtre sur un écran de 320px', () => {
+      const initialWidth = window.innerWidth;
+      Object.defineProperty(window, 'innerWidth', { value: 320, configurable: true });
+
+      const { container } = render(
+        <GlossaryPopover
+          term={TERM}
+          anchor={ANCHOR}
+          onClose={vi.fn()}
+          onOpenInGlossary={vi.fn()}
+        />,
+      );
+
+      const popover = container.querySelector('[role="dialog"]') as HTMLElement;
+      const left = parseInt(popover.style.left, 10);
+      const width = parseInt(popover.style.width, 10);
+
+      expect(left).toBeGreaterThanOrEqual(8);
+      expect(left + width).toBeLessThanOrEqual(320);
+
+      Object.defineProperty(window, 'innerWidth', { value: initialWidth, configurable: true });
+    });
+
     it('a une largeur de 320px', () => {
       const { container } = render(
         <GlossaryPopover

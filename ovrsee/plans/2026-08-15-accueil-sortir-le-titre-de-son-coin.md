@@ -1,9 +1,9 @@
 ---
 {
-  "status": "open",
+  "status": "closed",
   "title": "Accueil : sortir le titre de son coin",
   "opened": "2026-08-15",
-  "closed": null,
+  "closed": "2026-08-15",
   "commits": [
     {
       "sha": "e99bcfe",

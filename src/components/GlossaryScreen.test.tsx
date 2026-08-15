@@ -59,9 +59,9 @@ function setup(overrides: { selectedSlug?: string } = {}) {
     );
   }
 
-  render(<Wrapper />);
+  const { container } = render(<Wrapper />);
 
-  return { onSelectTerm, onCriteriaClick };
+  return { onSelectTerm, onCriteriaClick, container };
 }
 
 describe('GlossaryScreen', () => {
@@ -348,5 +348,57 @@ describe('GlossaryScreen', () => {
     setup({ selectedSlug: 'accessibilite' });
 
     expect(screen.getByText('Glossaire RGAA · A')).toBeInTheDocument();
+  });
+
+  // En dessous de 1100px les deux volets s'empilent : la liste des 119 termes
+  // faisait 8600px de haut et enterrait la définition sous elle. En étroit on
+  // montre donc l'un ou l'autre, comme l'écran d'audit le fait déjà.
+  describe('Volets liste et détail en écran étroit', () => {
+    it('masque le détail tant qu\'aucun terme n\'est choisi', () => {
+      const { container } = setup();
+
+      const volets = container.querySelectorAll('[data-volet]');
+      const liste = container.querySelector('[data-volet="liste"]');
+      const detail = container.querySelector('[data-volet="detail"]');
+
+      expect(volets).toHaveLength(2);
+      expect(liste).not.toHaveClass('hidden');
+      expect(detail).toHaveClass('hidden');
+      expect(detail).toHaveClass('wide:block');
+    });
+
+    it('masque la liste dès qu\'un terme est choisi', () => {
+      const { container } = setup({ selectedSlug: 'balise' });
+
+      expect(container.querySelector('[data-volet="liste"]')).toHaveClass('hidden');
+      expect(container.querySelector('[data-volet="liste"]')).toHaveClass('wide:flex');
+      expect(container.querySelector('[data-volet="detail"]')).not.toHaveClass('hidden');
+    });
+
+    it('bascule sur le détail au clic sur un terme', async () => {
+      const user = userEvent.setup();
+      const { container } = setup();
+
+      await user.click(screen.getByRole('button', { name: /Balise/ }));
+
+      expect(container.querySelector('[data-volet="detail"]')).not.toHaveClass('hidden');
+      expect(screen.getByRole('button', { name: 'Retour à la liste' })).toBeInTheDocument();
+    });
+
+    it('revient à la liste et désélectionne le terme', async () => {
+      const user = userEvent.setup();
+      const { onSelectTerm, container } = setup({ selectedSlug: 'balise' });
+
+      await user.click(screen.getByRole('button', { name: 'Retour à la liste' }));
+
+      expect(onSelectTerm).toHaveBeenCalledWith(undefined);
+      expect(container.querySelector('[data-volet="liste"]')).not.toHaveClass('hidden');
+    });
+
+    it('n\'offre pas de retour tant que rien n\'est choisi', () => {
+      setup();
+
+      expect(screen.queryByRole('button', { name: 'Retour à la liste' })).not.toBeInTheDocument();
+    });
   });
 });
