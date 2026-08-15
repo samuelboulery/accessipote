@@ -53,6 +53,16 @@
         "src/index.css",
         "src/tokens.css"
       ]
+    },
+    {
+      "sha": "2b953a8",
+      "date": "2026-08-15",
+      "files": [
+        "src/components/HomeHero.tsx",
+        "src/index.css",
+        "src/tokens.css",
+        "tailwind.config.js"
+      ]
     }
   ]
 }

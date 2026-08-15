@@ -48,8 +48,9 @@
   --a-banner-ink:   #FFFFFF;  /* 21:1 sur le début du dégradé */
   --a-banner-muted: #C4C4C4;  /* 8,4:1 sur la fin du dégradé */
   /* Fusion normale : sur un fond quasi noir, `overlay` n'a presque rien à
-     lever et le grain disparaissait. */
-  --a-banner-grain: 0.16;
+     lever et le grain disparaissait. Le grain étant fin, il lui faut plus
+     d'opacité qu'un motif large pour rester perceptible. */
+  --a-banner-grain: 0.3;
   --a-banner-grain-blend: normal;
 
   /* ---- Typographie ---- */
@@ -116,7 +117,7 @@
   --a-banner-to:    #131313;
   --a-banner-ink:   #FFFFFF;
   --a-banner-muted: #C4C4C4;
-  --a-banner-grain: 0.14;
+  --a-banner-grain: 0.26;
   --a-banner-grain-blend: normal;
 
   --a-focus-ring: 0 0 0 2px #000000, 0 0 0 5px #FFFFFF;
