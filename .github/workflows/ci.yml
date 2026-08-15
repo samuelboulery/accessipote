@@ -49,7 +49,7 @@ jobs:
       # publics. Un rapport de couverture manquant ne doit pas faire échouer
       # une PR dont les tests passent.
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         continue-on-error: true
         with:
           files: ./coverage/lcov.info
