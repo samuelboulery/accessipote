@@ -73,6 +73,9 @@ export default {
       section:  ['1.5rem', { lineHeight: '1.2', letterSpacing: '-0.02em'  }],
       screen:   ['2rem', { lineHeight: '1.2', letterSpacing: '-0.02em'  }],
       display:  ['2.625rem', { lineHeight: '1.1', letterSpacing: '-0.03em'  }],
+      // 9e pas, au-delà des 8 du handoff : le titre d'accueil est le seul
+      // endroit où la page a besoin de crier. Ajouté sur demande explicite.
+      hero:     ['3.5rem',   { lineHeight: '1.05', letterSpacing: '-0.035em' }],
     },
 
     fontFamily: {
@@ -84,6 +87,9 @@ export default {
       normal:   '400',
       medium:   '500',
       semibold: '600',
+      // La variable Instrument Sans monte à 700 ; le gras sert au seul titre
+      // d'accueil, pour le contraste que 600 ne donnait pas.
+      bold:     '700',
     },
 
     spacing: {

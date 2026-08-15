@@ -272,4 +272,15 @@ describe('HomeScreen', () => {
       expect(screen.queryByText(/Supprimer « API v2 »/)).not.toBeInTheDocument();
     });
   });
+
+  it('range les audits en grille plutôt qu\'en pile pleine largeur', () => {
+    setup();
+    // Ici la classe EST le comportement demandé : deux colonnes sur grand
+    // écran, avec passage à la ligne.
+    const liste = screen
+      .getByRole('button', { name: "Supprimer l'audit Refonte lamairie.fr" })
+      .closest('ul');
+    expect(liste).toHaveClass('grid');
+    expect(liste).toHaveClass('xl:grid-cols-2');
+  });
 });

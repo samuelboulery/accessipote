@@ -4,7 +4,17 @@
   "title": "Accueil : sortir le titre de son coin",
   "opened": "2026-08-15",
   "closed": null,
-  "commits": []
+  "commits": [
+    {
+      "sha": "e99bcfe",
+      "date": "2026-08-15",
+      "files": [
+        "src/App.tsx",
+        "src/components/HomeScreen.test.tsx",
+        "src/components/HomeScreen.tsx"
+      ]
+    }
+  ]
 }
 ---
 

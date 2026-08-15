@@ -54,13 +54,13 @@ export default function HomeScreen({
   ];
 
   return (
-    <div className="grid min-h-full content-center gap-8 lg:grid-cols-2 lg:gap-14">
-      <header className="max-w-[46ch]">
+    <div className="flex flex-col gap-8">
+      <header>
         <p className="font-mono text-meta uppercase tracking-[0.08em] text-ink-muted">RGAA 4.1</p>
-        <h1 className="mt-3 text-display font-semibold [text-wrap:balance]">
+        <h1 className="mt-3 max-w-[20ch] text-hero font-bold [text-wrap:balance]">
           Ton pote qui connaît le RGAA par cœur.
         </h1>
-        <p className="mt-4 text-lead text-ink-muted">
+        <p className="mt-4 max-w-[58ch] text-lead text-ink-muted">
           Les {criteriaCount} critères, thème par thème, sans que tu aies à retenir lequel vient
           après lequel. Tu nommes ton audit, tu le reprends quand tu veux, et tes notes comme tes
           pages restent dans ce navigateur — rien ne part ailleurs.
@@ -90,7 +90,7 @@ export default function HomeScreen({
         </h2>
 
         {hasAudits ? (
-          <ul className="flex flex-col gap-3">
+          <ul className="grid gap-3 xl:grid-cols-2">
             {audits.map(({ audit, evaluated, total }) => {
               const share = total > 0 ? evaluated / total : 0;
               const percentage = Math.round(share * 100);
@@ -133,7 +133,7 @@ export default function HomeScreen({
                       <button
                         type="button"
                         onClick={() => onOpenAudit(audit.id)}
-                        className="grid min-w-0 flex-1 grid-cols-[48px_1fr_auto_16px] items-center gap-4 text-left"
+                        className="grid min-w-0 flex-1 grid-cols-[48px_1fr_auto] items-center gap-4 text-left"
                       >
                         <AuditRing
                           size={48}
@@ -156,7 +156,6 @@ export default function HomeScreen({
                             {evaluated} / {total}
                           </span>
                         </span>
-                        <ChevronRight size={16} aria-hidden="true" className="text-ink-muted" />
                       </button>
                       <button
                         type="button"

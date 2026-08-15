@@ -2,7 +2,7 @@
 {
   "id": "T-0015",
   "titre": "Accueil en deux colonnes",
-  "colonne": "en-cours",
+  "colonne": "fait",
   "priorite": "moyenne",
   "tags": [
     "recette",
