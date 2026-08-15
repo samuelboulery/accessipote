@@ -2,7 +2,7 @@
 {
   "id": "T-0006",
   "titre": "Écran accueil et création d'audit",
-  "colonne": "en-cours",
+  "colonne": "fait",
   "priorite": "moyenne",
   "epic": "T-0001",
   "tags": [

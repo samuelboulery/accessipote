@@ -2,7 +2,7 @@
 {
   "id": "T-0008",
   "titre": "Glossaire plein écran et popover contextuel",
-  "colonne": "en-cours",
+  "colonne": "fait",
   "priorite": "moyenne",
   "epic": "T-0001",
   "tags": [

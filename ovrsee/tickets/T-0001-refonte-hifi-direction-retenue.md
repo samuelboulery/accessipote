@@ -2,7 +2,7 @@
 {
   "id": "T-0001",
   "titre": "Refonte hifi — direction retenue",
-  "colonne": "en-cours",
+  "colonne": "fait",
   "priorite": "haute",
   "type": "epic",
   "tags": [

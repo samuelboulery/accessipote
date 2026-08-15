@@ -2,7 +2,7 @@
 {
   "id": "T-0002",
   "titre": "Fondations visuelles — jetons et polices",
-  "colonne": "en-cours",
+  "colonne": "fait",
   "priorite": "haute",
   "epic": "T-0001",
   "tags": [

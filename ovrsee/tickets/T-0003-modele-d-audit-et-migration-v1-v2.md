@@ -2,7 +2,7 @@
 {
   "id": "T-0003",
   "titre": "Modèle d'audit et migration v1 vers v2",
-  "colonne": "en-cours",
+  "colonne": "fait",
   "priorite": "haute",
   "epic": "T-0001",
   "tags": [

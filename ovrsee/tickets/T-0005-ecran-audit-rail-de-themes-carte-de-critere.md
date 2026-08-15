@@ -2,7 +2,7 @@
 {
   "id": "T-0005",
   "titre": "Écran audit — rail de thèmes et carte de critère",
-  "colonne": "en-cours",
+  "colonne": "fait",
   "priorite": "haute",
   "epic": "T-0001",
   "tags": [

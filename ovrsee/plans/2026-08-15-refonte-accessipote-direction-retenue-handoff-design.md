@@ -170,6 +170,15 @@
         "src/components/ThemeRail.test.tsx",
         "src/utils/statusPresentation.ts"
       ]
+    },
+    {
+      "sha": "fd5372b",
+      "date": "2026-08-15",
+      "files": [
+        "src/components/CriteriaDetail.test.tsx",
+        "src/components/GlossaryPopover.test.tsx",
+        "vitest.config.ts"
+      ]
     }
   ]
 }
