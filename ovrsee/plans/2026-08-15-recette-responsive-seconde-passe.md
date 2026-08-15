@@ -4,7 +4,39 @@
   "title": "Recette responsive — seconde passe",
   "opened": "2026-08-15",
   "closed": null,
-  "commits": []
+  "commits": [
+    {
+      "sha": "2c647de",
+      "date": "2026-08-16",
+      "files": [
+        "index.html",
+        "src/App.tsx",
+        "src/components/AuditScreen.tsx",
+        "src/components/BulkActions.tsx",
+        "src/components/CriteriaDetail.tsx",
+        "src/components/EmptyState.test.tsx",
+        "src/components/GlossaryPopover.test.tsx",
+        "src/components/GlossaryPopover.tsx",
+        "src/components/GlossaryScreen.tsx",
+        "src/components/HomeHero.test.tsx",
+        "src/components/HomeHero.tsx",
+        "src/components/HomeScreen.tsx",
+        "src/components/MobileTabBar.test.tsx",
+        "src/components/MobileTabBar.tsx",
+        "src/components/MobileTopBar.test.tsx",
+        "src/components/MobileTopBar.tsx",
+        "src/components/NoAuditState.test.tsx",
+        "src/components/NoAuditState.tsx",
+        "src/components/SearchFilters.tsx",
+        "src/components/SummaryTab.test.tsx",
+        "src/components/SummaryTab.tsx",
+        "src/components/ThemeSummaryTable.test.tsx",
+        "src/components/ThemeSummaryTable.tsx",
+        "src/index.css",
+        "tailwind.config.js"
+      ]
+    }
+  ]
 }
 ---
 

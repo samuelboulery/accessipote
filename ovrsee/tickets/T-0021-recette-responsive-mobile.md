@@ -2,7 +2,7 @@
 {
   "id": "T-0021",
   "titre": "Recette responsive mobile",
-  "colonne": "revue",
+  "colonne": "fait",
   "priorite": "haute",
   "tags": [
     "responsive",
