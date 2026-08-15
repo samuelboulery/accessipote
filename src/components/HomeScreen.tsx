@@ -42,12 +42,12 @@ export default function HomeScreen({
       <header className="max-w-[52ch]">
         <p className="font-mono text-meta uppercase tracking-[0.08em] text-ink-muted">RGAA 4.1</p>
         <h1 className="mt-2 text-screen font-semibold">
-          Auditer l'accessibilité sans perdre le fil.
+          Ton pote qui connaît le RGAA par cœur.
         </h1>
         <p className="mt-3 text-lead text-ink-muted">
-          Les {criteriaCount} critères du RGAA, thème par thème, dans un audit nommé que vous
-          reprenez quand vous voulez. Vos notes, vos pages et vos tests cochés restent dans ce
-          navigateur — rien n'est envoyé ailleurs.
+          Les {criteriaCount} critères, thème par thème, sans que tu aies à retenir lequel vient
+          après lequel. Tu nommes ton audit, tu le reprends quand tu veux, et tes notes comme tes
+          pages restent dans ce navigateur — rien ne part ailleurs.
         </p>
       </header>
 
@@ -55,7 +55,7 @@ export default function HomeScreen({
         {hasAudits && (
           <div>
             <h2 className="mb-3 text-meta font-semibold uppercase tracking-[0.08em] text-ink-muted">
-              Vos audits
+              Tes audits
             </h2>
             <ul className="flex flex-col gap-3">
               {audits.map(({ audit, evaluated, total }) => {

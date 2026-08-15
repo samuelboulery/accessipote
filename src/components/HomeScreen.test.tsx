@@ -66,22 +66,22 @@ describe('HomeScreen', () => {
 
   it('affiche le titre principal', () => {
     setup();
-    expect(screen.getByText('Auditer l\'accessibilité sans perdre le fil.')).toBeInTheDocument();
+    expect(screen.getByText('Ton pote qui connaît le RGAA par cœur.')).toBeInTheDocument();
   });
 
   it('affiche l\'accroche avec le nombre de critères', () => {
     setup();
-    expect(screen.getByText(/Les 106 critères du RGAA/)).toBeInTheDocument();
+    expect(screen.getByText(/Les 106 critères/)).toBeInTheDocument();
   });
 
-  it('affiche le sous-titre « Vos audits » quand des audits existent', () => {
+  it('affiche le sous-titre « Tes audits » quand des audits existent', () => {
     setup({ audits: [AUDITS[0]] });
-    expect(screen.getByText('Vos audits')).toBeInTheDocument();
+    expect(screen.getByText('Tes audits')).toBeInTheDocument();
   });
 
-  it('n\'affiche pas le sous-titre « Vos audits » quand aucun audit n\'existe', () => {
+  it('n\'affiche pas le sous-titre « Tes audits » quand aucun audit n\'existe', () => {
     setup({ audits: [] });
-    expect(screen.queryByText('Vos audits')).not.toBeInTheDocument();
+    expect(screen.queryByText('Tes audits')).not.toBeInTheDocument();
   });
 
   it('masque la liste d\'audits quand elle est vide', () => {

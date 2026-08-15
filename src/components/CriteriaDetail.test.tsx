@@ -456,7 +456,7 @@ describe('CriteriaDetail', () => {
     it('gère aucune page ajoutée', () => {
       setup({ pages: [] });
 
-      expect(screen.queryByRole('link')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Retirer la page/ })).not.toBeInTheDocument();
     });
 
     it('ignore un clic sur bouton précédent quand previous est undefined', async () => {

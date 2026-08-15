@@ -103,7 +103,7 @@ describe('Sidebar', () => {
     await user.click(auditButton);
 
     // Le popover s'ouvre après clic
-    expect(screen.getByText('Vos audits')).toBeInTheDocument();
+    expect(screen.getByText('Tes audits')).toBeInTheDocument();
   });
 
   it('masque le sélecteur et la carte d\'audit quand aucun audit n\'est actif', () => {

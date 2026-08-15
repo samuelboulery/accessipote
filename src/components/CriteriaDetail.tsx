@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { getWcagCriteriaUrl, getTechniqueUrl, parseWcagReference } from '../utils/generateWcagLinks';
 import type { CriteriaRGAA, Mode, CriteriaStatus } from '../types';
 import { parseMarkdownLinks } from '../utils/parseMarkdown';
 import { parseInlineCode } from '../utils/parseInlineCode';
@@ -97,6 +98,8 @@ export default function CriteriaDetail({
   }, [criteriaId, currentStatus, next, previous, onNavigate, onStatusChange, statuses]);
 
   const tests = criterion.tests ?? [];
+  const wcagRefs = criterion.references?.wcag ?? [];
+  const techniques = criterion.references?.techniques ?? [];
   const checkedCount = tests.filter(test => checkedTests.includes(test.id)).length;
 
   const toggleTest = (testId: string) => {
@@ -245,6 +248,66 @@ export default function CriteriaDetail({
                 Ajouter
               </button>
             </div>
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-body font-semibold">Références</h3>
+            {/* Le RGAA fait foi : il ouvre la liste, le WCAG et les techniques
+                viennent en appui. */}
+            <a
+              href={criterion.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-ctrl bg-sunk px-2 py-1 font-mono text-meta font-semibold"
+            >
+              RGAA {criterion.id}
+              <ExternalLink size={12} aria-hidden="true" />
+            </a>
+
+            {wcagRefs.length > 0 && (
+              <div className="mt-3">
+                <p className="mb-1 text-meta text-ink-muted">WCAG</p>
+                <ul className="flex flex-wrap gap-1">
+                  {wcagRefs.map(ref => {
+                    const parsed = parseWcagReference(ref);
+                    return (
+                      <li key={ref}>
+                        <a
+                          href={getWcagCriteriaUrl(ref)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded-ctrl bg-sunk px-2 py-1 font-mono text-meta"
+                        >
+                          {parsed.number || ref}
+                          <ExternalLink size={12} aria-hidden="true" />
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
+            {techniques.length > 0 && (
+              <div className="mt-3">
+                <p className="mb-1 text-meta text-ink-muted">Techniques</p>
+                <ul className="flex flex-wrap gap-1">
+                  {techniques.map(technique => (
+                    <li key={technique}>
+                      <a
+                        href={getTechniqueUrl(technique)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 rounded-ctrl bg-sunk px-2 py-1 font-mono text-meta"
+                      >
+                        {technique}
+                        <ExternalLink size={12} aria-hidden="true" />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       </div>

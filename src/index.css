@@ -69,6 +69,88 @@ code {
   font-family: var(--a-font-mono);
 }
 
+/* Définitions du glossaire.
+   Le reset de Tailwind retire marges et puces : sans ces règles, les 119
+   définitions se lisent comme un seul bloc, paragraphes et listes confondus. */
+.prose {
+  color: var(--a-ink-muted);
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose > :last-child {
+  margin-bottom: 0;
+}
+
+.prose p {
+  margin: 0 0 1em;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.prose ul,
+.prose ol {
+  margin: 0 0 1em;
+  padding-left: 1.5em;
+  line-height: 1.6;
+}
+
+.prose ul {
+  list-style: disc;
+}
+
+.prose ol {
+  list-style: decimal;
+}
+
+.prose li {
+  margin-bottom: 0.5em;
+}
+
+.prose li::marker {
+  color: var(--a-border);
+}
+
+.prose strong,
+.prose b {
+  font-weight: 600;
+  color: var(--a-ink);
+}
+
+.prose em,
+.prose i {
+  font-style: italic;
+}
+
+.prose a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.prose blockquote {
+  margin: 0 0 1em;
+  padding-left: 1em;
+  border-left: 2px solid var(--a-border);
+}
+
+.prose hr {
+  margin: 1.5em 0;
+  border: 0;
+  border-top: 1px solid var(--a-separator);
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  margin: 1.5em 0 0.5em;
+  font-weight: 600;
+  color: var(--a-ink);
+}
+
 /* Balises code du glossaire — cf. README § 05, fiche de terme */
 .prose code {
   background-color: var(--a-surface-sunk);
@@ -77,13 +159,6 @@ code {
   border-radius: var(--a-radius-ctrl);
   font-size: var(--a-text-dense);
   font-family: var(--a-font-mono);
-}
-
-.prose p,
-.prose ul,
-.prose ol,
-.prose li {
-  color: var(--a-ink-muted);
 }
 
 /* Cases et radios natifs : la teinte par défaut du navigateur est hors système. */

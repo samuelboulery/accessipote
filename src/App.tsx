@@ -322,7 +322,7 @@ function App() {
             />
           ) : (
             <p className="text-body text-ink-muted">
-              Aucun audit ouvert. Reprenez-en un depuis l'accueil ou démarrez-en un nouveau.
+              Aucun audit ouvert. Reprends-en un depuis l'accueil, ou démarres-en un nouveau.
             </p>
           ))}
 
@@ -336,7 +336,7 @@ function App() {
             />
           ) : (
             <p className="text-body text-ink-muted">
-              Aucun audit ouvert. Reprenez-en un depuis l'accueil pour voir sa synthèse.
+              Aucun audit ouvert. Reprends-en un depuis l'accueil pour voir sa synthèse.
             </p>
           ))}
 

@@ -269,7 +269,7 @@ describe('GlossaryScreen', () => {
 
     expect(
       screen.getByText(
-        '« xyz » n\'apparaît dans aucun intitulé du glossaire. Le terme existe peut-être dans le corps d\'une définition, ou dans un intitulé de critère.'
+        '« xyz » n\'apparaît dans aucun intitulé du glossaire. Le terme est peut-être dans le corps d\'une définition, ou dans un intitulé de critère.'
       )
     ).toBeInTheDocument();
   });

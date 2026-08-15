@@ -65,6 +65,17 @@ function CriteriaItem({
             {testCount} test{testCount > 1 ? 's' : ''}
           </span>
         )}
+        <span aria-hidden="true" className="text-ink-muted">·</span>
+        {/* Le RGAA fait foi ici : il passe en premier, le WCAG vient en appui. */}
+        <a
+          href={criterion.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-meta font-semibold underline underline-offset-2"
+        >
+          RGAA {criterion.id}
+          <ExternalLink size={12} aria-hidden="true" />
+        </a>
         {wcag && wcag.number && (
           <>
             <span aria-hidden="true" className="text-ink-muted">·</span>
@@ -72,7 +83,7 @@ function CriteriaItem({
               href={getWcagCriteriaUrl(wcagRef)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-meta underline underline-offset-2"
+              className="inline-flex items-center gap-1 text-meta text-ink-muted underline underline-offset-2"
             >
               WCAG {wcag.number}
               <ExternalLink size={12} aria-hidden="true" />

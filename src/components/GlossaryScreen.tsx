@@ -199,7 +199,7 @@ export default function GlossaryScreen({
           ) : (
             <EmptyState
               title="Aucun terme ne correspond"
-              body={`« ${search} » n'apparaît dans aucun intitulé du glossaire. Le terme existe peut-être dans le corps d'une définition, ou dans un intitulé de critère.`}
+              body={`« ${search} » n'apparaît dans aucun intitulé du glossaire. Le terme est peut-être dans le corps d'une définition, ou dans un intitulé de critère.`}
               actions={
                 <button
                   type="button"

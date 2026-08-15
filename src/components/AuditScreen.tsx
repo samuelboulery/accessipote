@@ -247,7 +247,7 @@ export default function AuditScreen({
               title="Aucun critère ne correspond"
               body={
                 filters.search
-                  ? `« ${filters.search} » n'apparaît dans aucun intitulé de critère du thème ${activeTheme}. Essayez un autre thème, ou cherchez ce terme dans le glossaire.`
+                  ? `« ${filters.search} » n'apparaît dans aucun intitulé de critère du thème ${activeTheme}. Essaie un autre thème, ou cherche ce terme dans le glossaire.`
                   : `Les filtres actifs excluent les ${themeCriteria.length} critères de ce thème.`
               }
               actions={

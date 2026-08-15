@@ -74,7 +74,7 @@ export default function AuditSwitcher({
       {isOpen && (
         <div className="absolute left-0 right-0 top-full z-30 mt-2 rounded-card border-1 border-border bg-surface p-4 shadow-panel">
           <h2 className="mb-2 text-meta font-semibold uppercase tracking-[0.08em] text-ink-muted">
-            Vos audits
+            Tes audits
           </h2>
 
           <ul className="mb-2 flex max-h-[240px] flex-col gap-1 overflow-y-auto">

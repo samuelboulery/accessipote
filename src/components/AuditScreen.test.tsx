@@ -161,7 +161,7 @@ describe('AuditScreen', () => {
     expect(screen.getByText('Aucun critère ne correspond')).toBeInTheDocument();
     expect(
       screen.getByText(
-        '« nonexistent » n\'apparaît dans aucun intitulé de critère du thème Images. Essayez un autre thème, ou cherchez ce terme dans le glossaire.'
+        '« nonexistent » n\'apparaît dans aucun intitulé de critère du thème Images. Essaie un autre thème, ou cherche ce terme dans le glossaire.'
       )
     ).toBeInTheDocument();
   });

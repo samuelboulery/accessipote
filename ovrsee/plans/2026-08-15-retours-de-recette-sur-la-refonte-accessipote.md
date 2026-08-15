@@ -28,6 +28,17 @@
         "src/types/index.ts",
         "tailwind.config.js"
       ]
+    },
+    {
+      "sha": "628da75",
+      "date": "2026-08-15",
+      "files": [
+        "src/components/ExportButton.test.tsx",
+        "src/components/GlossaryScreen.test.tsx",
+        "src/components/MobileTabBar.test.tsx",
+        "src/tokens.css",
+        "tsconfig.app.json"
+      ]
     }
   ]
 }
