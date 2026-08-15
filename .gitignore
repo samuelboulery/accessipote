@@ -32,18 +32,14 @@ dist-ssr
 # Coverage reports
 coverage
 
-# Sessions Claude Code (contexte local, non partageable)
-.claude/.sessions/*.md
-!.claude/.sessions/_template.md
+# Outillage local de l'auteur : agents, règles et sessions Claude Code.
+# Utile en local, sans intérêt pour qui clone le dépôt. Les conventions du
+# projet destinées aux contributeurs vivent dans CLAUDE.md et CONTRIBUTING.md.
+.claude/
 
-# Fichiers Claude Code locaux (permissions et rapports personnels)
-.claude/settings.json
-.claude/settings.local.json
-.claude/*.md
+# Plans, tickets et journal de bord ovrsee (gestion de projet locale).
+ovrsee/
+ovrsee.config.json
 
 # Fichiers de planning locaux
 CLAUDE_CODE_PLAN.md
-
-# Captures d'écran ovrsee : régénérées à chaque commit, purge auto côté
-# disque (30j puis 1/semaine) — inutile de les suivre dans git.
-ovrsee/pages/shots/

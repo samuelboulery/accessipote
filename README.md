@@ -1,163 +1,211 @@
-# Accessipote — Outil d'Audit RGAA 4.1
+<div align="center">
 
-Application React/TypeScript pour vérifier la conformité web aux critères RGAA (Référentiel Général d'Amélioration de l'Accessibilité).
+<img src="public/accessibility-icon.svg" alt="" width="72">
 
-## 🎯 Fonctionnalités principales
+# Accessipote
 
-### Deux modes d'audit
-- **Mode Classique** : Audit traditionnel (conforme / non conforme / non applicable)
-- **Mode Design System** : Évaluation système de design (conforme par défaut / à mettre en place / non applicable)
+**L'audit RGAA 4.1 sans tableur.** Les 106 critères d'accessibilité numérique,
+thème par thème, avec vos notes, vos pages et votre taux de conformité — le tout
+dans votre navigateur, sans compte et sans serveur.
 
-### Onglets de navigation
-- **Onglet Critères** : Affichage détaillé des 106 critères RGAA avec tests et références
-- **Onglet Synthèse** : Vue d'ensemble avec statistiques (taux de conformité, résumé par thème, distribution des statuts)
+[**→ Ouvrir l'application**](https://accessipote.fr)
 
-### Filtrage avancé
-- Recherche textuelle dans critères (ID, titre, description)
-- Filtrage par thèmes (multi-sélection)
-- Filtrage par statuts
+[![CI](https://github.com/samuelboulery/accessipote/actions/workflows/ci.yml/badge.svg)](https://github.com/samuelboulery/accessipote/actions/workflows/ci.yml)
+[![Couverture 86 %](https://img.shields.io/badge/couverture-86%25-0F5C37)](#tests-et-qualité)
+[![611 tests](https://img.shields.io/badge/tests-611-0F5C37)](#tests-et-qualité)
+[![Licence MIT](https://img.shields.io/badge/licence-MIT-000000)](LICENSE)
+[![RGAA 4.1](https://img.shields.io/badge/RGAA-4.1-428AC2)](https://accessibilite.numerique.gouv.fr/)
 
-### Suivi de progression
-- Barre de progression dynamique
-- Résumé détaillé par statut et thème
-- Sauvegarde automatique dans localStorage
-- Actions en masse (sélectionner/désélectionner tous)
+![Créer un audit, noter des critères, lire la synthèse](docs/parcours.gif)
 
-### Glossaire interactif
-- Panneau latéral avec 200+ définitions des termes techniques
-- Recherche debouncée dans le glossaire
-- Navigation hypertexte (liens entre critères ↔ glossaire)
-- Redimensionnable (persistance largeur)
+</div>
 
-### Export des résultats
-- **Markdown** : Copie dans le presse-papiers
-- **PDF** : Téléchargement en mode classique (groupé par statut)
+---
 
-### Thème sombre / clair
-- Toggle en haut à droite
-- Persistance dans localStorage
+## Le problème
 
-## 📋 Critères couverts
+Un audit RGAA se mène encore, le plus souvent, dans un tableur. 106 critères,
+13 thèmes, une colonne par statut, une autre pour les notes, et le calcul du
+taux de conformité fait à la main — en oubliant régulièrement que « non
+applicable » ne compte pas au dénominateur.
 
-**106 critères RGAA 4.1** couvrant 13 thèmes officiels :
-Images, Cadres, Couleurs, Multimédias, Tableaux, Liens, Scripts, Éléments obligatoires, Structuration, Présentation, Formulaires, Navigation, Consultation.
+Puis le site évolue. Il faut reprendre l'audit, retrouver où on en était, et
+comprendre ce que voulait dire la note laissée trois mois plus tôt.
 
-Chaque critère inclut :
-- ID RGAA (ex: 1.1)
-- Titre et description
-- Tests associés
-- Références WCAG 2.1 + techniques W3C
+Accessipote fait exactement ce travail, et rien d'autre.
 
-## 🚀 Démarrage
+## Ce que fait l'outil
+
+**Des audits nommés et reprenables.** Un audit se crée, se date, se rouvre. Le
+mode est figé à sa création — *Classique* pour un audit de site, *Design
+System* pour évaluer un système de composants, avec ses propres statuts
+(« conforme par défaut », « à mettre en place »).
+
+**Un thème à la fois.** Le thème n'est pas un filtre posé sur une liste de 106
+lignes : c'est la navigation elle-même. On traite les Images, puis les Liens,
+puis les Formulaires.
+
+**Tout ce qu'un critère demande.** Pour chacun : son statut, ses tests
+cochables un par un, une note libre, et la liste des pages concernées. Les
+références WCAG 2.1 et les techniques W3C sont liées, les termes du référentiel
+renvoient au glossaire d'un clic.
+
+**Une synthèse qui ne triche pas.** Taux de conformité, anneau de progression,
+jauge par statut, tableau par thème. « Évalués » et « tranchés » sont deux
+compteurs distincts, avec deux dénominateurs différents — parce que ce sont
+deux questions différentes.
+
+**Un rapport exportable.** En Markdown, copié dans le presse-papiers pour
+tomber directement dans un ticket ou un compte rendu ; en PDF pour être envoyé
+tel quel.
+
+**Un glossaire de 119 entrées**, consultable en plein écran ou en survol depuis
+un critère.
+
+## Captures
+
+|  |  |
+|---|---|
+| ![Écran d'accueil listant les audits](docs/screenshots/accueil.png) | ![Écran d'audit, navigation par thème](docs/screenshots/audit.png) |
+| **Accueil** — vos audits, leur avancement | **Audit** — un thème, ses critères, vos notes |
+| ![Écran de synthèse](docs/screenshots/synthese.png) | ![L'interface en mode sombre](docs/screenshots/sombre.png) |
+| **Synthèse** — conformité et répartition | **Mode sombre** — comme le reste, au clavier |
+
+## Démarrage
+
+Prérequis : **Node 20 ou plus**. Le gestionnaire de paquets est **pnpm**, dont
+la version est figée par le champ `packageManager`.
 
 ```bash
-npm install
-npm run dev              # Dev server (localhost:5173)
-npm run build           # Build production
-npm run test            # Tests (Vitest)
-npm run test:coverage   # Rapport de couverture
-npm run lint            # ESLint
-npm run scrape:wcag     # Mettre à jour wcag-anchors.json
+git clone https://github.com/samuelboulery/accessipote.git
+cd accessipote
+corepack enable
+pnpm install
+pnpm dev            # http://localhost:5173
 ```
 
-## 🛠️ Stack technique
+Pour un déploiement, `pnpm build` produit un dossier `dist/` statique qui se
+sert depuis n'importe quel hébergeur. Il n'y a rien à configurer : pas de
+variable d'environnement, pas de base de données, pas d'API.
 
-| Couche | Technologies |
-|--------|------------|
-| **UI** | React 19 + TypeScript strict |
-| **Build** | Vite 7 + TypeScript compiler |
-| **Style** | Tailwind CSS 3 (+ Chelsea Market auto-hébergée) |
-| **Icônes** | Lucide React |
-| **Export** | jsPDF 4.2.1 + jspdf-autotable (lazy-loaded) |
-| **Sécurité** | DOMPurify 3.3.2+ (sanitization HTML) |
-| **Tests** | Vitest + @testing-library/react (83% couverture) |
-| **Data** | localStorage (client-side, pas de backend) |
+## Ce qui distingue l'outil
 
-## 📦 Architecture
+### Vos données ne bougent pas
+
+Il n'y a pas de serveur. Les audits vivent dans le `localStorage` de votre
+navigateur, et la politique de sécurité de contenu déclare `connect-src 'self'`
+— l'application est structurellement incapable d'envoyer quoi que ce soit
+ailleurs. Pas de compte à créer, pas de traceur, pas de conditions d'utilisation
+à accepter.
+
+C'est aussi la limite à connaître : vider les données du navigateur efface les
+audits. L'export sert autant de sauvegarde que de livrable.
+
+### Le référentiel officiel, non retouché
+
+Les 106 critères et les 119 entrées du glossaire proviennent du RGAA 4.1 publié
+par la DINUM, repris **sans modification**. C'est une règle du dépôt, pas une
+intention : un outil d'audit qui altérerait le référentiel qu'il mesure ne
+vaudrait rien. Voir [NOTICE.md](NOTICE.md).
+
+### L'outil applique ce qu'il mesure
+
+Un outil d'audit d'accessibilité inaccessible serait une plaisanterie. Ce qui
+est en place, et vérifié par des tests :
+
+- **Aucune information par la couleur seule.** Chaque statut porte une icône de
+  forme distincte et un libellé. La source est unique :
+  [`src/utils/statusPresentation.ts`](src/utils/statusPresentation.ts).
+- **Cibles d'au moins 44 × 44 px.** Un contrôle de 40 px porte la classe
+  `target-44`, qui étend sa zone cliquable par un pseudo-élément.
+- **Tailles en `rem`, jamais en `px`** : le zoom texte du navigateur agit
+  réellement sur l'interface (critère RGAA 10.4).
+- **Anneaux de focus à double contraste**, visibles sur fond clair comme sur
+  fond sombre.
+- **`prefers-reduced-motion` et `prefers-contrast: more`** respectés.
+- **Navigation entièrement au clavier**, avec des raccourcis et leur modale
+  d'aide.
+
+### Une CSP qu'on n'a pas eu à assouplir
+
+`index.html` déclare une politique de sécurité de contenu sans `unsafe-inline`
+ni `unsafe-eval`. Les polices sont auto-hébergées : aucune requête vers Google
+Fonts ni vers un CDN. En développement, un greffon Vite relâche la CSP le temps
+du rechargement à chaud, et uniquement là.
+
+## Stack
+
+| Couche | Technologie |
+|---|---|
+| Interface | React 19, TypeScript 5.9 en mode strict |
+| Build | Vite 7 |
+| Styles | Tailwind CSS 3, échelle restreinte aux jetons du design |
+| Icônes | Lucide React |
+| Export PDF | jsPDF + jspdf-autotable, chargés à la demande |
+| Assainissement | DOMPurify |
+| Tests | Vitest, Testing Library |
+| Persistance | `localStorage` |
+
+L'échelle Tailwind par défaut est **remplacée** par celle du design : une classe
+hors système ne produit aucun style. C'est volontaire — les dérives se voient
+tout de suite.
+
+Le chargement initial pèse environ **162 kB compressés**. Les 230 kB de la
+chaîne PDF ne sont téléchargés qu'au moment où l'on exporte.
+
+## Architecture
 
 ```
 src/
-├── components/             # 17 composants React
-│   ├── CriteriaItem.tsx         (affichage critère unique)
-│   ├── CriteriaList.tsx         (virtualized list, 78 critères max)
-│   ├── ExportButton.tsx         (Markdown + PDF)
-│   ├── GlossarySidePanel.tsx    (panneau latéral, resize handle)
-│   ├── SearchFilters.tsx        (recherche + filtres)
-│   ├── SummaryTab.tsx           (stats)
-│   └── ...
-├── hooks/                  # 8 hooks personnalisés
-│   ├── useFilters.ts            (state filtres)
-│   ├── useProgress.ts           (calcul progression)
-│   ├── useLocalStorage.ts       (persistance + migration schema)
-│   ├── useDebounce.ts           (200ms debounce)
-│   └── ...
-├── utils/                  # Utilitaires purs
-│   ├── parseGlossaryHtml.tsx    (DOMPurify + liens)
-│   ├── generateWcagLinks.ts     (mappage critères → W3C)
-│   ├── exportMarkdown.ts        (Markdown + PDF gen)
-│   └── ...
-├── data/                   # JSON statiques (RGAA officiels)
-│   ├── criteria.json       (106 critères)
-│   ├── glossary.json       (200+ termes)
-│   └── wcag-anchors.json   (mapping → W3C)
-├── types/index.ts          # Types TypeScript partagés
-└── constants.ts            # Constantes app
+├── components/   Composants React, un fichier par unité d'interface
+├── hooks/        État et effets : audits, filtres, progression, thème, clavier
+├── utils/        Fonctions pures : export, calculs de synthèse, parsing, migration
+├── data/         criteria.json, glossary.json, wcag-anchors.json (données RGAA)
+├── types/        Source de vérité des types partagés
+├── tokens.css    Jetons de couleur, typographie, rayons, anneaux de focus
+└── App.tsx       Quatre destinations : Accueil, Audit, Synthèse, Glossaire
 ```
 
-## 🔒 Sécurité
+Deux endroits font autorité et méritent d'être connus avant de contribuer :
+[`statusPresentation.ts`](src/utils/statusPresentation.ts) pour tout ce qui
+touche à l'affichage d'un statut, et
+[`summaryView.ts`](src/utils/summaryView.ts) pour les compteurs de la synthèse.
 
-✅ **CSP (Content Security Policy)** stricte sans `'unsafe-inline'`
-- Production : CSP maximalement restrictive (fichiers locaux uniquement)
-- Dev : `transformIndexHtml` relâche pour HMR Tailwind
+## Tests et qualité
 
-✅ **XSS Prevention**
-- DOMPurify sur tous les HTML externes (glossaire)
-- Pas de `dangerouslySetInnerHTML` dans le code
-- Validation schema localStorage
+**611 tests** répartis sur 45 fichiers, **86 % de couverture** en lignes et
+93 % en branches. La CI les rejoue sur Node 20 et 22 à chaque poussée.
 
-✅ **Input Validation**
-- Recherche limitée à 200 caractères
-- Filtres enumérés (thèmes, statuts, niveaux)
-- JSON parsing robuste avec migration schema
+```bash
+pnpm test          # mode surveillance
+pnpm test:run      # une passe, comme la CI
+pnpm test:coverage # rapport de couverture
+pnpm lint
+pnpm build
+```
 
-✅ **Dépendances** : `npm audit` = 0 vulnérabilités (maj: jsPDF 4.2.1, DOMPurify 3.3.2+)
+## Contribuer
 
-## ⚡ Performance
+Les contributions sont bienvenues — ouvrez une issue avant d'écrire du code, ça
+évite les allers-retours. Tout est dans [CONTRIBUTING.md](CONTRIBUTING.md) :
+mise en route, conventions, et la barre d'accessibilité, qui est plus haute ici
+qu'ailleurs.
 
-| Métrique | Valeur |
-|----------|--------|
-| Bundle gzip | ~400 kB |
-| Core Web Vitals | A (Lighthouse) |
-| Chunk splitting | React + PDF + UI vendored |
-| Lazy loading | jsPDF (chargé à l'export) |
-| List virtualization | 78 critères (CriteriaList) |
-| Debouncing | Glossaire search (200ms) |
+Pour une faille de sécurité, ne passez pas par une issue publique :
+[SECURITY.md](SECURITY.md).
 
-## ♿ Accessibilité
+## Licence
 
-- ✅ Navigation clavier complète (Tab, Entrée, Échap)
-- ✅ ARIA labels/roles sur tous les composants
-- ✅ Focus management (FocusTrap, focus-visible)
-- ✅ Feedback visuel + toasts
-- ✅ Contrast ratio WCAG AA+
-- ✅ Responsive design mobile/tablet/desktop
+Le code est sous [licence MIT](LICENSE).
 
-## 🧪 Tests
+Les données du RGAA 4.1 sont publiées par la DINUM sous
+[Licence Ouverte 2.0](https://www.etalab.gouv.fr/licence-ouverte-open-licence/).
+Le détail des licences — données, références WCAG, polices — est dans
+[NOTICE.md](NOTICE.md).
 
-**83.42% couverture** (428 tests) — Vitest + @testing-library/react
+---
 
-- ✅ CriteriaItem (25 tests)
-- ✅ ExportButton (12 tests)
-- ✅ GlossarySidePanel (34 tests)
-- ✅ ThemeSelector (11 tests)
-- ✅ 8 hooks (+ utils)
-
-Tous les tests passent : `npm run test`
-
-## 📄 Licence
-
-Données officielles RGAA © [DINUM](https://accessibilite.numerique.gouv.fr/)
-
-## 🤝 Contribution
-
-Ouvrez une issue pour discuter des changements avant une PR.
+<div align="center">
+<sub>Accessipote n'est pas un outil officiel de la DINUM. Il s'appuie sur le
+référentiel qu'elle publie.</sub>
+</div>

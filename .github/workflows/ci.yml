@@ -2,9 +2,14 @@ name: CI/CD
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
+  # L'audit de sécurité tourne aussi tout seul : un avis publié en amont ne
+  # dépend pas de nos commits, et n'a donc pas à faire rougir une PR.
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
 
 jobs:
   lint-and-test:
@@ -40,12 +45,17 @@ jobs:
       - name: Run tests with coverage
         run: pnpm test:coverage
 
+      # Sans CODECOV_TOKEN, l'envoi échoue par intermittence sur les dépôts
+      # publics. Un rapport de couverture manquant ne doit pas faire échouer
+      # une PR dont les tests passent.
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
+        continue-on-error: true
         with:
           files: ./coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   build:
     runs-on: ubuntu-latest
@@ -79,6 +89,7 @@ jobs:
 
   security-audit:
     runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout code
@@ -98,8 +109,3 @@ jobs:
 
       - name: Run security audit
         run: pnpm audit --audit-level=moderate
-        continue-on-error: true
-
-      - name: Check for vulnerabilities
-        run: pnpm audit --audit-level=high
-        continue-on-error: false

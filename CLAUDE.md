@@ -1,4 +1,9 @@
-# Accessipote — Configuration Claude Code
+# Accessipote — conventions du projet
+
+Ce fichier est destiné aux agents de codage (Claude Code et équivalents). Il
+rassemble ce qu'on ne devine pas en lisant le code. Pour contribuer à la main,
+voir [CONTRIBUTING.md](./CONTRIBUTING.md), qui dit la même chose en plus
+détaillé.
 
 ## Présentation du projet
 Outil d'audit RGAA 4.1 (accessibilité web française) en React.
@@ -64,13 +69,10 @@ Gestionnaire de paquets : **pnpm** exclusivement.
   deux dénominateurs différents.
 - `src/data/criteria.json` et `glossary.json` : ne jamais modifier (données RGAA officielles).
 
-## Subagents disponibles
-- /tdd → écriture test-first
-- /code-review → review qualité et sécurité
-- /plan → décomposition de feature
-- /build-fix → résolution erreurs build TypeScript
-- /pre-commit → vérification avant commit (lint + build + tests)
-- /audit-a11y → audit accessibilité des composants
+## Avant de proposer un changement
+
+Dans l'ordre : `pnpm lint`, `pnpm build`, `pnpm test:run`. Les trois doivent
+passer. Écrire le test avant l'implémentation.
 
 ## Architecture des écrans
 

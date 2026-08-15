@@ -1,8 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/accessibility-icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <!-- viewport-fit=cover : sans lui les `env(safe-area-inset-*)` valent 0 sur iOS,
          et les barres haute et basse passent sous l'encoche et l'indicateur d'accueil. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -34,7 +36,82 @@
       object-src 'none';
       upgrade-insecure-requests;
     ">
-    <title>Accessipote</title>
+    <title>Accessipote — Audit RGAA 4.1 : checklist d'accessibilité</title>
+    <meta
+      name="description"
+      content="Outil libre d'audit RGAA 4.1 : parcourez les 106 critères d'accessibilité numérique, notez vos écarts, suivez votre taux de conformité et exportez le rapport."
+    />
+    <link rel="canonical" href="https://accessipote.fr/" />
+    <meta name="author" content="Samuel Boulery" />
+
+    <!-- Alignées sur --a-bg de src/tokens.css, thème clair et thème sombre. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#E8E8E8" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Accessipote" />
+    <meta property="og:url" content="https://accessipote.fr/" />
+    <meta property="og:title" content="Accessipote — Audit RGAA 4.1 : checklist d'accessibilité" />
+    <meta
+      property="og:description"
+      content="Menez un audit RGAA 4.1 complet dans votre navigateur : 106 critères, 13 thèmes, notes et pages par critère, synthèse chiffrée, exports Markdown et PDF. Aucune donnée ne sort de votre poste."
+    />
+    <meta property="og:image" content="https://accessipote.fr/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Accessipote, outil d'audit RGAA 4.1 : checklist des 106 critères d'accessibilité."
+    />
+    <meta property="og:locale" content="fr_FR" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Accessipote — Audit RGAA 4.1" />
+    <meta
+      name="twitter:description"
+      content="Outil libre d'audit d'accessibilité numérique : 106 critères RGAA 4.1, suivi de conformité, exports Markdown et PDF. Hors ligne, sans compte."
+    />
+    <meta name="twitter:image" content="https://accessipote.fr/og-image.png" />
+
+    <!--
+      Données structurées. Un bloc `application/ld+json` n'est pas exécuté par
+      le navigateur : c'est un bloc de données, hors du périmètre de
+      `script-src`. La CSP stricte ci-dessus ne le bloque donc pas.
+
+      Pas de `aggregateRating` : aucun avis n'a été collecté, et une note
+      inventée est une donnée structurée mensongère.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Accessipote",
+        "url": "https://accessipote.fr/",
+        "description": "Outil libre d'audit RGAA 4.1 : checklist des 106 critères d'accessibilité numérique, suivi du taux de conformité et export du rapport. Fonctionne entièrement dans le navigateur, sans compte ni serveur.",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Web",
+        "browserRequirements": "Navigateur moderne avec JavaScript activé",
+        "inLanguage": "fr-FR",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "EUR"
+        },
+        "license": "https://opensource.org/licenses/MIT",
+        "author": {
+          "@type": "Person",
+          "name": "Samuel Boulery",
+          "url": "https://github.com/samuelboulery"
+        },
+        "codeRepository": "https://github.com/samuelboulery/accessipote",
+        "about": {
+          "@type": "Thing",
+          "name": "Référentiel général d'amélioration de l'accessibilité (RGAA) 4.1",
+          "url": "https://accessibilite.numerique.gouv.fr/"
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

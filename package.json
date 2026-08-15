@@ -1,8 +1,35 @@
 {
   "packageManager": "pnpm@10.12.1",
-  "name": "outil-checklist-rgaa",
+  "name": "accessipote",
+  "version": "1.0.0",
+  "description": "Outil d'audit RGAA 4.1 : checklist interactive des 106 critères d'accessibilité numérique, hors ligne et sans compte, avec exports Markdown et PDF.",
+  "keywords": [
+    "rgaa",
+    "rgaa-4-1",
+    "accessibilite",
+    "accessibility",
+    "a11y",
+    "audit",
+    "wcag",
+    "checklist",
+    "react",
+    "typescript"
+  ],
+  "homepage": "https://accessipote.fr",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samuelboulery/accessipote.git"
+  },
+  "bugs": {
+    "url": "https://github.com/samuelboulery/accessipote/issues"
+  },
+  "license": "MIT",
+  "author": "Samuel Boulery (https://github.com/samuelboulery)",
+  "engines": {
+    "node": ">=20"
+  },
+  "//": "private: Accessipote est une application, pas une bibliothèque. Ce champ n'a aucun effet sur la découvrabilité GitHub et empêche une publication npm accidentelle.",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
