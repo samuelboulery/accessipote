@@ -87,8 +87,10 @@ describe('StatusButtons', () => {
     expect(container.querySelectorAll('input[name="status-1.2"]')).toHaveLength(3);
   });
 
-  it('empile les boutons en colonne en densité mobile', () => {
-    setup({ density: 'mobile' });
-    expect(screen.getByRole('radiogroup')).toHaveClass('flex-col');
+  it('empile les boutons en colonne en tactile, en rangée au-delà', () => {
+    setup();
+    const group = screen.getByRole('radiogroup');
+    expect(group).toHaveClass('flex-col');
+    expect(group).toHaveClass('sm:flex-row');
   });
 });

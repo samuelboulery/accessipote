@@ -11,7 +11,9 @@ import { useDebounce } from './hooks/useDebounce';
 import useToast from './hooks/useToast';
 import { useDarkMode } from './hooks/useDarkMode';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useIsMobile } from './hooks/useIsMobile';
 import Sidebar, { type View } from './components/Sidebar';
+import MobileTabBar from './components/MobileTabBar';
 import HomeScreen from './components/HomeScreen';
 import NewAuditForm from './components/NewAuditForm';
 import AuditScreen from './components/AuditScreen';
@@ -51,6 +53,7 @@ function App() {
 
   const { toasts, showToast, hideToast } = useToast();
   const { isDark, toggle: toggleDarkMode } = useDarkMode();
+  const isMobile = useIsMobile();
   const { audits, activeAudit, createAudit, updateAudit, setActiveAuditId } = useAudits();
 
   const [view, setView] = useState<View>('home');
@@ -243,16 +246,23 @@ function App() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg">
-      <Sidebar
-        view={view}
-        onNavigate={setView}
-        activeAudit={activeAudit}
-        counts={sidebarCounts}
-        total={auditCriteria.length}
-        onAuditSelectorClick={() => setView('home')}
-      />
+      {!isMobile && (
+        <Sidebar
+          view={view}
+          onNavigate={setView}
+          activeAudit={activeAudit}
+          counts={sidebarCounts}
+          total={auditCriteria.length}
+          onAuditSelectorClick={() => setView('home')}
+        />
+      )}
 
-      <main className="my-2 flex-1 overflow-y-auto rounded-l-panel bg-surface p-4 shadow-panel">
+      <main
+        className={[
+          'flex-1 overflow-y-auto bg-surface p-4',
+          isMobile ? 'pb-two' : 'my-2 rounded-l-panel shadow-panel',
+        ].join(' ')}
+      >
         {view === 'home' &&
           (isCreating ? (
             <NewAuditForm
@@ -341,6 +351,8 @@ function App() {
           }}
         />
       )}
+
+      {isMobile && <MobileTabBar view={view} onNavigate={setView} />}
 
       <Toast toasts={toasts} onDismiss={hideToast} />
 

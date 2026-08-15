@@ -1,82 +1,92 @@
-import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import BulkActions from './BulkActions';
 
-const defaultProps = {
-  mode: 'classic' as const,
-  displayedCriteriaCount: 5,
-  onSelectAll: vi.fn(),
-  onDeselectAll: vi.fn(),
-};
+function setup(overrides = {}) {
+  const onApply = vi.fn();
+  const onClearStatus = vi.fn();
+  const onDeselectAll = vi.fn();
+
+  render(
+    <BulkActions
+      selectedCount={12}
+      mode="classic"
+      onApply={onApply}
+      onClearStatus={onClearStatus}
+      onDeselectAll={onDeselectAll}
+      {...overrides}
+    />,
+  );
+
+  return { onApply, onClearStatus, onDeselectAll };
+}
 
 describe('BulkActions', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  it('reste invisible tant que rien n\'est sélectionné', () => {
+    setup({ selectedCount: 0 });
+    expect(screen.queryByRole('region', { name: 'Actions groupées' })).not.toBeInTheDocument();
   });
 
-  it('devrait afficher le nombre de critères affiches', () => {
-    render(<BulkActions {...defaultProps} />);
-    expect(screen.getByText(/5 critères/)).toBeInTheDocument();
+  it('annonce le cardinal de la sélection', () => {
+    setup();
+    expect(screen.getByText('12 critères sélectionnés')).toBeInTheDocument();
   });
 
-  it('devrait afficher les options de statut en mode classic', () => {
-    render(<BulkActions {...defaultProps} />);
-    expect(screen.getByLabelText('Conforme')).toBeInTheDocument();
-    expect(screen.getByLabelText('Non conforme')).toBeInTheDocument();
-    expect(screen.getByLabelText('Non applicable')).toBeInTheDocument();
+  it('accorde le cardinal au singulier', () => {
+    setup({ selectedCount: 1 });
+    expect(screen.getByText('1 critère sélectionné')).toBeInTheDocument();
   });
 
-  it('devrait afficher les options de statut en mode design-system', () => {
-    render(<BulkActions {...defaultProps} mode="design-system" />);
-    expect(screen.getByLabelText('Conforme par défaut')).toBeInTheDocument();
-    expect(screen.getByLabelText('À mettre en place')).toBeInTheDocument();
-    expect(screen.getByLabelText('Non applicable')).toBeInTheDocument();
+  it('propose les trois statuts du mode et l\'effacement', () => {
+    setup();
+    expect(screen.getByRole('button', { name: 'Conforme' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Non conforme' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Non applicable' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Effacer le statut' })).toBeInTheDocument();
   });
 
-  it('devrait sélectionner "conforme" par défaut en mode classic', () => {
-    render(<BulkActions {...defaultProps} />);
-    const radio = screen.getByLabelText('Conforme') as HTMLInputElement;
-    expect(radio.checked).toBe(true);
+  it('propose les statuts du mode design system', () => {
+    setup({ mode: 'design-system' });
+    expect(screen.getByRole('button', { name: 'Conforme par défaut' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'À mettre en place' })).toBeInTheDocument();
   });
 
-  it('devrait sélectionner "default-compliant" par défaut en mode design-system', () => {
-    render(<BulkActions {...defaultProps} mode="design-system" />);
-    const radio = screen.getByLabelText('Conforme par défaut') as HTMLInputElement;
-    expect(radio.checked).toBe(true);
+  it('applique le statut choisi', async () => {
+    const user = userEvent.setup();
+    const { onApply } = setup();
+
+    await user.click(screen.getByRole('button', { name: 'Non conforme' }));
+
+    expect(onApply).toHaveBeenCalledWith('non-conforme');
   });
 
-  it('devrait mettre à jour le statut sélectionné lors d\'un changement de radio', () => {
-    render(<BulkActions {...defaultProps} />);
-    const radio = screen.getByLabelText('Non conforme') as HTMLInputElement;
-    fireEvent.click(radio);
-    expect(radio.checked).toBe(true);
+  it('efface le statut de la sélection', async () => {
+    const user = userEvent.setup();
+    const { onClearStatus } = setup();
+
+    await user.click(screen.getByRole('button', { name: 'Effacer le statut' }));
+
+    expect(onClearStatus).toHaveBeenCalled();
   });
 
-  it('devrait appeler onSelectAll avec le statut sélectionné lors du clic sur "Appliquer à tous"', () => {
-    const onSelectAll = vi.fn();
-    render(<BulkActions {...defaultProps} onSelectAll={onSelectAll} />);
-    fireEvent.click(screen.getByText('Appliquer à tous'));
-    expect(onSelectAll).toHaveBeenCalledWith('conforme');
-  });
+  it('permet de tout désélectionner', async () => {
+    const user = userEvent.setup();
+    const { onDeselectAll } = setup();
 
-  it('devrait appeler onSelectAll avec un statut modifié', () => {
-    const onSelectAll = vi.fn();
-    render(<BulkActions {...defaultProps} onSelectAll={onSelectAll} />);
-    fireEvent.click(screen.getByLabelText('Non applicable'));
-    fireEvent.click(screen.getByText('Appliquer à tous'));
-    expect(onSelectAll).toHaveBeenCalledWith('non-applicable');
-  });
+    await user.click(screen.getByRole('button', { name: 'Tout désélectionner' }));
 
-  it('devrait appeler onDeselectAll lors du clic sur "Tout effacer"', () => {
-    const onDeselectAll = vi.fn();
-    render(<BulkActions {...defaultProps} onDeselectAll={onDeselectAll} />);
-    fireEvent.click(screen.getByText('Tout effacer'));
     expect(onDeselectAll).toHaveBeenCalled();
   });
 
-  it('devrait avoir une légende accessible pour le groupe radio', () => {
-    render(<BulkActions {...defaultProps} />);
-    // La légende est sr-only mais présente dans le DOM
-    expect(screen.getByText('Choisir un statut')).toBeInTheDocument();
+  it('expose la barre comme une région nommée', () => {
+    setup();
+    expect(screen.getByRole('region', { name: 'Actions groupées' })).toBeInTheDocument();
+  });
+
+  it('double chaque statut d\'une icône, jamais la couleur seule', () => {
+    setup();
+    const conforme = screen.getByRole('button', { name: 'Conforme' });
+    expect(conforme.querySelector('svg')).toBeInTheDocument();
   });
 });

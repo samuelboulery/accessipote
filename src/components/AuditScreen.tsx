@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import type { Audit, CriteriaFilters, CriteriaRGAA, CriteriaStatus } from '../types';
 import SearchFilters from './SearchFilters';
@@ -7,6 +7,7 @@ import CriteriaList from './CriteriaList';
 import CriteriaDetail from './CriteriaDetail';
 import SegmentedGauge from './SegmentedGauge';
 import EmptyState from './EmptyState';
+import BulkActions from './BulkActions';
 import { useFilters } from '../hooks/useFilters';
 import { getStatusPresentation } from '../utils/statusPresentation';
 import { cleanCriteriaTitle } from '../utils/stripMarkdown';
@@ -86,6 +87,22 @@ export default function AuditScreen({
     ? themeCriteria.find(c => c.id === expandedCriteriaId) ?? null
     : null;
   const expandedIndex = expanded ? themeCriteria.indexOf(expanded) : -1;
+
+  const [selection, setSelection] = useState<Set<string>>(new Set());
+
+  const handleSelectedChange = useCallback((criteriaId: string, selected: boolean) => {
+    setSelection(previous => {
+      const next = new Set(previous);
+      if (selected) next.add(criteriaId);
+      else next.delete(criteriaId);
+      return next;
+    });
+  }, []);
+
+  const applyToSelection = (status: CriteriaStatus | '') => {
+    for (const criteriaId of selection) onStatusChange(criteriaId, status);
+    setSelection(new Set());
+  };
 
   const okColor = getStatusPresentation('conforme', audit.mode).color;
   const koColor = getStatusPresentation('non-conforme', audit.mode).color;
@@ -176,6 +193,8 @@ export default function AuditScreen({
           onStatusChange={onStatusChange}
           onGlossaryClick={onGlossaryClick}
           onExpand={onExpand}
+          selection={selection}
+          onSelectedChange={handleSelectedChange}
           emptyState={
             <EmptyState
               title="Aucun critère ne correspond"
@@ -195,6 +214,16 @@ export default function AuditScreen({
               }
             />
           }
+        />
+      )}
+
+      {!expanded && (
+        <BulkActions
+          selectedCount={selection.size}
+          mode={audit.mode}
+          onApply={status => applyToSelection(status)}
+          onClearStatus={() => applyToSelection('')}
+          onDeselectAll={() => setSelection(new Set())}
         />
       )}
     </div>

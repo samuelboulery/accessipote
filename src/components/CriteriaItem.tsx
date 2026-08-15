@@ -15,6 +15,8 @@ interface CriteriaItemProps {
   onGlossaryClick: (slug: string) => void;
   onCriteriaClick?: (criteriaId: string) => void;
   onExpand: (criteriaId: string) => void;
+  isSelected: boolean;
+  onSelectedChange: (criteriaId: string, selected: boolean) => void;
 }
 
 function CriteriaItem({
@@ -25,6 +27,8 @@ function CriteriaItem({
   onGlossaryClick,
   onCriteriaClick,
   onExpand,
+  isSelected,
+  onSelectedChange,
 }: CriteriaItemProps) {
   const parsedTitle = useMemo(
     () => parseMarkdownLinks(criterion.title, { onGlossaryClick, onCriteriaClick }),
@@ -44,6 +48,13 @@ function CriteriaItem({
       className={`rounded-card border-1 p-3 ${cardClass}`}
     >
       <div className="mb-3 flex flex-wrap items-center gap-3">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={event => onSelectedChange(criterion.id, event.target.checked)}
+          aria-label={`Sélectionner le critère ${criterion.id}`}
+          className="h-icon-lg w-icon-lg cursor-pointer rounded-box"
+        />
         <span className="rounded-ctrl bg-sunk px-2 py-1 font-mono text-meta font-semibold">
           {criterion.id}
         </span>

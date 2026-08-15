@@ -2,7 +2,7 @@ import { memo } from 'react';
 import type { CriteriaStatus, Mode } from '../types';
 import { getSelectableStatuses } from '../utils/statusPresentation';
 
-export type StatusButtonsDensity = 'card' | 'detail' | 'mobile';
+export type StatusButtonsDensity = 'card' | 'detail';
 
 interface StatusButtonsProps {
   criteriaId: string;
@@ -13,17 +13,18 @@ interface StatusButtonsProps {
   density?: StatusButtonsDensity;
 }
 
+// En dessous de `sm`, les trois boutons passent en colonne : trois cibles de
+// 48px de large valent mieux qu'une rangée de trois cibles qu'on rate au pouce.
 const GROUP_CLASS: Record<StatusButtonsDensity, string> = {
-  card: 'flex flex-wrap gap-2',
-  detail: 'flex gap-2',
-  mobile: 'flex flex-col gap-2',
+  card: 'flex flex-col gap-2 sm:flex-row sm:flex-wrap',
+  detail: 'flex flex-col gap-2 sm:flex-row',
 };
 
 const BUTTON_CLASS: Record<StatusButtonsDensity, string> = {
-  // 40px de haut, mais la cible réelle est portée à 48px par le pseudo-élément.
-  card: 'h-ctrl px-4',
-  detail: 'h-prim flex-1 px-4',
-  mobile: 'h-prim w-full px-4',
+  // 48px en tactile ; 40px de haut en desktop, mais la cible réelle y est portée
+  // à 48px par le pseudo-élément.
+  card: 'h-prim px-4 sm:h-ctrl',
+  detail: 'h-prim px-4 sm:flex-1',
 };
 
 function StatusButtons({

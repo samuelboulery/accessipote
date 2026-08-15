@@ -18,6 +18,8 @@ const defaultProps = {
   onStatusChange: vi.fn(),
   onGlossaryClick: vi.fn(),
   onExpand: vi.fn(),
+  selection: new Set<string>(),
+  onSelectedChange: vi.fn(),
 };
 
 describe('CriteriaList', () => {

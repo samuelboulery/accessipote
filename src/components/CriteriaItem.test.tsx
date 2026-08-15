@@ -30,6 +30,8 @@ const defaultProps = {
   onStatusChange: vi.fn(),
   onGlossaryClick: vi.fn(),
   onExpand: vi.fn(),
+  isSelected: false,
+  onSelectedChange: vi.fn(),
 };
 
 describe('CriteriaItem', () => {
@@ -116,9 +118,24 @@ describe('CriteriaItem', () => {
     expect(container.textContent).toContain('Conforme par défaut');
   });
 
-  it('devrait appeler onGlossaryClick quand un terme est cliqué', () => {
-    const onGlossaryClick = vi.fn();
-    render(<CriteriaItem {...defaultProps} onGlossaryClick={onGlossaryClick} />);
-    // StatusPill + StatusButtons ne contiennent pas de termes, pas de clic glossaire ici
+  it('expose une case de sélection nommant le critère', () => {
+    render(<CriteriaItem {...defaultProps} />);
+    expect(
+      screen.getByRole('checkbox', { name: /Sélectionner le critère 1\.1/ }),
+    ).not.toBeChecked();
+  });
+
+  it('remonte la sélection du critère', () => {
+    const onSelectedChange = vi.fn();
+    render(<CriteriaItem {...defaultProps} onSelectedChange={onSelectedChange} />);
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /Sélectionner le critère 1\.1/ }));
+
+    expect(onSelectedChange).toHaveBeenCalledWith('1.1', true);
+  });
+
+  it('reflète l\'état sélectionné', () => {
+    render(<CriteriaItem {...defaultProps} isSelected />);
+    expect(screen.getByRole('checkbox', { name: /Sélectionner le critère 1\.1/ })).toBeChecked();
   });
 });

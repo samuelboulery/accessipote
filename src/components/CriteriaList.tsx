@@ -10,6 +10,8 @@ interface CriteriaListProps {
   onGlossaryClick: (slug: string) => void;
   onCriteriaClick?: (criteriaId: string) => void;
   onExpand: (criteriaId: string) => void;
+  selection: Set<string>;
+  onSelectedChange: (criteriaId: string, selected: boolean) => void;
   emptyState?: React.ReactNode;
 }
 
@@ -26,6 +28,8 @@ export default function CriteriaList({
   onGlossaryClick,
   onCriteriaClick,
   onExpand,
+  selection,
+  onSelectedChange,
   emptyState,
 }: CriteriaListProps) {
   if (criteria.length === 0) {
@@ -53,6 +57,8 @@ export default function CriteriaList({
             onGlossaryClick={onGlossaryClick}
             onCriteriaClick={onCriteriaClick}
             onExpand={onExpand}
+            isSelected={selection.has(criterion.id)}
+            onSelectedChange={onSelectedChange}
           />
         </li>
       ))}

@@ -79,6 +79,34 @@
         "src/index.css",
         "src/types/index.ts"
       ]
+    },
+    {
+      "sha": "390c55b",
+      "date": "2026-08-15",
+      "files": [
+        "src/App.tsx",
+        "src/components/DonutChart.test.tsx",
+        "src/components/DonutChart.tsx",
+        "src/components/GlossaryPopover.tsx",
+        "src/components/GlossaryScreen.tsx",
+        "src/components/GlossarySidePanel.test.tsx",
+        "src/components/GlossarySidePanel.tsx",
+        "src/components/HomeScreen.tsx",
+        "src/components/ModeSelector.test.tsx",
+        "src/components/ModeSelector.tsx",
+        "src/components/ProgressBar.test.tsx",
+        "src/components/ProgressBar.tsx",
+        "src/components/SummaryTab.test.tsx",
+        "src/components/SummaryTab.tsx",
+        "src/components/ThemeSelector.test.tsx",
+        "src/components/ThemeSelector.tsx",
+        "src/components/ThemeSummaryTable.test.tsx",
+        "src/components/ThemeSummaryTable.tsx",
+        "src/constants.ts",
+        "src/utils/getProgressColorClass.test.ts",
+        "src/utils/getProgressColorClass.ts",
+        "src/utils/summaryView.ts"
+      ]
     }
   ]
 }
