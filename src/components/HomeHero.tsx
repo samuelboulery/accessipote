@@ -5,10 +5,12 @@ interface HomeHeroProps {
 }
 
 /**
- * Vit **hors** du panneau, sur le fond de l'application. À l'intérieur, il
- * fallait choisir entre un titre à l'étroit contre le bord et un padding qui
- * décalait tout le reste. Dehors, il respire et le panneau redevient ce qu'il
- * est : le contenant des audits.
+ * Bannière posée hors du panneau, sur le fond de l'application. À l'intérieur,
+ * il fallait choisir entre un titre à l'étroit contre le bord et un padding qui
+ * décalait tout le reste.
+ *
+ * Le dégradé est un neutre chaud, pas une couleur : dans ce système la couleur
+ * ne dit qu'un statut, et une teinte franche ici se lirait comme tel.
  */
 export default function HomeHero({ criteriaCount, themeCount, glossaryCount }: HomeHeroProps) {
   const figures = [
@@ -18,7 +20,9 @@ export default function HomeHero({ criteriaCount, themeCount, glossaryCount }: H
   ];
 
   return (
-    <header className="flex-shrink-0 px-4 pb-6 pt-4">
+    // Même emprise que le panneau du dessous — arrondie à gauche, à fleur du
+    // bord droit — pour que les deux blocs de texte s'alignent.
+    <header className="banner mt-2 flex-shrink-0 rounded-l-card p-6">
       <p className="font-mono text-meta uppercase tracking-[0.08em] text-ink-muted">RGAA 4.1</p>
       <h1 className="mt-3 max-w-[20ch] text-hero font-bold [text-wrap:balance]">
         Ton pote qui connaît le RGAA par cœur.

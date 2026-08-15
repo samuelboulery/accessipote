@@ -54,4 +54,15 @@ describe('HomeHero', () => {
     expect(screen.getByText('thème')).toBeInTheDocument();
     expect(screen.getByText('définition')).toBeInTheDocument();
   });
+
+  it('se présente en bannière, au rayon des panneaux', () => {
+    const { container } = render(
+      <HomeHero criteriaCount={106} themeCount={13} glossaryCount={119} />,
+    );
+
+    // Ici les classes SONT le traitement demandé : dégradé, grain, rayon.
+    const banniere = container.querySelector('header');
+    expect(banniere).toHaveClass('banner');
+    expect(banniere).toHaveClass('rounded-l-card');
+  });
 });

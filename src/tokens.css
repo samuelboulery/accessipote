@@ -39,6 +39,17 @@
   --a-todo-bg:       #EDEDED;
   --a-todo-fg:       #404040;
 
+  /* ---- Bannière d'accueil ----
+     Neutre chaud très désaturé : une pointe de chaleur, sans introduire de
+     teinte qui pourrait se lire comme un statut. Assez clair pour porter
+     l'encre à plus de 15:1. */
+  --a-banner-from:  #F4EFE7;
+  --a-banner-to:    #E4DED3;
+  /* Sur un fond clair, `overlay` pousse vers le blanc et le grain disparaît ;
+     `multiply` le fait mordre. */
+  --a-banner-grain: 0.22;
+  --a-banner-grain-blend: multiply;
+
   /* ---- Typographie ---- */
   --a-font-sans: 'Instrument Sans', system-ui, sans-serif;
   --a-font-mono: 'JetBrains Mono', ui-monospace, monospace;
@@ -96,6 +107,12 @@
 
   --a-todo-bg:       #1F1F1F;
   --a-todo-fg:       #C4C4C4;
+
+  /* Brun très foncé vers le noir : même chaleur, rampe inversée. */
+  --a-banner-from:  #1E1915;
+  --a-banner-to:    #0B0B0B;
+  --a-banner-grain: 0.30;
+  --a-banner-grain-blend: overlay;
 
   --a-focus-ring: 0 0 0 2px #000000, 0 0 0 5px #FFFFFF;
 }

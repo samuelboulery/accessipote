@@ -285,7 +285,7 @@ function App() {
 
         <main
           className={[
-            'flex flex-1 flex-col overflow-y-auto bg-surface p-4',
+            'flex flex-1 flex-col overflow-y-auto bg-surface p-6',
             isMobile ? 'pb-two' : 'my-2 rounded-l-card shadow-panel',
           ].join(' ')}
         >
