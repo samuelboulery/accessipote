@@ -42,7 +42,6 @@ const AUDITS: AuditSummary[] = [
 function setup(overrides = {}) {
   const onOpenAudit = vi.fn();
   const onCreateAudit = vi.fn();
-  const onOpenGlossary = vi.fn();
   const onDeleteAudit = vi.fn();
   render(
     <HomeScreen
@@ -52,12 +51,11 @@ function setup(overrides = {}) {
       themeCount={13}
       onOpenAudit={onOpenAudit}
       onCreateAudit={onCreateAudit}
-      onOpenGlossary={onOpenGlossary}
       onDeleteAudit={onDeleteAudit}
       {...overrides}
     />,
   );
-  return { onOpenAudit, onCreateAudit, onOpenGlossary, onDeleteAudit };
+  return { onOpenAudit, onCreateAudit, onDeleteAudit };
 }
 
 describe('HomeScreen', () => {
@@ -172,21 +170,7 @@ describe('HomeScreen', () => {
     expect(onCreateAudit).toHaveBeenCalled();
   });
 
-  it('affiche le bouton Glossaire avec le nombre de définitions', () => {
-    setup();
-    expect(screen.getByRole('button', { name: /Glossaire/ })).toBeInTheDocument();
-    expect(screen.getByText('284')).toBeInTheDocument();
-  });
 
-  it('appelle onOpenGlossary au clic sur le glossaire', async () => {
-    const user = userEvent.setup();
-    const { onOpenGlossary } = setup();
-
-    const glossaryButton = screen.getByRole('button', { name: /Glossaire/ });
-    await user.click(glossaryButton);
-
-    expect(onOpenGlossary).toHaveBeenCalled();
-  });
 
   it('n\'affiche pas la carte « Importer un rapport »', () => {
     setup();
@@ -282,5 +266,12 @@ describe('HomeScreen', () => {
       .closest('ul');
     expect(liste).toHaveClass('grid');
     expect(liste).toHaveClass('xl:grid-cols-2');
+  });
+
+  it('ne double pas le glossaire, que la barre latérale porte déjà', () => {
+    setup();
+    expect(screen.queryByRole('button', { name: /Glossaire/ })).not.toBeInTheDocument();
+    // Le nombre de définitions reste, mais comme chiffre, pas comme bouton.
+    expect(screen.getByText('définitions')).toBeInTheDocument();
   });
 });

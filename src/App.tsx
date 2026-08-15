@@ -295,7 +295,6 @@ function App() {
               themeCount={themes.length}
               onOpenAudit={handleOpenAudit}
               onCreateAudit={() => setIsCreating(true)}
-              onOpenGlossary={() => setView('glossary')}
               onDeleteAudit={handleDeleteAudit}
             />
           ))}

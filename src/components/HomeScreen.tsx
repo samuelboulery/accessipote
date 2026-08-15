@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, ChevronRight, BookOpen, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import type { Audit } from '../types';
 import AuditRing from './AuditRing';
 import { formatRelativeTime } from '../utils/formatRelativeTime';
@@ -12,12 +12,12 @@ export interface AuditSummary {
 
 interface HomeScreenProps {
   audits: AuditSummary[];
+  /** Sert la ligne de chiffres, pas un bouton : le glossaire vit dans la barre. */
   glossaryCount: number;
   criteriaCount: number;
   themeCount: number;
   onOpenAudit: (auditId: string) => void;
   onCreateAudit: () => void;
-  onOpenGlossary: () => void;
   onDeleteAudit: (auditId: string) => void;
 }
 
@@ -39,7 +39,6 @@ export default function HomeScreen({
   themeCount,
   onOpenAudit,
   onCreateAudit,
-  onOpenGlossary,
   onDeleteAudit,
 }: HomeScreenProps) {
   // Confirmation en place plutôt qu'une modale : la suppression est
@@ -54,7 +53,7 @@ export default function HomeScreen({
   ];
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex min-h-full flex-col gap-8">
       <header>
         <p className="font-mono text-meta uppercase tracking-[0.08em] text-ink-muted">RGAA 4.1</p>
         <h1 className="mt-3 max-w-[20ch] text-hero font-bold [text-wrap:balance]">
@@ -84,7 +83,7 @@ export default function HomeScreen({
         </ul>
       </header>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-1 flex-col gap-4">
         <h2 className="text-meta font-semibold uppercase tracking-[0.08em] text-ink-muted">
           Tes audits
         </h2>
@@ -195,27 +194,13 @@ export default function HomeScreen({
           <button
             type="button"
             onClick={onCreateAudit}
-            className="flex h-prim items-center justify-center gap-2 self-start rounded-ctrl bg-ink px-6 text-lead font-semibold text-surface"
+            className="mt-auto flex h-prim items-center justify-center gap-2 self-start rounded-ctrl bg-ink px-6 text-lead font-semibold text-surface"
           >
             <Plus size={16} strokeWidth={2.2} aria-hidden="true" />
             Nouvel audit
           </button>
         )}
 
-        <button
-          type="button"
-          onClick={onOpenGlossary}
-          className="flex items-center gap-3 rounded-card border-1 border-border p-4 text-left"
-        >
-          <BookOpen size={16} aria-hidden="true" className="flex-shrink-0" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-body font-semibold">Glossaire</span>
-            <span className="mt-1 block text-dense text-ink-muted">
-              {glossaryCount} définitions RGAA, consultables sans ouvrir d'audit.
-            </span>
-          </span>
-          <ChevronRight size={16} aria-hidden="true" className="flex-shrink-0 text-ink-muted" />
-        </button>
       </div>
     </div>
   );
