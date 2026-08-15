@@ -14,6 +14,24 @@ export default {
   theme: {
     extend: {},
 
+    // Un breakpoint mesure la fenêtre ; la zone de contenu, elle, vaut
+    // `fenêtre − 244px (sidebar) − 48px (padding du panneau)`. À 1024px — le
+    // `lg` de Tailwind — il ne reste que 732px, trop peu pour deux colonnes :
+    // c'est ce décalage qui faisait basculer les mises en page trop tôt.
+    //
+    // `lg` est retiré, pas redéfini. Une classe `lg:` oubliée ne produit alors
+    // aucun style, ce qui la rend visible, plutôt que de la laisser se
+    // déclencher au mauvais seuil.
+    screens: {
+      sm:    '640px',  // bascule mobile — aligné sur useIsMobile (max-width: 639px)
+      // Deux blocs de texte côte à côte demandent moins de place qu'une vraie
+      // colonne latérale : la bannière tient dès 730px de contenu, là où le
+      // détail d'un critère se serrerait.
+      roomy: '1024px', // contenu ≈ 732px
+      wide:  '1100px', // contenu ≈ 808px : seuil des mises en page deux colonnes
+      xl:    '1280px', // contenu ≈ 988px : deux cartes d'audit côte à côte
+    },
+
     colors: {
       transparent: 'transparent',
       current: 'currentColor',

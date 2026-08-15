@@ -30,7 +30,9 @@ function BulkActions({
     <div
       role="region"
       aria-label="Actions groupées"
-      className="sticky bottom-4 z-20 flex flex-wrap items-center gap-3 rounded-card bg-ink p-4 text-surface shadow-panel"
+      // 64px en mobile : la barre d'onglets est fixée en bas, une barre d'actions
+      // collée à 16px viendrait se glisser dessous.
+      className="sticky bottom-two z-20 flex flex-wrap items-center gap-3 rounded-card bg-ink p-4 text-surface shadow-panel sm:bottom-4"
     >
       <span className="font-mono text-body font-semibold">
         {selectedCount} critère{selectedCount > 1 ? 's' : ''} sélectionné

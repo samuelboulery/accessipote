@@ -111,8 +111,8 @@ export default function GlossaryScreen({
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">
-        <div className="flex min-h-0 w-full flex-col lg:w-[320px] lg:border-r lg:border-separator lg:pr-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 wide:flex-row">
+        <div className="flex w-full flex-col wide:min-h-0 wide:w-[320px] wide:border-r wide:border-separator wide:pr-4">
           <div className="relative">
             <Search
               size={16}
@@ -134,7 +134,10 @@ export default function GlossaryScreen({
             {filtered.length} terme{filtered.length > 1 ? 's' : ''} sur {glossary.length}
           </p>
 
-          <ul className="min-h-0 flex-1 overflow-y-auto">
+          {/* En colonne, les deux panneaux suivent le défilement de la page :
+              deux zones scrollables imbriquées dans un `main` déjà scrollable
+              obligent à viser la bonne au pouce. */}
+          <ul className="wide:min-h-0 wide:flex-1 wide:overflow-y-auto">
             {filtered.map(term => {
               const slug = titleToSlug(term.title);
               const isSelected = selected != null && titleToSlug(selected.title) === slug;
@@ -161,7 +164,7 @@ export default function GlossaryScreen({
           </ul>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="flex-1 wide:min-h-0 wide:overflow-y-auto">
           {selected ? (
             <article>
               <p className="font-mono text-meta uppercase tracking-[0.08em] text-ink-muted">

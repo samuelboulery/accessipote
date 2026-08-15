@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/accessibility-icon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover : sans lui les `env(safe-area-inset-*)` valent 0 sur iOS,
+         et les barres haute et basse passent sous l'encoche et l'indicateur d'accueil. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!--
       Content Security Policy stricte — sans 'unsafe-inline' ni 'unsafe-eval'
       Police Chelsea Market auto-hébergée dans /public/fonts/ (pas de dépendance Google Fonts)

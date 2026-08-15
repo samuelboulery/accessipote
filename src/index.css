@@ -188,6 +188,30 @@ code {
   .banner::after { display: none; }
 }
 
+/* La bannière décide de sa mise en page d'après SA largeur, pas celle de la
+   fenêtre : elle occupe tout l'écran en mobile et la fenêtre moins les 244px de
+   sidebar en desktop. Un breakpoint viewport confond les deux, et le seuil calé
+   sur l'un rate l'autre — les chiffres retombaient sous le texte. */
+.hero {
+  container-type: inline-size;
+}
+
+/* 620px : la place qu'il faut pour poser le bloc de texte et la colonne de
+   chiffres côte à côte sans les écraser. */
+@container (min-width: 620px) {
+  .hero-layout {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 56px;
+  }
+
+  .hero-figures {
+    flex-direction: column;
+    gap: 24px;
+  }
+}
+
 /* Cases et radios natifs : la teinte par défaut du navigateur est hors système. */
 input[type='radio'],
 input[type='checkbox'] {

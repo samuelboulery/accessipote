@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
+import { BarChart3 } from 'lucide-react';
 import type { CriteriaRGAA, Mode, Progress } from '../types';
 import { calculateSummaryStats } from '../utils/calculateSummaryStats';
 import { toSummaryView } from '../utils/summaryView';
 import AuditRing from './AuditRing';
+import EmptyState from './EmptyState';
 import SegmentedGauge from './SegmentedGauge';
 import ThemeSummaryTable from './ThemeSummaryTable';
 
@@ -37,6 +39,22 @@ export default function SummaryTab({ criteriaList, progress, mode, actions }: Su
     .map(bucket => `${bucket.count} ${bucket.label.toLowerCase()}`)
     .join(', ');
 
+  // Rien d'évalué : les compteurs n'auraient que des zéros à montrer, le taux un
+  // tiret, et l'export produirait un document vide. Le titre reste — c'est bien
+  // la synthèse qu'on regarde, elle n'a simplement rien à dire encore.
+  if (view.evaluated === 0) {
+    return (
+      <div className="flex flex-col gap-6">
+        <h1 className="text-section font-semibold">Synthèse</h1>
+        <EmptyState
+          title="Aucun critère évalué"
+          body="Les chiffres arrivent dès le premier statut posé. Ouvre l'onglet Audit et commence par le thème que tu veux."
+          Icon={BarChart3}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end gap-4">
@@ -50,7 +68,7 @@ export default function SummaryTab({ criteriaList, progress, mode, actions }: Su
         {actions}
       </div>
 
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid gap-3 sm:grid-cols-2 wide:grid-cols-4">
         {view.buckets.map(({ key, label, count, color, Icon }) => (
           <li key={key} className="rounded-card border-1 border-border bg-surface p-4">
             <span className="flex items-center gap-2 text-body font-semibold">

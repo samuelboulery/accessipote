@@ -91,7 +91,7 @@ export default function SearchFilters({
         </button>
 
         {isOpen && (
-          <div className="absolute right-0 z-10 mt-2 flex w-[280px] flex-col gap-4 rounded-card border-1 border-border bg-surface p-4 shadow-panel">
+          <div className="absolute right-0 z-10 mt-2 flex w-[280px] max-w-[calc(100vw-32px)] flex-col gap-4 rounded-card border-1 border-border bg-surface p-4 shadow-panel">
             <div>
               <label htmlFor="filter-level" className="mb-2 block text-body font-semibold">
                 Niveau

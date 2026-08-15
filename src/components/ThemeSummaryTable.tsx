@@ -21,7 +21,17 @@ function ThemeSummaryTable({ byTheme, mode, stats }: ThemeSummaryTableProps) {
   const { buckets } = toSummaryView(stats, mode);
 
   return (
-    <div className="overflow-x-auto">
+    // Sept colonnes ne tiennent pas sur un téléphone, et les empiler en cartes
+    // ferait perdre la comparaison d'un thème à l'autre — c'est tout l'objet du
+    // tableau. Il défile donc, mais la zone doit être atteignable au clavier
+    // (WCAG 2.1.1) : sans `tabindex`, les colonnes hors cadre sont perdues pour
+    // qui n'a pas de souris.
+    <div
+      role="region"
+      aria-label="Répartition par thème, tableau défilant horizontalement"
+      tabIndex={0}
+      className="overflow-x-auto"
+    >
       <table className="w-full border-collapse text-body">
         <caption className="sr-only">Répartition des critères par thème</caption>
         <thead>

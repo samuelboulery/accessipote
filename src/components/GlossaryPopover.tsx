@@ -46,7 +46,12 @@ export default function GlossaryPopover({
 
   // Recadrer dans la fenêtre : ancré à gauche du terme, il déborderait à droite
   // de l'écran pour un terme situé en fin de ligne.
-  const left = Math.min(Math.max(8, anchor.left), window.innerWidth - WIDTH - 8);
+  //
+  // La marge de 8px se garde en dernier, à l'extérieur : sur un écran plus
+  // étroit que le popover, la borne droite passe sous la borne gauche et un
+  // `min` appliqué après renvoyait une valeur négative — hors écran à gauche.
+  const width = Math.min(WIDTH, window.innerWidth - 16);
+  const left = Math.max(8, Math.min(anchor.left, window.innerWidth - width - 8));
   const top = anchor.bottom + 8;
 
   return (
@@ -55,7 +60,7 @@ export default function GlossaryPopover({
       role="dialog"
       aria-label={`Définition : ${term.title}`}
       tabIndex={-1}
-      style={{ left, top, width: WIDTH }}
+      style={{ left, top, width }}
       className="fixed z-30 rounded-card bg-ink p-4 text-surface shadow-panel"
     >
       <div className="flex items-start gap-2">

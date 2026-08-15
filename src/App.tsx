@@ -14,6 +14,8 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useIsMobile } from './hooks/useIsMobile';
 import Sidebar, { type View } from './components/Sidebar';
 import MobileTabBar from './components/MobileTabBar';
+import MobileTopBar from './components/MobileTopBar';
+import NoAuditState from './components/NoAuditState';
 import HomeScreen from './components/HomeScreen';
 import HomeHero from './components/HomeHero';
 import NewAuditForm from './components/NewAuditForm';
@@ -254,6 +256,13 @@ function App() {
     />
   ) : null;
 
+  // Le formulaire de création vit sur l'accueil : y appeler depuis une autre vue
+  // demande les deux gestes, jamais un seul.
+  const startNewAudit = () => {
+    setView('home');
+    setIsCreating(true);
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-bg">
       {!isMobile && (
@@ -265,16 +274,19 @@ function App() {
           total={auditCriteria.length}
           audits={homeAudits}
           onSelectAudit={handleOpenAudit}
-          onCreateAudit={() => {
-            setView('home');
-            setIsCreating(true);
-          }}
+          onCreateAudit={startNewAudit}
           themeMode={themeMode}
           onCycleTheme={cycleTheme}
         />
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      {/* Le défilement change d'étage selon la taille. En desktop c'est le
+          panneau qui défile, la bannière restant posée au-dessus. En mobile il
+          remonte d'un cran, sur ce conteneur : sans quoi la bannière reste figée
+          et mange la moitié de l'écran pendant qu'on parcourt la liste. */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-y-auto sm:overflow-hidden">
+        {isMobile && <MobileTopBar themeMode={themeMode} onCycleTheme={cycleTheme} />}
+
         {view === 'home' && !isCreating && (
           <HomeHero
             criteriaCount={criteriaList.length}
@@ -285,10 +297,19 @@ function App() {
 
         <main
           className={[
-            'flex flex-1 flex-col overflow-y-auto bg-surface p-6',
-            isMobile ? 'pb-two' : 'my-2 rounded-l-card shadow-panel',
+            'flex flex-1 flex-col bg-surface p-6 sm:overflow-y-auto',
+            // La barre d'onglets fait 64px plus la zone sûre ; les 16 de plus
+            // sont l'air qui manquait sous le dernier bouton.
+            isMobile
+              ? 'pb-[calc(80px+env(safe-area-inset-bottom))]'
+              : 'my-2 rounded-l-card shadow-panel',
           ].join(' ')}
         >
+        {/* Le panneau garde son bord droit à fleur — c'est lui qui porte la
+            forme. La largeur de lecture se borne à l'intérieur, avec le même
+            conteneur que la bannière, qui vit hors du panneau : c'est ce qui
+            tient les deux blocs de texte alignés. */}
+        <div className="mx-auto flex min-h-0 w-full max-w-[1200px] flex-1 flex-col">
         {view === 'home' &&
           (isCreating ? (
             <NewAuditForm
@@ -331,9 +352,12 @@ function App() {
               toolbarActions={exportButton}
             />
           ) : (
-            <p className="text-body text-ink-muted">
-              Aucun audit ouvert. Reprends-en un depuis l'accueil, ou démarres-en un nouveau.
-            </p>
+            <NoAuditState
+              target="audit"
+              hasAudits={homeAudits.length > 0}
+              onGoHome={() => setView('home')}
+              onCreateAudit={startNewAudit}
+            />
           ))}
 
         {view === 'summary' &&
@@ -345,9 +369,12 @@ function App() {
               actions={exportButton}
             />
           ) : (
-            <p className="text-body text-ink-muted">
-              Aucun audit ouvert. Reprends-en un depuis l'accueil pour voir sa synthèse.
-            </p>
+            <NoAuditState
+              target="summary"
+              hasAudits={homeAudits.length > 0}
+              onGoHome={() => setView('home')}
+              onCreateAudit={startNewAudit}
+            />
           ))}
 
         {view === 'glossary' && (
@@ -359,6 +386,7 @@ function App() {
             onCriteriaClick={handleCriteriaClick}
           />
         )}
+        </div>
         </main>
       </div>
 
@@ -374,14 +402,7 @@ function App() {
         />
       )}
 
-      {isMobile && (
-        <MobileTabBar
-          view={view}
-          onNavigate={setView}
-          themeMode={themeMode}
-          onCycleTheme={cycleTheme}
-        />
-      )}
+      {isMobile && <MobileTabBar view={view} onNavigate={setView} />}
 
       <Toast toasts={toasts} onDismiss={hideToast} />
 

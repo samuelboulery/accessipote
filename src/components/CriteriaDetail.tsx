@@ -120,7 +120,7 @@ export default function CriteriaDetail({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+      <div className="grid gap-6 wide:grid-cols-[1fr_380px]">
         <div className="flex flex-col gap-4">
           <div className="flex items-baseline gap-3">
             <h2 className="text-meta font-semibold uppercase tracking-[0.08em] text-ink-muted">
