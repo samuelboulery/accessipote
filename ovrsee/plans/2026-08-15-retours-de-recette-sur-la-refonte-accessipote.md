@@ -4,7 +4,32 @@
   "title": "Retours de recette sur la refonte Accessipote",
   "opened": "2026-08-15",
   "closed": null,
-  "commits": []
+  "commits": [
+    {
+      "sha": "bd2d53b",
+      "date": "2026-08-15",
+      "files": [
+        "src/App.tsx",
+        "src/components/AuditScreen.test.tsx",
+        "src/components/AuditScreen.tsx",
+        "src/components/AuditSwitcher.tsx",
+        "src/components/BulkActions.tsx",
+        "src/components/CriteriaDetail.tsx",
+        "src/components/CriteriaItem.tsx",
+        "src/components/ErrorBoundary.tsx",
+        "src/components/HomeScreen.test.tsx",
+        "src/components/HomeScreen.tsx",
+        "src/components/KeyboardShortcutsModal.tsx",
+        "src/components/MobileTabBar.tsx",
+        "src/components/NewAuditForm.tsx",
+        "src/components/Sidebar.test.tsx",
+        "src/components/Sidebar.tsx",
+        "src/components/Toast.tsx",
+        "src/types/index.ts",
+        "tailwind.config.js"
+      ]
+    }
+  ]
 }
 ---
 

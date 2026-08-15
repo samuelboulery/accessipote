@@ -43,66 +43,22 @@
   --a-font-sans: 'Instrument Sans', system-ui, sans-serif;
   --a-font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-  /* 8 pas. En rem : mêmes tailles rendues à racine 16px, mais le zoom
-     texte du navigateur agit dessus (RGAA 10.4). */
-  --a-text-display:  2.625rem;  /* titre de page */
-  --a-text-screen:   2rem;  /* titre d'écran */
-  --a-text-section:  1.5rem;  /* titre de section */
-  --a-text-criteria: 20px;  /* intitulé de critère déplié */
-  --a-text-lead:     1rem;  /* texte courant porteur */
-  --a-text-body:     0.875rem;  /* interface */
-  --a-text-dense:    0.8125rem;  /* secondaire dense */
-  --a-text-meta:     0.75rem;  /* méta, mono, capitales */
+  /* Seul pas de texte lu par une règle CSS (le code en ligne du glossaire) ;
+     l'échelle complète vit dans tailwind.config.js, qui en est la source. */
+  --a-text-dense: 0.8125rem;
 
-  /* Approche liée à la taille (jamais une valeur unique) */
-  --a-track-display:  -0.03em;
-  --a-track-large:    -0.02em;  /* 32, 24, 20 */
-  --a-track-lead:     -0.01em;  /* 16 en gras */
-  --a-track-body:      0;
-  --a-track-caps:      0.08em;  /* capitales de 12px */
-
-  /* Interligne inversement proportionnel à la taille */
-  --a-leading-display: 1.1;
-  --a-leading-title:   1.2;
-  --a-leading-criteria:1.4;
-  --a-leading-body:    1.5;
-  --a-leading-list:    1.6;
-
-  /* ---- Espacement : grille de 4 ---- */
-  --a-space-1:  4px;   /* icône <-> libellé */
-  --a-space-2:  8px;   /* éléments d'un même groupe */
-  --a-space-3: 12px;   /* intérieur de carte */
-  --a-space-4: 16px;   /* intérieur de panneau */
-  --a-space-6: 24px;   /* entre blocs */
-  --a-space-14:56px;   /* entre écrans */
-
-  /* ---- Rayons : concentriques (voir README § Rayons) ---- */
-  --a-radius-box:    8px;    /* case à cocher */
-  --a-radius-ctrl:  0.75rem;    /* champ, bouton, chip mono */
-  --a-radius-card:  1.5rem;    /* carte  = 12 + 12 */
-  --a-radius-panel: 40px;    /* panneau = 24 + 16 */
-  --a-radius-frame: 48px;    /* cadre  = 40 + 8 */
+  /* ---- Rayons : trois valeurs ----
+     En px : un rayon ne doit pas grandir avec le zoom texte, seules les
+     tailles de police le doivent.
+     Le padding d'un conteneur vaut au moins son rayon moins celui de son
+     enfant. À égalité l'enfant épouse la courbe ; au-dessus il respire ; en
+     dessous il mord le coin. */
+  --a-radius-ctrl:  12px;    /* case, bouton, champ, chip mono */
+  --a-radius-card:  24px;    /* carte, panneau, modale */
   --a-radius-pill: 999px;    /* pastille de statut, jauge */
-
-  /* ---- Hauteurs de contrôle ---- */
-  --a-h-chip:  2rem;
-  --a-h-ctrl:  40px;   /* défaut desktop */
-  --a-h-touch: 44px;   /* cible minimale desktop */
-  --a-h-prim:  48px;   /* action primaire + tout le mobile */
-  --a-h-two:   64px;   /* contrôle sur deux lignes */
-
-  /* ---- Icônes ---- */
-  --a-icon-sm: 12px;   /* dans une pastille */
-  --a-icon-md: 16px;   /* défaut */
-  --a-icon-lg: 20px;   /* onglets mobile, cases */
 
   /* ---- Focus ---- */
   --a-focus-ring: 0 0 0 2px #FFFFFF, 0 0 0 5px #000000;
-
-  /* ---- Mouvement (voir README § Interactions) ---- */
-  --a-press-scale: 0.97;
-  --a-press-in:  100ms;   /* pointerdown -> état pressé */
-  --a-spring-response: 0.35s;
 }
 
 /* ============================================================
@@ -148,7 +104,6 @@
    Préférences système — à respecter, ce sont des critères RGAA.
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-  :root { --a-press-in: 0ms; --a-spring-response: 0s; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

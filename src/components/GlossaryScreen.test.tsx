@@ -37,7 +37,7 @@ const CRITERIA: CriteriaRGAA[] = [
   },
 ];
 
-function setup(overrides = {}) {
+function setup(overrides: { selectedSlug?: string } = {}) {
   const onSelectTerm = vi.fn();
   const onCriteriaClick = vi.fn();
 

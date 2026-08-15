@@ -169,7 +169,7 @@ describe('ExportButton', () => {
     vi.mocked(await import('jspdf')).default = vi.fn(() => {
       return new Promise<void>(() => {
         // Promise volontairement non résolue pour tester l'état de chargement
-      }) as unknown as ReturnType<typeof mockJsPDFInstance.constructor>;
+      }) as unknown as typeof mockJsPDFInstance;
     }) as never;
 
     render(<ExportButton {...defaultProps} />);
