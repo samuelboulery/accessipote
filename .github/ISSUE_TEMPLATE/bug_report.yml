@@ -1,0 +1,78 @@
+name: Signaler un bug
+description: Quelque chose ne fonctionne pas comme prévu
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de signaler ce problème.
+
+        S'il s'agit d'une faille de sécurité, n'utilise pas ce formulaire :
+        passe par un [avis de sécurité privé](https://github.com/samuelboulery/accessipote/security/advisories/new).
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Ce qui se passe
+      description: Décris le problème tel que tu l'observes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: attendu
+    attributes:
+      label: Ce à quoi tu t'attendais
+    validations:
+      required: true
+
+  - type: textarea
+    id: etapes
+    attributes:
+      label: Comment le reproduire
+      description: Les étapes exactes, dans l'ordre.
+      placeholder: |
+        1. Créer un audit en mode Classique
+        2. Ouvrir le thème « Images »
+        3. …
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Mode d'audit concerné
+      options:
+        - Classique
+        - Design System
+        - Les deux
+        - Sans rapport avec le mode
+    validations:
+      required: true
+
+  - type: input
+    id: navigateur
+    attributes:
+      label: Navigateur et version
+      placeholder: Firefox 142 sur macOS 15
+    validations:
+      required: true
+
+  - type: dropdown
+    id: assistive
+    attributes:
+      label: Utilises-tu une technologie d'assistance ?
+      description: Un bug rencontré au lecteur d'écran ou au clavier seul est traité en priorité.
+      options:
+        - Non
+        - Lecteur d'écran
+        - Navigation au clavier seul
+        - Zoom ou agrandissement
+        - Autre
+    validations:
+      required: false
+
+  - type: textarea
+    id: complement
+    attributes:
+      label: Autre chose ?
+      description: Captures d'écran, messages de la console, contexte.

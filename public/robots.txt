@@ -1,0 +1,10 @@
+# Accessipote — https://accessipote.fr
+#
+# Aucun Disallow sur /assets/ : l'application est une SPA. Bloquer ses scripts
+# et ses feuilles de style empêcherait Google de rendre la page, donc de
+# l'indexer correctement.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://accessipote.fr/sitemap.xml

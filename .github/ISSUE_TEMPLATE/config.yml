@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Essayer Accessipote
+    url: https://accessipote.fr
+    about: L'application en ligne, sans installation ni compte.
+  - name: Signaler une faille de sécurité
+    url: https://github.com/samuelboulery/accessipote/security/advisories/new
+    about: Divulgation privée, jamais par une issue publique.
+  - name: Le RGAA officiel
+    url: https://accessibilite.numerique.gouv.fr/
+    about: Pour une question sur le référentiel lui-même plutôt que sur l'outil.

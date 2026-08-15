@@ -1,0 +1,28 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+    groups:
+      # Une PR par famille plutôt qu'une par paquet : les outils de test et de
+      # build bougent ensemble, les traiter séparément ne fait que du bruit.
+      types:
+        patterns: ["@types/*"]
+      tests:
+        patterns: ["vitest", "@vitest/*", "@testing-library/*", "jsdom"]
+      lint:
+        patterns: ["eslint", "@eslint/*", "eslint-plugin-*", "typescript-eslint", "globals"]
+      build:
+        patterns: ["vite", "@vitejs/*", "tailwindcss", "postcss", "autoprefixer", "terser"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci"

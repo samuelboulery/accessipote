@@ -1,0 +1,34 @@
+name: Proposer une évolution
+description: Suggérer une amélioration ou une nouvelle fonctionnalité
+labels: ["évolution"]
+body:
+  - type: textarea
+    id: probleme
+    attributes:
+      label: Le problème
+      description: Quelle difficulté rencontres-tu aujourd'hui ? Décris la situation, pas la solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposition
+    attributes:
+      label: Ce que tu proposes
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Ce que tu as déjà essayé
+      description: Contournements, autres outils, autres approches écartées.
+
+  - type: checkboxes
+    id: verifications
+    attributes:
+      label: Vérifications
+      options:
+        - label: Cette proposition ne demande pas de modifier les données officielles du RGAA.
+          required: true
+        - label: J'ai cherché s'il existait déjà une issue sur le sujet.
+          required: true

@@ -1,0 +1,27 @@
+{
+  "name": "Accessipote — Audit RGAA 4.1",
+  "short_name": "Accessipote",
+  "description": "Checklist interactive des 106 critères d'accessibilité du RGAA 4.1, hors ligne et sans compte.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#E8E8E8",
+  "theme_color": "#E8E8E8",
+  "categories": ["productivity", "developer", "utilities"],
+  "icons": [
+    {
+      "src": "/accessibility-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
