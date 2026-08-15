@@ -35,6 +35,14 @@
         "src/index.css",
         "tailwind.config.js"
       ]
+    },
+    {
+      "sha": "de9e738",
+      "date": "2026-08-16",
+      "files": [
+        "src/components/GlossaryScreen.test.tsx",
+        "src/components/GlossaryScreen.tsx"
+      ]
     }
   ]
 }
