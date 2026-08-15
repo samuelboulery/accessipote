@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
+import { logError } from '../utils/logger';
 
 interface Props {
   children: ReactNode;
@@ -27,8 +28,9 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Logger l'erreur dans un service de monitoring
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // logError se tait hors développement : rien ne doit fuir en console en
+    // production, pas même une trace d'erreur.
+    logError('Erreur interceptée par ErrorBoundary:', error, errorInfo);
   }
 
   render() {

@@ -50,7 +50,7 @@ function BulkActions({
         <button
           key={key}
           type="button"
-          onClick={() => onApply(key as CriteriaStatus)}
+          onClick={() => onApply(key)}
           className={[
             'flex h-ctrl items-center gap-2 rounded-ctrl px-3 text-body font-semibold',
             index === 0 ? 'bg-surface text-ink' : 'border-1 border-[#5A5A5A]',

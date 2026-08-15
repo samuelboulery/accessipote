@@ -87,7 +87,7 @@ export default function CriteriaDetail({
         event.preventDefault();
         const chosen = statuses[Number(key) - 1];
         if (chosen) {
-          onStatusChange(criteriaId, chosen.key === currentStatus ? '' : (chosen.key as CriteriaStatus));
+          onStatusChange(criteriaId, chosen.key === currentStatus ? '' : chosen.key);
         }
       }
     };

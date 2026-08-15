@@ -67,7 +67,7 @@ function StatusButtons({
               value={key}
               checked={isSelected}
               className="sr-only"
-              onChange={() => onStatusChange(criteriaId, key as CriteriaStatus)}
+              onChange={() => onStatusChange(criteriaId, key)}
               // Un second clic sur le statut actif l'efface : `change` ne se
               // déclenche pas dans ce cas, seul `click` le voit.
               onClick={() => {

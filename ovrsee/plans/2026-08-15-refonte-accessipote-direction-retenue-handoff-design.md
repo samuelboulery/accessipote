@@ -125,6 +125,34 @@
         "src/components/StatusButtons.test.tsx",
         "src/components/StatusButtons.tsx"
       ]
+    },
+    {
+      "sha": "357e3b1",
+      "date": "2026-08-15",
+      "files": [
+        "src/components/AuditScreen.tsx",
+        "src/components/BulkActions.tsx",
+        "src/components/CriteriaDetail.tsx",
+        "src/components/CriteriaItem.tsx",
+        "src/components/DarkModeToggle.test.tsx",
+        "src/components/DarkModeToggle.tsx",
+        "src/components/ErrorBoundary.tsx",
+        "src/components/ExportButton.tsx",
+        "src/components/GlossaryScreen.tsx",
+        "src/components/KeyboardShortcutsModal.tsx",
+        "src/components/NewAuditForm.tsx",
+        "src/components/SearchFilters.tsx",
+        "src/components/ThemeRail.tsx",
+        "src/components/Toast.test.tsx",
+        "src/components/Toast.tsx",
+        "src/index.css",
+        "src/tokens.css",
+        "src/utils/parseGlossaryHtml.tsx",
+        "src/utils/parseInlineCode.test.tsx",
+        "src/utils/parseInlineCode.tsx",
+        "src/utils/parseMarkdown.tsx",
+        "tailwind.config.js"
+      ]
     }
   ]
 }

@@ -79,10 +79,16 @@ export function getStatusPresentation(status: CriteriaStatus | undefined, mode: 
   return table[status ?? UNSET_STATUS];
 }
 
-/** Les trois statuts sélectionnables d'un mode, dans l'ordre d'affichage. */
-export function getSelectableStatuses(mode: Mode): StatusPresentation[] {
+/**
+ * Les trois statuts sélectionnables d'un mode, dans l'ordre d'affichage. Le type
+ * de retour restreint `key` à un vrai statut — « à évaluer » n'en est pas un —
+ * ce qui évite un cast chez chaque appelant.
+ */
+export function getSelectableStatuses(
+  mode: Mode,
+): Array<StatusPresentation & { key: CriteriaStatus }> {
   const keys: CriteriaStatus[] = mode === 'classic'
     ? ['conforme', 'non-conforme', 'non-applicable']
     : ['default-compliant', 'project-implementation', 'non-applicable'];
-  return keys.map(key => getStatusPresentation(key, mode));
+  return keys.map(key => ({ ...getStatusPresentation(key, mode), key }));
 }
