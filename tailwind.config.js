@@ -107,14 +107,13 @@ export default {
       'icon-lg': '20px',
     },
 
+    // Trois valeurs, pas six. L'inventaire montrait que 12, 24 et pill portaient
+    // 53 usages sur 59 : les trois autres n'ajoutaient que du bruit.
     borderRadius: {
       none: '0',
-      box:   'var(--a-radius-box)',
-      ctrl:  'var(--a-radius-ctrl)',
-      card:  'var(--a-radius-card)',
-      panel: 'var(--a-radius-panel)',
-      frame: 'var(--a-radius-frame)',
-      pill:  'var(--a-radius-pill)',
+      ctrl: 'var(--a-radius-ctrl)',   // case, bouton, champ
+      card: 'var(--a-radius-card)',   // carte, panneau, modale
+      pill: 'var(--a-radius-pill)',   // pastille, jauge
     },
 
     borderWidth: { DEFAULT: '1px', 0: '0', 1: '1px', 1.5: '1.5px', 2: '2px' },

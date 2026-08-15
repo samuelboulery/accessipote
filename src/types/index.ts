@@ -84,6 +84,9 @@ export interface Audit {
   pages: Record<string, string[]>;
   /** criteriaId -> ids des tests cochés */
   checkedTests: Record<string, string[]>;
+  /** Dernier critère touché, pour que l'indicateur de sauvegarde dise quoi.
+   *  Optionnel : les audits créés avant ce champ le laissent indéfini. */
+  lastTouchedCriteriaId?: string;
 }
 
 export interface AuditStore {

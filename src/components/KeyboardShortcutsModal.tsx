@@ -78,7 +78,7 @@ export default function KeyboardShortcutsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="keyboard-shortcuts-title"
-        className="mx-4 w-full max-w-md overflow-hidden rounded-panel bg-surface shadow-panel"
+        className="mx-4 w-full max-w-md overflow-hidden rounded-card bg-surface shadow-panel"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-separator p-4">

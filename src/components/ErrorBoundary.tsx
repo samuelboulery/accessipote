@@ -43,7 +43,7 @@ export default class ErrorBoundary extends Component<Props, State> {
       // UI de fallback par défaut
       return (
         <div className="flex min-h-screen items-center justify-center bg-bg p-4">
-          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-4 sm:p-8">
+          <div className="w-full max-w-md rounded-card bg-surface p-6 shadow-panel">
             <div className="mx-auto mb-4 flex h-two w-two items-center justify-center rounded-pill bg-ko-bg">
               <svg
                 className="h-8 w-8 text-ko-fg"

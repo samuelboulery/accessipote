@@ -65,7 +65,7 @@ export default function NewAuditForm({
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-frame bg-bg p-6">
+    <div className="flex flex-col gap-4 rounded-card bg-bg p-6">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -80,7 +80,7 @@ export default function NewAuditForm({
 
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col gap-4 rounded-card border-1 border-border bg-surface p-3"
+        className="flex flex-col gap-4 rounded-card border-1 border-border bg-surface p-4"
       >
         <div>
           <label htmlFor="audit-name" className="mb-2 block text-body font-semibold">
@@ -129,7 +129,7 @@ export default function NewAuditForm({
                 <label
                   key={option.value}
                   className={[
-                    'grid cursor-pointer grid-cols-[20px_1fr] items-start gap-3 rounded-card border-1.5 p-3',
+                    'grid cursor-pointer grid-cols-[20px_1fr] items-start gap-3 rounded-card border-1.5 p-4',
                     isSelected ? 'border-ink bg-sunk' : 'border-border bg-surface',
                   ].join(' ')}
                 >

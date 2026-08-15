@@ -1,6 +1,5 @@
-import { Plus, ChevronRight, BookOpen, Upload } from 'lucide-react';
+import { Plus, ChevronRight, BookOpen } from 'lucide-react';
 import type { Audit } from '../types';
-import AccessipoteLogo from './AccessipoteLogo';
 import AuditRing from './AuditRing';
 import { formatRelativeTime } from '../utils/formatRelativeTime';
 
@@ -13,6 +12,7 @@ export interface AuditSummary {
 interface HomeScreenProps {
   audits: AuditSummary[];
   glossaryCount: number;
+  criteriaCount: number;
   onOpenAudit: (auditId: string) => void;
   onCreateAudit: () => void;
   onOpenGlossary: () => void;
@@ -23,9 +23,14 @@ const MODE_LABEL = {
   'design-system': 'Mode design system',
 } as const;
 
+/**
+ * Ni tuile de logo ni mot-symbole ici : la barre latérale les porte déjà, les
+ * répéter ne dit rien de plus.
+ */
 export default function HomeScreen({
   audits,
   glossaryCount,
+  criteriaCount,
   onOpenAudit,
   onCreateAudit,
   onOpenGlossary,
@@ -33,92 +38,85 @@ export default function HomeScreen({
   const hasAudits = audits.length > 0;
 
   return (
-    <div className="flex flex-col gap-4 rounded-frame bg-bg p-6">
-      <div className="flex items-center gap-3">
-        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-ctrl bg-ink text-surface">
-          <AccessipoteLogo size={16} />
-        </span>
-        <span className="text-lead font-semibold">Accessipote</span>
-        <span className="flex-1" />
-        <span className="font-mono text-meta text-ink-muted">RGAA 4.1</span>
-      </div>
-
-      <div>
-        <h1 className="text-screen font-semibold">On reprend où on en était ?</h1>
-        <p className="mt-2 text-lead text-ink-muted">
-          {hasAudits
-            ? `${audits.length} audit${audits.length > 1 ? 's' : ''} ouvert${audits.length > 1 ? 's' : ''}. Tout reste dans ce navigateur.`
-            : 'Aucun audit pour le moment. Tout reste dans ce navigateur, rien n\'est envoyé ailleurs.'}
+    <div className="flex min-h-full flex-col justify-between gap-8 rounded-card bg-bg p-6">
+      <header className="max-w-[52ch]">
+        <p className="font-mono text-meta uppercase tracking-[0.08em] text-ink-muted">RGAA 4.1</p>
+        <h1 className="mt-2 text-screen font-semibold">
+          Auditer l'accessibilité sans perdre le fil.
+        </h1>
+        <p className="mt-3 text-lead text-ink-muted">
+          Les {criteriaCount} critères du RGAA, thème par thème, dans un audit nommé que vous
+          reprenez quand vous voulez. Vos notes, vos pages et vos tests cochés restent dans ce
+          navigateur — rien n'est envoyé ailleurs.
         </p>
-      </div>
+      </header>
 
-      {hasAudits && (
-        <ul className="flex flex-col gap-3">
-          {audits.map(({ audit, evaluated, total }) => {
-            const share = total > 0 ? evaluated / total : 0;
-            const percentage = Math.round(share * 100);
+      <div className="flex flex-col gap-4">
+        {hasAudits && (
+          <div>
+            <h2 className="mb-3 text-meta font-semibold uppercase tracking-[0.08em] text-ink-muted">
+              Vos audits
+            </h2>
+            <ul className="flex flex-col gap-3">
+              {audits.map(({ audit, evaluated, total }) => {
+                const share = total > 0 ? evaluated / total : 0;
+                const percentage = Math.round(share * 100);
 
-            return (
-              <li key={audit.id}>
-                <button
-                  type="button"
-                  onClick={() => onOpenAudit(audit.id)}
-                  className="grid w-full grid-cols-[48px_1fr_auto_16px] items-center gap-4 rounded-card border-1 border-border bg-surface px-4 py-3 text-left"
-                >
-                  <AuditRing
-                    size={48}
-                    segments={[{ key: 'evalues', share, color: 'var(--a-ink)' }]}
-                    label={`${percentage} % évalué`}
-                  />
-                  <span className="min-w-0">
-                    <span className="block truncate text-lead font-semibold">{audit.name}</span>
-                    <span className="mt-1 block text-dense text-ink-muted">
-                      {MODE_LABEL[audit.mode]} · modifié {formatRelativeTime(audit.updatedAt)}
-                    </span>
-                  </span>
-                  <span className="text-right">
-                    <span className="block font-mono text-body font-semibold">{percentage}%</span>
-                    <span className="mt-1 block font-mono text-meta text-ink-muted">
-                      {evaluated} / {total}
-                    </span>
-                  </span>
-                  <ChevronRight size={16} aria-hidden="true" className="text-ink-muted" />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                return (
+                  <li key={audit.id}>
+                    <button
+                      type="button"
+                      onClick={() => onOpenAudit(audit.id)}
+                      className="grid w-full grid-cols-[48px_1fr_auto_16px] items-center gap-4 rounded-card border-1 border-border bg-surface p-4 text-left"
+                    >
+                      <AuditRing
+                        size={48}
+                        segments={[{ key: 'evalues', share, color: 'var(--a-ink)' }]}
+                        label={`${percentage} % évalué`}
+                      />
+                      <span className="min-w-0">
+                        <span className="block truncate text-lead font-semibold">{audit.name}</span>
+                        <span className="mt-1 block text-dense text-ink-muted">
+                          {MODE_LABEL[audit.mode]} · modifié {formatRelativeTime(audit.updatedAt)}
+                        </span>
+                      </span>
+                      <span className="text-right">
+                        <span className="block font-mono text-body font-semibold">
+                          {percentage}%
+                        </span>
+                        <span className="mt-1 block font-mono text-meta text-ink-muted">
+                          {evaluated} / {total}
+                        </span>
+                      </span>
+                      <ChevronRight size={16} aria-hidden="true" className="text-ink-muted" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
 
-      <button
-        type="button"
-        onClick={onCreateAudit}
-        className="flex h-prim items-center justify-center gap-2 rounded-card bg-ink px-4 text-lead font-semibold text-surface"
-      >
-        <Plus size={16} strokeWidth={2.2} aria-hidden="true" />
-        Démarrer un nouvel audit
-      </button>
-
-      <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={onOpenGlossary}
-          className="flex-1 rounded-card border-1 border-border bg-surface p-4 text-left"
-        >
-          <span className="mb-1 flex items-center gap-2 text-body font-semibold">
+        {/* Pleine largeur en tactile seulement : sur desktop un bouton étiré sur
+            tout le panneau est disproportionné. */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <button
+            type="button"
+            onClick={onCreateAudit}
+            className="flex h-prim items-center justify-center gap-2 rounded-ctrl bg-ink px-6 text-lead font-semibold text-surface"
+          >
+            <Plus size={16} strokeWidth={2.2} aria-hidden="true" />
+            {hasAudits ? 'Nouvel audit' : 'Démarrer un premier audit'}
+          </button>
+          <button
+            type="button"
+            onClick={onOpenGlossary}
+            className="flex h-prim items-center justify-center gap-2 rounded-ctrl border-1 border-border bg-surface px-6 text-body"
+          >
             <BookOpen size={16} aria-hidden="true" />
             Glossaire
-          </span>
-          <span className="block text-meta text-ink-muted">
-            {glossaryCount} définitions RGAA, consultables sans ouvrir d'audit.
-          </span>
-        </button>
-        <div className="flex-1 rounded-card border-1 border-dashed border-dashed p-4">
-          <span className="mb-1 flex items-center gap-2 text-body font-semibold text-ink-muted">
-            <Upload size={16} aria-hidden="true" />
-            Importer un rapport
-          </span>
-          <span className="block text-meta text-ink-muted">Bientôt disponible.</span>
+            <span className="font-mono text-meta text-ink-muted">{glossaryCount}</span>
+          </button>
         </div>
       </div>
     </div>

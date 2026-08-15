@@ -47,6 +47,7 @@ function setup(overrides = {}) {
     <HomeScreen
       audits={AUDITS}
       glossaryCount={284}
+      criteriaCount={106}
       onOpenAudit={onOpenAudit}
       onCreateAudit={onCreateAudit}
       onOpenGlossary={onOpenGlossary}
@@ -57,30 +58,30 @@ function setup(overrides = {}) {
 }
 
 describe('HomeScreen', () => {
-  it('affiche l\'en-tête avec logo et version RGAA', () => {
+  it('affiche le sur-titre RGAA 4.1 sans logo ni mot-symbole', () => {
     setup();
-    expect(screen.getByText('Accessipote')).toBeInTheDocument();
     expect(screen.getByText('RGAA 4.1')).toBeInTheDocument();
+    expect(screen.queryByText('Accessipote')).not.toBeInTheDocument();
   });
 
   it('affiche le titre principal', () => {
     setup();
-    expect(screen.getByText('On reprend où on en était ?')).toBeInTheDocument();
+    expect(screen.getByText('Auditer l\'accessibilité sans perdre le fil.')).toBeInTheDocument();
   });
 
-  it('accorde le sous-titre au singulier quand un audit existe', () => {
-    setup({ audits: [AUDITS[0]] });
-    expect(screen.getByText(/1 audit ouvert/)).toBeInTheDocument();
-  });
-
-  it('accorde le sous-titre au pluriel quand plusieurs audits existent', () => {
+  it('affiche l\'accroche avec le nombre de critères', () => {
     setup();
-    expect(screen.getByText(/2 audits ouverts/)).toBeInTheDocument();
+    expect(screen.getByText(/Les 106 critères du RGAA/)).toBeInTheDocument();
   });
 
-  it('affiche le message vide quand aucun audit n\'existe', () => {
+  it('affiche le sous-titre « Vos audits » quand des audits existent', () => {
+    setup({ audits: [AUDITS[0]] });
+    expect(screen.getByText('Vos audits')).toBeInTheDocument();
+  });
+
+  it('n\'affiche pas le sous-titre « Vos audits » quand aucun audit n\'existe', () => {
     setup({ audits: [] });
-    expect(screen.getByText(/Aucun audit pour le moment/)).toBeInTheDocument();
+    expect(screen.queryByText('Vos audits')).not.toBeInTheDocument();
   });
 
   it('masque la liste d\'audits quand elle est vide', () => {
@@ -96,15 +97,12 @@ describe('HomeScreen', () => {
 
   it('affiche le pourcentage d\'évaluation en chiffres, jamais dans l\'anneau seul', () => {
     setup();
-    // Les pourcentages sont affichés à côté de l'anneau (45% et 75%)
-    // Pas dans le label du ring lui-même uniquement
     expect(screen.getByRole('img', { name: /45 % évalué/ })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /75 % évalué/ })).toBeInTheDocument();
   });
 
   it('affiche le ratio évalués/total pour chaque audit', () => {
     setup();
-    // Les ratios sont dans des spans fragmentés : "48 / 106" etc.
     expect(screen.getByText(/48/)).toBeInTheDocument();
     expect(screen.getByText(/80/)).toBeInTheDocument();
   });
@@ -124,16 +122,21 @@ describe('HomeScreen', () => {
     expect(onOpenAudit).toHaveBeenCalledWith('a1');
   });
 
-  it('affiche le bouton de création d\'audit avec icône', () => {
-    setup();
-    expect(screen.getByRole('button', { name: /Démarrer un nouvel audit/ })).toBeInTheDocument();
+  it('affiche le bouton « Nouvel audit » quand des audits existent', () => {
+    setup({ audits: [AUDITS[0]] });
+    expect(screen.getByRole('button', { name: 'Nouvel audit' })).toBeInTheDocument();
+  });
+
+  it('affiche le bouton « Démarrer un premier audit » quand aucun audit n\'existe', () => {
+    setup({ audits: [] });
+    expect(screen.getByRole('button', { name: 'Démarrer un premier audit' })).toBeInTheDocument();
   });
 
   it('appelle onCreateAudit au clic sur le bouton de création', async () => {
     const user = userEvent.setup();
     const { onCreateAudit } = setup();
 
-    await user.click(screen.getByRole('button', { name: /Démarrer un nouvel audit/ }));
+    await user.click(screen.getByRole('button', { name: 'Nouvel audit' }));
 
     expect(onCreateAudit).toHaveBeenCalled();
   });
@@ -141,29 +144,27 @@ describe('HomeScreen', () => {
   it('affiche le bouton Glossaire avec le nombre de définitions', () => {
     setup();
     expect(screen.getByRole('button', { name: /Glossaire/ })).toBeInTheDocument();
-    expect(screen.getByText(/284 définitions RGAA/)).toBeInTheDocument();
+    expect(screen.getByText('284')).toBeInTheDocument();
   });
 
   it('appelle onOpenGlossary au clic sur le glossaire', async () => {
     const user = userEvent.setup();
     const { onOpenGlossary } = setup();
 
-    const glossaryButton = screen.getByText('Glossaire').closest('button');
-    if (glossaryButton) {
-      await user.click(glossaryButton);
-    }
+    const glossaryButton = screen.getByRole('button', { name: /Glossaire/ });
+    await user.click(glossaryButton);
 
     expect(onOpenGlossary).toHaveBeenCalled();
   });
 
-  it('affiche la mention « bientôt disponible » pour l\'import de rapport', () => {
+  it('n\'affiche pas la carte « Importer un rapport »', () => {
     setup();
-    expect(screen.getByText(/Bientôt disponible/)).toBeInTheDocument();
+    expect(screen.queryByText(/Importer un rapport/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Bientôt disponible/)).not.toBeInTheDocument();
   });
 
   it('affiche la date relative de modification pour chaque audit', () => {
     setup();
-    // Les audits ont des dates différentes, donc il y aura du texte "modifié il y a..."
     expect(screen.getByText(/modifié il y a/)).toBeInTheDocument();
   });
 });

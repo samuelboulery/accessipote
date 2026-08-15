@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Sidebar from './Sidebar';
 import type { Audit } from '../types';
+import type { SwitchableAudit } from './AuditSwitcher';
 
 const AUDIT: Audit = {
   id: 'a1',
@@ -15,13 +16,24 @@ const AUDIT: Audit = {
   notes: {},
   pages: {},
   checkedTests: {},
+  lastTouchedCriteriaId: undefined,
 };
 
 const COUNTS = { conforme: 29, ecarts: 12, nonApplicable: 7, aEvaluer: 58 };
 
+const AUDITS: SwitchableAudit[] = [
+  {
+    audit: AUDIT,
+    evaluated: 48,
+    total: 106,
+  },
+];
+
 function setup(overrides = {}) {
   const onNavigate = vi.fn();
-  const onAuditSelectorClick = vi.fn();
+  const onSelectAudit = vi.fn();
+  const onCreateAudit = vi.fn();
+  const onToggleDark = vi.fn();
   render(
     <Sidebar
       view="audit"
@@ -29,11 +41,15 @@ function setup(overrides = {}) {
       activeAudit={AUDIT}
       counts={COUNTS}
       total={106}
-      onAuditSelectorClick={onAuditSelectorClick}
+      audits={AUDITS}
+      onSelectAudit={onSelectAudit}
+      onCreateAudit={onCreateAudit}
+      isDark={false}
+      onToggleDark={onToggleDark}
       {...overrides}
     />,
   );
-  return { onNavigate, onAuditSelectorClick };
+  return { onNavigate, onSelectAudit, onCreateAudit, onToggleDark };
 }
 
 describe('Sidebar', () => {
@@ -80,12 +96,14 @@ describe('Sidebar', () => {
 
   it('affiche le sélecteur d\'audit avec son mode en lecture', async () => {
     const user = userEvent.setup();
-    const { onAuditSelectorClick } = setup();
+    setup();
 
     expect(screen.getByText('Mode classique')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /Refonte lamairie\.fr/ }));
+    const auditButton = screen.getByRole('button', { name: /Audit courant : Refonte lamairie\.fr/ });
+    await user.click(auditButton);
 
-    expect(onAuditSelectorClick).toHaveBeenCalled();
+    // Le popover s'ouvre après clic
+    expect(screen.getByText('Vos audits')).toBeInTheDocument();
   });
 
   it('masque le sélecteur et la carte d\'audit quand aucun audit n\'est actif', () => {
@@ -97,6 +115,27 @@ describe('Sidebar', () => {
 
   it('annonce l\'état de sauvegarde plutôt que de le laisser deviner', () => {
     setup();
+    expect(screen.getByText(/Enregistré/)).toBeInTheDocument();
+  });
+
+  it('affiche la bascule clair/sombre au pied de la barre', async () => {
+    const user = userEvent.setup();
+    const { onToggleDark } = setup();
+
+    const toggleButton = screen.getByRole('button', { name: /Activer le mode sombre/ });
+    expect(toggleButton).toBeInTheDocument();
+
+    await user.click(toggleButton);
+    expect(onToggleDark).toHaveBeenCalled();
+  });
+
+  it('supporte le dernier critère modifié en lecture', () => {
+    const auditWithCriteria: typeof AUDIT = {
+      ...AUDIT,
+      lastTouchedCriteriaId: '1.1',
+    };
+    setup({ activeAudit: auditWithCriteria });
+    // Vérifie que le composant accepte le champ sans erreur
     expect(screen.getByText(/Enregistré/)).toBeInTheDocument();
   });
 });

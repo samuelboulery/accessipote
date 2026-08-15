@@ -21,7 +21,6 @@ import SummaryTab from './components/SummaryTab';
 import GlossaryScreen from './components/GlossaryScreen';
 import GlossaryPopover from './components/GlossaryPopover';
 import ExportButton from './components/ExportButton';
-import DarkModeToggle from './components/DarkModeToggle';
 import Toast from './components/Toast';
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 import criteriaRawData from './data/criteria.json';
@@ -126,7 +125,7 @@ function App() {
       const next = { ...activeAudit.progress };
       if (status === '') delete next[criteriaId];
       else next[criteriaId] = { status } as (typeof next)[string];
-      patchAudit({ progress: next });
+      patchAudit({ progress: next, lastTouchedCriteriaId: criteriaId });
     },
     [activeAudit, patchAudit],
   );
@@ -134,7 +133,10 @@ function App() {
   const handleCheckedTestsChange = useCallback(
     (criteriaId: string, testIds: string[]) => {
       if (!activeAudit) return;
-      patchAudit({ checkedTests: { ...activeAudit.checkedTests, [criteriaId]: testIds } });
+      patchAudit({
+        checkedTests: { ...activeAudit.checkedTests, [criteriaId]: testIds },
+        lastTouchedCriteriaId: criteriaId,
+      });
     },
     [activeAudit, patchAudit],
   );
@@ -142,7 +144,10 @@ function App() {
   const handleNoteChange = useCallback(
     (criteriaId: string, note: string) => {
       if (!activeAudit) return;
-      patchAudit({ notes: { ...activeAudit.notes, [criteriaId]: note } });
+      patchAudit({
+        notes: { ...activeAudit.notes, [criteriaId]: note },
+        lastTouchedCriteriaId: criteriaId,
+      });
     },
     [activeAudit, patchAudit],
   );
@@ -150,7 +155,10 @@ function App() {
   const handlePagesChange = useCallback(
     (criteriaId: string, pages: string[]) => {
       if (!activeAudit) return;
-      patchAudit({ pages: { ...activeAudit.pages, [criteriaId]: pages } });
+      patchAudit({
+        pages: { ...activeAudit.pages, [criteriaId]: pages },
+        lastTouchedCriteriaId: criteriaId,
+      });
     },
     [activeAudit, patchAudit],
   );
@@ -253,14 +261,21 @@ function App() {
           activeAudit={activeAudit}
           counts={sidebarCounts}
           total={auditCriteria.length}
-          onAuditSelectorClick={() => setView('home')}
+          audits={homeAudits}
+          onSelectAudit={handleOpenAudit}
+          onCreateAudit={() => {
+            setView('home');
+            setIsCreating(true);
+          }}
+          isDark={isDark}
+          onToggleDark={toggleDarkMode}
         />
       )}
 
       <main
         className={[
-          'flex-1 overflow-y-auto bg-surface p-4',
-          isMobile ? 'pb-two' : 'my-2 rounded-l-panel shadow-panel',
+          'flex flex-1 flex-col overflow-y-auto bg-surface p-4',
+          isMobile ? 'pb-two' : 'my-2 rounded-l-card shadow-panel',
         ].join(' ')}
       >
         {view === 'home' &&
@@ -275,6 +290,7 @@ function App() {
             <HomeScreen
               audits={homeAudits}
               glossaryCount={glossary.length}
+              criteriaCount={criteriaList.length}
               onOpenAudit={handleOpenAudit}
               onCreateAudit={() => setIsCreating(true)}
               onOpenGlossary={() => setView('glossary')}
@@ -302,12 +318,7 @@ function App() {
               onPagesChange={handlePagesChange}
               onGlossaryClick={handleGlossaryClick}
               searchInputRef={searchInputRef}
-              toolbarActions={
-                <>
-                  <DarkModeToggle isDark={isDark} onToggle={toggleDarkMode} />
-                  {exportButton}
-                </>
-              }
+              toolbarActions={exportButton}
             />
           ) : (
             <p className="text-body text-ink-muted">
@@ -352,7 +363,14 @@ function App() {
         />
       )}
 
-      {isMobile && <MobileTabBar view={view} onNavigate={setView} />}
+      {isMobile && (
+        <MobileTabBar
+          view={view}
+          onNavigate={setView}
+          isDark={isDark}
+          onToggleDark={toggleDarkMode}
+        />
+      )}
 
       <Toast toasts={toasts} onDismiss={hideToast} />
 

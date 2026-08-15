@@ -48,7 +48,7 @@ export default function Toast({ toasts, onDismiss }: ToastProps) {
           <div
             key={toast.id}
             data-testid={`toast-${toast.id}`}
-            className={`flex items-center gap-3 rounded-card border-1 p-3 motion-safe:transition-all ${style}`}
+            className={`flex items-center gap-3 rounded-card border-1 p-4 motion-safe:transition-all ${style}`}
           >
             <div className="flex-shrink-0">{getToastIcon(toast.type)}</div>
             <p className="flex-1 text-body font-medium">{toast.message}</p>

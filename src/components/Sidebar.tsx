@@ -1,8 +1,10 @@
-import { memo } from 'react';
-import { Home, List, BarChart3, BookOpen, ChevronsUpDown, Check } from 'lucide-react';
-import type { Audit, Mode } from '../types';
+import { memo, useEffect, useState } from 'react';
+import { Home, List, BarChart3, BookOpen, Check } from 'lucide-react';
+import type { Audit } from '../types';
 import AccessipoteLogo from './AccessipoteLogo';
 import AuditRing from './AuditRing';
+import AuditSwitcher, { type SwitchableAudit } from './AuditSwitcher';
+import DarkModeToggle from './DarkModeToggle';
 import { getStatusPresentation, UNSET_STATUS } from '../utils/statusPresentation';
 import { formatRelativeTime } from '../utils/formatRelativeTime';
 
@@ -22,7 +24,11 @@ interface SidebarProps {
   /** Répartition des critères de l'audit actif. */
   counts: StatusCounts;
   total: number;
-  onAuditSelectorClick: () => void;
+  audits: SwitchableAudit[];
+  onSelectAudit: (auditId: string) => void;
+  onCreateAudit: () => void;
+  isDark: boolean;
+  onToggleDark: () => void;
 }
 
 const NAV: Array<{ view: View; label: string; Icon: typeof Home }> = [
@@ -32,12 +38,26 @@ const NAV: Array<{ view: View; label: string; Icon: typeof Home }> = [
   { view: 'glossary', label: 'Glossaire', Icon: BookOpen },
 ];
 
-const MODE_LABEL: Record<Mode, string> = {
-  'classic': 'Mode classique',
-  'design-system': 'Mode design system',
-};
+function Sidebar({
+  view,
+  onNavigate,
+  activeAudit,
+  counts,
+  total,
+  audits,
+  onSelectAudit,
+  onCreateAudit,
+  isDark,
+  onToggleDark,
+}: SidebarProps) {
+  // « il y a 2 minutes » se figerait sans ce battement : rien ne provoque de
+  // rendu entre deux modifications.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick(t => t + 1), 30_000);
+    return () => clearInterval(timer);
+  }, []);
 
-function Sidebar({ view, onNavigate, activeAudit, counts, total, onAuditSelectorClick }: SidebarProps) {
   const evaluated = counts.conforme + counts.ecarts + counts.nonApplicable;
   const share = total > 0 ? evaluated / total : 0;
   const percentage = Math.round(share * 100);
@@ -59,19 +79,13 @@ function Sidebar({ view, onNavigate, activeAudit, counts, total, onAuditSelector
       </div>
 
       {activeAudit && (
-        <button
-          type="button"
-          onClick={onAuditSelectorClick}
-          className="flex h-two w-full items-center gap-3 rounded-ctrl border-1 border-border bg-surface px-3 text-left"
-        >
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-body font-semibold">{activeAudit.name}</span>
-            <span className="mt-1 block font-mono text-meta text-ink-muted">
-              {MODE_LABEL[activeAudit.mode]}
-            </span>
-          </span>
-          <ChevronsUpDown size={16} aria-hidden="true" className="flex-shrink-0 text-ink-muted" />
-        </button>
+        <AuditSwitcher
+          activeAudit={activeAudit}
+          audits={audits}
+          onSelectAudit={onSelectAudit}
+          onSeeAllAudits={() => onNavigate('home')}
+          onCreateAudit={onCreateAudit}
+        />
       )}
 
       <nav aria-label="Navigation principale">
@@ -138,12 +152,24 @@ function Sidebar({ view, onNavigate, activeAudit, counts, total, onAuditSelector
         </div>
       )}
 
-      {activeAudit && (
-        <p className="flex items-center gap-1 text-dense text-ink-muted">
-          <Check size={12} strokeWidth={2.6} aria-hidden="true" />
-          Enregistré {formatRelativeTime(activeAudit.updatedAt)}
-        </p>
-      )}
+      {/* Pied de colonne : la bascule doit être atteignable des quatre écrans,
+          pas seulement de l'audit. */}
+      <div className="mt-auto flex items-end gap-2">
+        {activeAudit && (
+          <p className="min-w-0 flex-1 text-dense text-ink-muted">
+            <span className="flex items-center gap-1">
+              <Check size={12} strokeWidth={2.6} aria-hidden="true" className="flex-shrink-0" />
+              Enregistré {formatRelativeTime(activeAudit.updatedAt)}
+            </span>
+            {activeAudit.lastTouchedCriteriaId && (
+              <span className="mt-1 block truncate font-mono text-meta">
+                Modifié : {activeAudit.lastTouchedCriteriaId}
+              </span>
+            )}
+          </p>
+        )}
+        <DarkModeToggle isDark={isDark} onToggle={onToggleDark} />
+      </div>
     </div>
   );
 }

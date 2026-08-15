@@ -1,9 +1,9 @@
 ---
 {
-  "status": "open",
+  "status": "closed",
   "title": "Refonte Accessipote — direction retenue (handoff design)",
   "opened": "2026-08-15",
-  "closed": null,
+  "closed": "2026-08-15",
   "commits": [
     {
       "sha": "caaa1bc",
@@ -182,6 +182,11 @@
     },
     {
       "sha": "8e43972",
+      "date": "2026-08-15",
+      "files": []
+    },
+    {
+      "sha": "df6faae",
       "date": "2026-08-15",
       "files": []
     }

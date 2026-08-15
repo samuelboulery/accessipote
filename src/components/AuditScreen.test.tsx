@@ -197,11 +197,61 @@ describe('AuditScreen', () => {
     expect(onFiltersChange).toHaveBeenCalledWith({ search: '', level: '', status: '' });
   });
 
+  it('affiche la case maîtresse pour sélectionner tous les critères affichés', () => {
+    setup();
+    expect(screen.getByRole('checkbox', { name: /Sélectionner les 2 critères affichés/ })).toBeInTheDocument();
+  });
+
+  it('sélectionne tous les critères au clic sur la case maîtresse', async () => {
+    const user = userEvent.setup();
+    setup();
+
+    const masterCheckbox = screen.getByRole('checkbox', { name: /Sélectionner les 2 critères affichés/ });
+    await user.click(masterCheckbox);
+
+    expect(screen.getByText('2 critères sélectionnés')).toBeInTheDocument();
+  });
+
+  it('désélectionne tous les critères au deuxième clic sur la case maîtresse', async () => {
+    const user = userEvent.setup();
+    setup();
+
+    const masterCheckbox = screen.getByRole('checkbox', { name: /Sélectionner les 2 critères affichés/ });
+    await user.click(masterCheckbox);
+    await user.click(masterCheckbox);
+
+    expect(screen.queryByText(/critère sélectionné/)).not.toBeInTheDocument();
+  });
+
+  it('la case maîtresse est indéterminée en sélection partielle', async () => {
+    const user = userEvent.setup();
+    setup();
+
+    const criteriaCheckbox = screen.getByRole('checkbox', { name: /Sélectionner le critère 1\.1/ });
+    await user.click(criteriaCheckbox);
+
+    const masterCheckbox = screen.getByRole('checkbox', { name: /Sélectionner les 2 critères affichés/ });
+    expect(masterCheckbox).toHaveProperty('indeterminate', true);
+  });
+
+  it('la case maîtresse n\'agit que sur les critères affichés avec un filtre actif', async () => {
+    const user = userEvent.setup();
+    setup({
+      filters: { search: '', level: 'A', status: '' },
+    });
+
+    // Avec le filtre level=A, seuls les critères 1.1 et 1.2 (thème Images) sont affichés
+    const masterCheckbox = screen.getByRole('checkbox', { name: /Sélectionner les 2 critères affichés/ });
+    await user.click(masterCheckbox);
+
+    expect(screen.getByText('2 critères sélectionnés')).toBeInTheDocument();
+  });
+
   it('affiche la barre d\'actions groupées quand on sélectionne un critère', async () => {
     const user = userEvent.setup();
     setup();
 
-    const checkbox = screen.getAllByRole('checkbox')[0];
+    const checkbox = screen.getByRole('checkbox', { name: /Sélectionner le critère 1\.1/ });
     await user.click(checkbox);
 
     expect(screen.getByText('1 critère sélectionné')).toBeInTheDocument();
@@ -211,9 +261,10 @@ describe('AuditScreen', () => {
     const user = userEvent.setup();
     setup();
 
-    const checkboxes = screen.getAllByRole('checkbox');
-    await user.click(checkboxes[0]);
-    await user.click(checkboxes[1]);
+    const checkbox1 = screen.getByRole('checkbox', { name: /Sélectionner le critère 1\.1/ });
+    const checkbox2 = screen.getByRole('checkbox', { name: /Sélectionner le critère 1\.2/ });
+    await user.click(checkbox1);
+    await user.click(checkbox2);
 
     expect(screen.getByText('2 critères sélectionnés')).toBeInTheDocument();
   });
@@ -222,9 +273,10 @@ describe('AuditScreen', () => {
     const user = userEvent.setup();
     const { onStatusChange } = setup();
 
-    const checkboxes = screen.getAllByRole('checkbox');
-    await user.click(checkboxes[0]);
-    await user.click(checkboxes[1]);
+    const checkbox1 = screen.getByRole('checkbox', { name: /Sélectionner le critère 1\.1/ });
+    const checkbox2 = screen.getByRole('checkbox', { name: /Sélectionner le critère 1\.2/ });
+    await user.click(checkbox1);
+    await user.click(checkbox2);
 
     const conformeButton = screen.getByRole('button', { name: /Conforme/ });
     await user.click(conformeButton);
@@ -238,8 +290,8 @@ describe('AuditScreen', () => {
     const user = userEvent.setup();
     setup();
 
-    const checkboxes = screen.getAllByRole('checkbox');
-    await user.click(checkboxes[0]);
+    const checkbox = screen.getByRole('checkbox', { name: /Sélectionner le critère 1\.1/ });
+    await user.click(checkbox);
 
     const conformeButton = screen.getByRole('button', { name: /Conforme/ });
     await user.click(conformeButton);
@@ -257,7 +309,7 @@ describe('AuditScreen', () => {
     const user = userEvent.setup();
     setup();
 
-    const checkbox = screen.getAllByRole('checkbox')[0];
+    const checkbox = screen.getByRole('checkbox', { name: /Sélectionner le critère 1\.1/ });
     await user.click(checkbox);
 
     expect(screen.getByRole('button', { name: 'Tout désélectionner' })).toBeInTheDocument();
@@ -267,9 +319,10 @@ describe('AuditScreen', () => {
     const user = userEvent.setup();
     setup();
 
-    const checkboxes = screen.getAllByRole('checkbox');
-    await user.click(checkboxes[0]);
-    await user.click(checkboxes[1]);
+    const checkbox1 = screen.getByRole('checkbox', { name: /Sélectionner le critère 1\.1/ });
+    const checkbox2 = screen.getByRole('checkbox', { name: /Sélectionner le critère 1\.2/ });
+    await user.click(checkbox1);
+    await user.click(checkbox2);
 
     const deselectButton = screen.getByRole('button', { name: 'Tout désélectionner' });
     await user.click(deselectButton);

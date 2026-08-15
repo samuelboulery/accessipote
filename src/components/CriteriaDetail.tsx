@@ -143,7 +143,7 @@ export default function CriteriaDetail({
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => toggleTest(test.id)}
-                      className="mt-1 h-icon-lg w-icon-lg cursor-pointer rounded-box"
+                      className="mt-1 h-icon-lg w-icon-lg cursor-pointer rounded-ctrl"
                     />
                     <span>
                       <span className="block font-mono text-meta text-ink-muted">

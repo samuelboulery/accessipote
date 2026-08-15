@@ -45,7 +45,7 @@ function CriteriaItem({
     <article
       id={`criteria-${criterion.id}`}
       tabIndex={-1}
-      className={`rounded-card border-1 p-3 ${cardClass}`}
+      className={`rounded-card border-1 p-4 ${cardClass}`}
     >
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <label className="-m-3 flex h-touch w-touch cursor-pointer items-center justify-center">
@@ -54,7 +54,7 @@ function CriteriaItem({
             checked={isSelected}
             onChange={event => onSelectedChange(criterion.id, event.target.checked)}
             aria-label={`Sélectionner le critère ${criterion.id}`}
-            className="h-icon-lg w-icon-lg cursor-pointer rounded-box"
+            className="h-icon-lg w-icon-lg cursor-pointer rounded-ctrl"
           />
         </label>
         <span className="rounded-ctrl bg-sunk px-2 py-1 font-mono text-meta font-semibold">

@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import type { Audit, CriteriaFilters, CriteriaRGAA, CriteriaStatus } from '../types';
 import SearchFilters from './SearchFilters';
@@ -104,6 +104,32 @@ export default function AuditScreen({
     setSelection(new Set());
   };
 
+  // La case maîtresse n'agit que sur les critères affichés, filtres compris :
+  // agir sur des critères hors écran, c'est ce qui rendait l'ancien « tout
+  // sélectionner » malhonnête.
+  const visibleIds = useMemo(() => filteredCriteria.map(c => c.id), [filteredCriteria]);
+  const selectedVisibleCount = visibleIds.filter(id => selection.has(id)).length;
+  const allVisibleSelected = visibleIds.length > 0 && selectedVisibleCount === visibleIds.length;
+  const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
+
+  // `indeterminate` est une propriété du DOM, pas un attribut : React ne sait
+  // pas la poser en JSX.
+  const masterRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (masterRef.current) masterRef.current.indeterminate = someVisibleSelected;
+  }, [someVisibleSelected]);
+
+  const toggleAllVisible = () => {
+    setSelection(previous => {
+      const next = new Set(previous);
+      for (const id of visibleIds) {
+        if (allVisibleSelected) next.delete(id);
+        else next.add(id);
+      }
+      return next;
+    });
+  };
+
   const okColor = getStatusPresentation('conforme', audit.mode).color;
   const koColor = getStatusPresentation('non-conforme', audit.mode).color;
   const naColor = getStatusPresentation('non-applicable', audit.mode).color;
@@ -186,7 +212,28 @@ export default function AuditScreen({
           />
         </div>
       ) : (
-        <CriteriaList
+        <>
+          {filteredCriteria.length > 0 && (
+            <div className="flex items-center gap-3">
+              <label className="flex h-touch w-touch flex-shrink-0 cursor-pointer items-center justify-center">
+                <input
+                  ref={masterRef}
+                  type="checkbox"
+                  checked={allVisibleSelected}
+                  onChange={toggleAllVisible}
+                  aria-label={`Sélectionner les ${filteredCriteria.length} critères affichés`}
+                  className="h-icon-lg w-icon-lg cursor-pointer rounded-ctrl"
+                />
+              </label>
+              <span className="text-dense text-ink-muted">
+                {selectedVisibleCount > 0
+                  ? `${selectedVisibleCount} sur ${filteredCriteria.length} sélectionné${selectedVisibleCount > 1 ? 's' : ''}`
+                  : `Tout sélectionner (${filteredCriteria.length})`}
+              </span>
+            </div>
+          )}
+
+          <CriteriaList
           criteria={filteredCriteria}
           mode={audit.mode}
           progress={progress}
@@ -214,7 +261,8 @@ export default function AuditScreen({
               }
             />
           }
-        />
+          />
+        </>
       )}
 
       {!expanded && (
