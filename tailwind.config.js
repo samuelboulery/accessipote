@@ -56,6 +56,12 @@ export default {
         bg: 'var(--a-todo-bg)',
         fg: 'var(--a-todo-fg)',
       },
+
+      // La bannière est un bloc inversé : son encre ne suit pas celle de l'app.
+      banner: {
+        ink:   'var(--a-banner-ink)',
+        muted: 'var(--a-banner-muted)',
+      },
     },
 
     // [taille, { lineHeight, letterSpacing }] — l'approche et l'interligne

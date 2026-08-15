@@ -42,6 +42,17 @@
         "src/components/HomeScreen.test.tsx",
         "src/components/HomeScreen.tsx"
       ]
+    },
+    {
+      "sha": "f89a976",
+      "date": "2026-08-15",
+      "files": [
+        "src/App.tsx",
+        "src/components/HomeHero.test.tsx",
+        "src/components/HomeHero.tsx",
+        "src/index.css",
+        "src/tokens.css"
+      ]
     }
   ]
 }

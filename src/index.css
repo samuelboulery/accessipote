@@ -165,6 +165,7 @@ code {
    Le grain est un bruit SVG en data: URI. La CSP l'autorise — `img-src`
    couvre les background-image et accepte `data:`. */
 .banner {
+  color: var(--a-banner-ink);
   background-image: linear-gradient(135deg, var(--a-banner-from), var(--a-banner-to));
   isolation: isolate;
   position: relative;
@@ -178,7 +179,7 @@ code {
   pointer-events: none;
   opacity: var(--a-banner-grain);
   mix-blend-mode: var(--a-banner-grain-blend);
-  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27140%27%20height%3D%27140%27%3E%3Cfilter%20id%3D%27g%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.85%27%20numOctaves%3D%273%27%20stitchTiles%3D%27stitch%27%2F%3E%3C%2Ffilter%3E%3Crect%20width%3D%27140%27%20height%3D%27140%27%20filter%3D%27url%28%23g%29%27%2F%3E%3C%2Fsvg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27200%27%20height%3D%27200%27%3E%3Cfilter%20id%3D%27g%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.3%27%20numOctaves%3D%272%27%20stitchTiles%3D%27stitch%27%2F%3E%3C%2Ffilter%3E%3Crect%20width%3D%27200%27%20height%3D%27200%27%20filter%3D%27url%28%23g%29%27%2F%3E%3C%2Fsvg%3E");
 }
 
 /* En contraste renforcé, le grain ne fait que brouiller le texte. */

@@ -40,15 +40,17 @@
   --a-todo-fg:       #404040;
 
   /* ---- Bannière d'accueil ----
-     Neutre chaud très désaturé : une pointe de chaleur, sans introduire de
-     teinte qui pourrait se lire comme un statut. Assez clair pour porter
-     l'encre à plus de 15:1. */
-  --a-banner-from:  #F4EFE7;
-  --a-banner-to:    #E4DED3;
-  /* Sur un fond clair, `overlay` pousse vers le blanc et le grain disparaît ;
-     `multiply` le fait mordre. */
-  --a-banner-grain: 0.22;
-  --a-banner-grain-blend: multiply;
+     Sombre dans les deux thèmes : c'est un bloc inversé, pas une surface.
+     Le neutre chaud clair ne se voyait pas, et toute teinte franche se lirait
+     comme un statut. */
+  --a-banner-from:  #000000;
+  --a-banner-to:    #2E2E2E;
+  --a-banner-ink:   #FFFFFF;  /* 21:1 sur le début du dégradé */
+  --a-banner-muted: #C4C4C4;  /* 8,4:1 sur la fin du dégradé */
+  /* Fusion normale : sur un fond quasi noir, `overlay` n'a presque rien à
+     lever et le grain disparaissait. */
+  --a-banner-grain: 0.16;
+  --a-banner-grain-blend: normal;
 
   /* ---- Typographie ---- */
   --a-font-sans: 'Instrument Sans', system-ui, sans-serif;
@@ -108,11 +110,14 @@
   --a-todo-bg:       #1F1F1F;
   --a-todo-fg:       #C4C4C4;
 
-  /* Brun très foncé vers le noir : même chaleur, rampe inversée. */
-  --a-banner-from:  #1E1915;
-  --a-banner-to:    #0B0B0B;
-  --a-banner-grain: 0.30;
-  --a-banner-grain-blend: overlay;
+  /* En sombre le fond de l'app est noir : la bannière remonte d'un cran pour
+     rester un bloc distinct plutôt que de s'y fondre. */
+  --a-banner-from:  #2E2E2E;
+  --a-banner-to:    #131313;
+  --a-banner-ink:   #FFFFFF;
+  --a-banner-muted: #C4C4C4;
+  --a-banner-grain: 0.14;
+  --a-banner-grain-blend: normal;
 
   --a-focus-ring: 0 0 0 2px #000000, 0 0 0 5px #FFFFFF;
 }
