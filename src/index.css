@@ -73,6 +73,12 @@ code {
   color: var(--a-ink-muted);
 }
 
+/* Cases et radios natifs : la teinte par défaut du navigateur est hors système. */
+input[type='radio'],
+input[type='checkbox'] {
+  accent-color: var(--a-ink);
+}
+
 /* Focus visible partout : liseré clair puis anneau contrasté. Ne jamais poser
    `outline: none` sans ce remplacement. */
 :focus-visible {

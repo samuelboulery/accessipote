@@ -92,9 +92,9 @@ export interface AuditStore {
   activeAuditId: string | null;
 }
 
+/** Le thème n'est plus un filtre mais la navigation — voir ThemeRail. */
 export interface CriteriaFilters {
   search: string;
-  themes: string[];
   level: string;
   status: string;
 }

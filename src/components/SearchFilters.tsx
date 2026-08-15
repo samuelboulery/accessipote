@@ -1,94 +1,147 @@
-import type React from 'react';
-import type { CriteriaFilters } from '../types';
-import ThemeSelector from './ThemeSelector';
+import { useState, useRef, useEffect } from 'react';
+import { Search, SlidersHorizontal } from 'lucide-react';
+import type { CriteriaFilters, Mode } from '../types';
+import { getSelectableStatuses } from '../utils/statusPresentation';
+import { MAX_SEARCH_LENGTH } from '../constants';
 
 interface SearchFiltersProps {
   filters: CriteriaFilters;
   onFiltersChange: (filters: CriteriaFilters) => void;
-  themes: string[];
-  mode: 'classic' | 'design-system';
+  levels: string[];
+  mode: Mode;
   inputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
+/**
+ * Niveau et statut sont des affinages, pas la navigation principale : ils
+ * passent derrière un bouton plutôt que d'occuper la barre en permanence.
+ */
 export default function SearchFilters({
   filters,
   onFiltersChange,
-  themes,
+  levels,
   mode,
   inputRef,
 }: SearchFiltersProps) {
-  const handleFilterChange = (key: keyof CriteriaFilters, value: string) => {
-    onFiltersChange({ ...filters, [key]: value });
-  };
+  const [isOpen, setIsOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
-  const statusOptions =
-    mode === 'classic'
-      ? [
-          { value: 'conforme', label: 'Conforme' },
-          { value: 'non-conforme', label: 'Non conf.' },
-          { value: 'non-applicable', label: 'N/A' },
-        ]
-      : [
-          { value: 'default-compliant', label: 'Par défaut' },
-          { value: 'project-implementation', label: 'À impl.' },
-          { value: 'non-applicable', label: 'N/A' },
-        ];
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!popoverRef.current?.contains(event.target as Node)) setIsOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsOpen(false);
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
+  const update = (patch: Partial<CriteriaFilters>) => onFiltersChange({ ...filters, ...patch });
+  const activeCount = (filters.level === '' ? 0 : 1) + (filters.status === '' ? 0 : 1);
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-      <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Filtres de recherche</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Recherche textuelle */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Recherche
-          </label>
-          <input
-            ref={inputRef}
-            type="text"
-            value={filters.search}
-            onChange={(e) => handleFilterChange('search', e.target.value)}
-            placeholder="ID, titre, description..."
-            maxLength={200}
-            aria-keyshortcuts="Control+f Meta+f"
-            className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 text-sm"
-          />
-        </div>
-
-        {/* Filtre par statut */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Statut
-          </label>
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrer par statut">
-            {[{ value: '', label: 'Tous' }, ...statusOptions].map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => handleFilterChange('status', opt.value)}
-                className={`px-3 py-2 sm:py-2.5 text-sm border rounded-md transition-colors ${
-                  filters.status === opt.value
-                    ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Sélection multiple de thèmes */}
-      <div className="mt-4">
-        <ThemeSelector
-          availableThemes={themes}
-          selectedThemes={filters.themes}
-          onThemesChange={(themes) => onFiltersChange({ ...filters, themes })}
+    <div className="flex items-center gap-3">
+      <div className="relative flex-1">
+        <Search
+          size={16}
+          aria-hidden="true"
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted"
         />
+        <input
+          ref={inputRef}
+          type="search"
+          value={filters.search}
+          onChange={event => update({ search: event.target.value })}
+          maxLength={MAX_SEARCH_LENGTH}
+          aria-label="Rechercher un critère"
+          aria-keyshortcuts="Control+K Meta+K"
+          placeholder="Rechercher un critère"
+          className="h-ctrl w-full rounded-card border-1 border-border bg-surface pl-8 pr-14 text-body"
+        />
+        <span
+          aria-hidden="true"
+          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-ctrl bg-sunk px-2 py-1 font-mono text-meta text-ink-muted"
+        >
+          ⌘K
+        </span>
       </div>
 
+      <div className="relative" ref={popoverRef}>
+        <button
+          type="button"
+          onClick={() => setIsOpen(open => !open)}
+          aria-expanded={isOpen}
+          className="flex h-ctrl items-center gap-2 rounded-ctrl border-1 border-border bg-surface px-3 text-body"
+        >
+          <SlidersHorizontal size={16} aria-hidden="true" />
+          Filtrer
+          {activeCount > 0 && (
+            <span className="rounded-pill bg-ink px-2 font-mono text-meta text-surface">
+              {activeCount}
+            </span>
+          )}
+        </button>
 
+        {isOpen && (
+          <div className="absolute right-0 z-10 mt-2 flex w-[280px] flex-col gap-4 rounded-card border-1 border-border bg-surface p-4 shadow-panel">
+            <div>
+              <label htmlFor="filter-level" className="mb-2 block text-body font-semibold">
+                Niveau
+              </label>
+              <select
+                id="filter-level"
+                value={filters.level}
+                onChange={event => update({ level: event.target.value })}
+                className="h-ctrl w-full rounded-ctrl border-1 border-border bg-surface px-2 text-body"
+              >
+                <option value="">Tous les niveaux</option>
+                {levels.map(level => (
+                  <option key={level} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="filter-status" className="mb-2 block text-body font-semibold">
+                Statut
+              </label>
+              <select
+                id="filter-status"
+                value={filters.status}
+                onChange={event => update({ status: event.target.value })}
+                className="h-ctrl w-full rounded-ctrl border-1 border-border bg-surface px-2 text-body"
+              >
+                <option value="">Tous les statuts</option>
+                {getSelectableStatuses(mode).map(({ key, label }) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {activeCount > 0 && (
+              <button
+                type="button"
+                onClick={() => update({ level: '', status: '' })}
+                className="h-ctrl rounded-ctrl border-1 border-border text-body"
+              >
+                Effacer les filtres
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

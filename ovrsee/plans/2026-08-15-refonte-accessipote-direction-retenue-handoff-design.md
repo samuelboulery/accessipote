@@ -33,6 +33,25 @@
         "src/utils/migrateProgress.test.ts",
         "src/utils/migrateProgress.ts"
       ]
+    },
+    {
+      "sha": "82c129b",
+      "date": "2026-08-15",
+      "files": [
+        "src/components/AccessipoteLogo.tsx",
+        "src/components/AuditRing.test.tsx",
+        "src/components/AuditRing.tsx",
+        "src/components/SegmentedGauge.test.tsx",
+        "src/components/SegmentedGauge.tsx",
+        "src/components/Sidebar.test.tsx",
+        "src/components/Sidebar.tsx",
+        "src/components/StatusButtons.test.tsx",
+        "src/components/StatusButtons.tsx",
+        "src/components/StatusPill.test.tsx",
+        "src/components/StatusPill.tsx",
+        "src/utils/formatRelativeTime.ts",
+        "src/utils/statusPresentation.ts"
+      ]
     }
   ]
 }
