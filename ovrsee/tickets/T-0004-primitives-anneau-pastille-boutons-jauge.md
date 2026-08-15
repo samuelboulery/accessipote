@@ -2,7 +2,7 @@
 {
   "id": "T-0004",
   "titre": "Primitives — anneau, pastille, boutons, jauge",
-  "colonne": "pret",
+  "colonne": "en-cours",
   "priorite": "haute",
   "epic": "T-0001",
   "tags": [

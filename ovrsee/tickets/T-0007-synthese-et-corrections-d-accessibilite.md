@@ -2,7 +2,7 @@
 {
   "id": "T-0007",
   "titre": "Synthèse et corrections d'accessibilité",
-  "colonne": "pret",
+  "colonne": "en-cours",
   "priorite": "haute",
   "epic": "T-0001",
   "tags": [

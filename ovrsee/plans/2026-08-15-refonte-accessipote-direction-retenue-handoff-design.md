@@ -20,6 +20,19 @@
         "src/tokens.css",
         "tailwind.config.js"
       ]
+    },
+    {
+      "sha": "3377187",
+      "date": "2026-08-15",
+      "files": [
+        ".gitignore",
+        "src/constants.ts",
+        "src/hooks/useAudits.test.ts",
+        "src/hooks/useAudits.ts",
+        "src/types/index.ts",
+        "src/utils/migrateProgress.test.ts",
+        "src/utils/migrateProgress.ts"
+      ]
     }
   ]
 }

@@ -2,7 +2,7 @@
 {
   "id": "T-0009",
   "titre": "États, mobile et mode sombre",
-  "colonne": "pret",
+  "colonne": "en-cours",
   "priorite": "moyenne",
   "epic": "T-0001",
   "tags": [

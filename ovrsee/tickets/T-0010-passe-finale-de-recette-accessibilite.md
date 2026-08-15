@@ -2,7 +2,7 @@
 {
   "id": "T-0010",
   "titre": "Passe finale de recette accessibilité",
-  "colonne": "pret",
+  "colonne": "en-cours",
   "priorite": "haute",
   "epic": "T-0001",
   "tags": [
