@@ -63,6 +63,14 @@
         "src/tokens.css",
         "tailwind.config.js"
       ]
+    },
+    {
+      "sha": "3000e99",
+      "date": "2026-08-15",
+      "files": [
+        "src/index.css",
+        "src/tokens.css"
+      ]
     }
   ]
 }
