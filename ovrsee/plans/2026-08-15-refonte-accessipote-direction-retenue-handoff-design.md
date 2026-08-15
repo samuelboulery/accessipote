@@ -52,6 +52,33 @@
         "src/utils/formatRelativeTime.ts",
         "src/utils/statusPresentation.ts"
       ]
+    },
+    {
+      "sha": "824e796",
+      "date": "2026-08-15",
+      "files": [
+        "package.json",
+        "pnpm-lock.yaml",
+        "src/App.tsx",
+        "src/components/AuditScreen.tsx",
+        "src/components/CriteriaDetail.tsx",
+        "src/components/CriteriaItem.test.tsx",
+        "src/components/CriteriaItem.tsx",
+        "src/components/CriteriaList.test.tsx",
+        "src/components/CriteriaList.tsx",
+        "src/components/EmptyState.tsx",
+        "src/components/ExportButton.test.tsx",
+        "src/components/ExportButton.tsx",
+        "src/components/HomeScreen.tsx",
+        "src/components/NewAuditForm.tsx",
+        "src/components/SearchFilters.test.tsx",
+        "src/components/SearchFilters.tsx",
+        "src/components/ThemeRail.tsx",
+        "src/hooks/useFilters.test.ts",
+        "src/hooks/useFilters.ts",
+        "src/index.css",
+        "src/types/index.ts"
+      ]
     }
   ]
 }

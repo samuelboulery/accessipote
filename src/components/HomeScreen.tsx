@@ -12,6 +12,7 @@ export interface AuditSummary {
 
 interface HomeScreenProps {
   audits: AuditSummary[];
+  glossaryCount: number;
   onOpenAudit: (auditId: string) => void;
   onCreateAudit: () => void;
   onOpenGlossary: () => void;
@@ -24,6 +25,7 @@ const MODE_LABEL = {
 
 export default function HomeScreen({
   audits,
+  glossaryCount,
   onOpenAudit,
   onCreateAudit,
   onOpenGlossary,
@@ -108,7 +110,7 @@ export default function HomeScreen({
             Glossaire
           </span>
           <span className="block text-meta text-ink-muted">
-            213 définitions RGAA, consultables sans ouvrir d'audit.
+            {glossaryCount} définitions RGAA, consultables sans ouvrir d'audit.
           </span>
         </button>
         <div className="flex-1 rounded-card border-1 border-dashed border-dashed p-4">

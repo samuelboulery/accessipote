@@ -1,113 +1,89 @@
+import { memo } from 'react';
+import type { Mode } from '../types';
 import type { ThemeStats } from '../utils/calculateSummaryStats';
+import { toSummaryView, themeCounts } from '../utils/summaryView';
+import type { SummaryStats } from '../utils/calculateSummaryStats';
+import SegmentedGauge from './SegmentedGauge';
 
 interface ThemeSummaryTableProps {
-  themes: ThemeStats[];
-  mode: 'classic' | 'design-system';
+  byTheme: ThemeStats[];
+  mode: Mode;
+  /** Sert uniquement à retrouver libellés, icônes et couleurs des colonnes. */
+  stats: SummaryStats;
 }
 
-function ThemeSummaryTable({ themes, mode }: ThemeSummaryTableProps) {
+/**
+ * Quatre colonnes chiffrées, chacune avec son icône en en-tête : les barres ne
+ * font qu'illustrer ces nombres. Un lecteur d'écran, un daltonien et une
+ * impression en niveaux de gris doivent obtenir la même information.
+ */
+function ThemeSummaryTable({ byTheme, mode, stats }: ThemeSummaryTableProps) {
+  const { buckets } = toSummaryView(stats, mode);
+
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-xs sm:text-sm dark:bg-gray-800 dark:text-gray-100">
+      <table className="w-full border-collapse text-body">
+        <caption className="sr-only">Répartition des critères par thème</caption>
         <thead>
-          <tr className="border-b border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-700">
-            <th
-              scope="col"
-              className="text-left px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-900 dark:text-white"
-            >
+          <tr className="border-b-2 border-ink">
+            <th scope="col" className="p-2 text-left font-semibold">
               Thème
             </th>
-            {mode === 'classic' ? (
-              <>
-                <th
-                  scope="col"
-                  className="text-center px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-900 dark:text-white"
-                >
-                  Conformes
-                </th>
-                <th
-                  scope="col"
-                  className="text-center px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-900 dark:text-white"
-                >
-                  Non-conformes
-                </th>
-              </>
-            ) : (
-              <>
-                <th
-                  scope="col"
-                  className="text-center px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-900 dark:text-white"
-                >
-                  Par défaut
-                </th>
-                <th
-                  scope="col"
-                  className="text-center px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-900 dark:text-white"
-                >
-                  À mettre en place
-                </th>
-              </>
-            )}
-            <th
-              scope="col"
-              className="text-center px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-900 dark:text-white"
-            >
-              N/A
+            {buckets.map(({ key, label, Icon, color }) => (
+              <th key={key} scope="col" className="p-2 text-right font-semibold">
+                <span className="inline-flex items-center gap-1">
+                  <Icon size={16} strokeWidth={2.6} aria-hidden="true" style={{ color }} />
+                  {label}
+                </span>
+              </th>
+            ))}
+            <th scope="col" className="min-w-[150px] p-2 text-left font-semibold">
+              Répartition
             </th>
-            <th
-              scope="col"
-              className="text-center px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-900 dark:text-white"
-            >
+            <th scope="col" className="p-2 text-right font-semibold">
               Taux
             </th>
           </tr>
         </thead>
         <tbody>
-          {themes.map((theme) => (
-            <tr
-              key={theme.theme}
-              className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              <td className="text-left px-2 sm:px-4 py-2 sm:py-3 font-medium text-gray-900 dark:text-gray-100">
-                {theme.theme}
-              </td>
-              {mode === 'classic' ? (
-                <>
-                  <td className="text-center px-2 sm:px-4 py-2 sm:py-3 text-green-600 dark:text-green-400 font-semibold">
-                    {theme.conforme}
+          {byTheme.map(theme => {
+            const counts = themeCounts(theme);
+            const values = [counts.conforme, counts.ecarts, counts.nonApplicable, counts.aEvaluer];
+
+            return (
+              <tr key={theme.theme} className="border-b border-separator">
+                <th scope="row" className="p-2 text-left font-medium">
+                  {theme.theme}
+                </th>
+                {values.map((value, index) => (
+                  <td key={buckets[index].key} className="p-2 text-right font-mono">
+                    {value}
                   </td>
-                  <td className="text-center px-2 sm:px-4 py-2 sm:py-3 text-red-600 dark:text-red-400 font-semibold">
-                    {theme.nonConforme}
-                  </td>
-                </>
-              ) : (
-                <>
-                  <td className="text-center px-2 sm:px-4 py-2 sm:py-3 text-green-600 dark:text-green-400 font-semibold">
-                    {theme.defaultCompliant}
-                  </td>
-                  <td className="text-center px-2 sm:px-4 py-2 sm:py-3 text-amber-600 dark:text-amber-400 font-semibold">
-                    {theme.projectImplementation}
-                  </td>
-                </>
-              )}
-              <td className="text-center px-2 sm:px-4 py-2 sm:py-3 text-gray-600 dark:text-gray-400 font-semibold">
-                {theme.nonApplicable}
-              </td>
-              <td className="text-center px-2 sm:px-4 py-2 sm:py-3 font-semibold">
-                {theme.rate === null ? (
-                  <span className="text-gray-500 dark:text-gray-400">–</span>
-                ) : (
-                  <span className="text-gray-900 dark:text-gray-100">
-                    {Math.round(theme.rate * 10) / 10}%
-                  </span>
-                )}
-              </td>
-            </tr>
-          ))}
+                ))}
+                <td className="p-2">
+                  <SegmentedGauge
+                    className="min-w-[150px]"
+                    total={counts.total}
+                    segments={buckets.map((bucket, index) => ({
+                      key: bucket.key,
+                      count: values[index],
+                      color: bucket.color,
+                    }))}
+                    label={buckets
+                      .map((bucket, index) => `${values[index]} ${bucket.label.toLowerCase()}`)
+                      .join(', ')}
+                  />
+                </td>
+                <td className="p-2 text-right font-mono">
+                  {theme.rate === null ? '–' : `${Math.round(theme.rate * 10) / 10} %`}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
   );
 }
 
-export default ThemeSummaryTable;
+export default memo(ThemeSummaryTable);

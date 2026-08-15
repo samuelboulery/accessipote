@@ -16,7 +16,8 @@ import HomeScreen from './components/HomeScreen';
 import NewAuditForm from './components/NewAuditForm';
 import AuditScreen from './components/AuditScreen';
 import SummaryTab from './components/SummaryTab';
-import GlossarySidePanel from './components/GlossarySidePanel';
+import GlossaryScreen from './components/GlossaryScreen';
+import GlossaryPopover from './components/GlossaryPopover';
 import ExportButton from './components/ExportButton';
 import DarkModeToggle from './components/DarkModeToggle';
 import Toast from './components/Toast';
@@ -24,7 +25,7 @@ import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 import criteriaRawData from './data/criteria.json';
 import glossaryRawData from './data/glossary.json';
 import { transformCriteriaData } from './utils/transformCriteria';
-import { DEFAULT_PANEL_WIDTH } from './constants';
+import { titleToSlug } from './utils/transformGlossary';
 
 function App() {
   const criteriaList = useMemo(
@@ -58,8 +59,8 @@ function App() {
   const [expandedCriteriaId, setExpandedCriteriaId] = useState<string | null>(null);
   const [filters, setFilters] = useState<CriteriaFilters>({ search: '', level: '', status: '' });
 
-  const [glossaryOpen, setGlossaryOpen] = useState(false);
   const [selectedGlossaryTerm, setSelectedGlossaryTerm] = useState<string | undefined>();
+  const [popoverAnchor, setPopoverAnchor] = useState<DOMRect | null>(null);
 
   const debouncedSearch = useDebounce(filters.search, 300);
   const debouncedFilters = useMemo(
@@ -67,12 +68,20 @@ function App() {
     [debouncedSearch, filters.level, filters.status],
   );
 
+  /**
+   * Le terme cliqué a le focus au moment du clic : c'est ainsi qu'on récupère
+   * son rectangle sans avoir à faire descendre l'événement dans parseMarkdown.
+   */
   const handleGlossaryClick = useCallback((slug: string) => {
+    const trigger = document.activeElement;
     setSelectedGlossaryTerm(slug);
-    setGlossaryOpen(true);
+    setPopoverAnchor(trigger instanceof HTMLElement ? trigger.getBoundingClientRect() : null);
   }, []);
 
-  const handleGlossaryToggle = useCallback(() => setGlossaryOpen(open => !open), []);
+  const handleGlossaryToggle = useCallback(() => {
+    setPopoverAnchor(null);
+    setView(current => (current === 'glossary' ? 'audit' : 'glossary'));
+  }, []);
 
   const { shortcuts, isHelpModalOpen, closeHelpModal } = useKeyboardShortcuts({
     searchInputRef,
@@ -91,6 +100,7 @@ function App() {
       if (!criterion) return;
 
       setView('audit');
+      setPopoverAnchor(null);
       setActiveTheme(criterion.theme);
       setExpandedCriteriaId(null);
       queueMicrotask(() => {
@@ -210,6 +220,14 @@ function App() {
       : { classic: {}, designSystem: activeAudit.progress as Progress['designSystem'] };
   }, [activeAudit]);
 
+  const popoverTerm = useMemo(
+    () =>
+      selectedGlossaryTerm
+        ? glossary.find(term => titleToSlug(term.title) === selectedGlossaryTerm) ?? null
+        : null,
+    [glossary, selectedGlossaryTerm],
+  );
+
   const isThemeInAudit = auditThemes.includes(activeTheme);
   const currentTheme = isThemeInAudit ? activeTheme : auditThemes[0];
 
@@ -246,9 +264,10 @@ function App() {
           ) : (
             <HomeScreen
               audits={homeAudits}
+              glossaryCount={glossary.length}
               onOpenAudit={handleOpenAudit}
               onCreateAudit={() => setIsCreating(true)}
-              onOpenGlossary={() => setGlossaryOpen(true)}
+              onOpenGlossary={() => setView('glossary')}
             />
           ))}
 
@@ -286,33 +305,42 @@ function App() {
             </p>
           ))}
 
-        {view === 'summary' && activeAudit && (
-          <SummaryTab
-            criteriaList={auditCriteria}
-            progress={progressForMode}
-            mode={activeAudit.mode}
-            isDark={isDark}
-          />
-        )}
+        {view === 'summary' &&
+          (activeAudit ? (
+            <SummaryTab
+              criteriaList={auditCriteria}
+              progress={progressForMode}
+              mode={activeAudit.mode}
+              actions={exportButton}
+            />
+          ) : (
+            <p className="text-body text-ink-muted">
+              Aucun audit ouvert. Reprenez-en un depuis l'accueil pour voir sa synthèse.
+            </p>
+          ))}
 
         {view === 'glossary' && (
-          <p className="text-body text-ink-muted">
-            Le glossaire s'ouvre en panneau. Utilisez la touche G ou un terme souligné dans un
-            critère.
-          </p>
+          <GlossaryScreen
+            glossary={glossary}
+            criteriaList={criteriaList}
+            selectedSlug={selectedGlossaryTerm}
+            onSelectTerm={setSelectedGlossaryTerm}
+            onCriteriaClick={handleCriteriaClick}
+          />
         )}
       </main>
 
-      <GlossarySidePanel
-        isOpen={glossaryOpen}
-        onClose={() => setGlossaryOpen(false)}
-        selectedTerm={selectedGlossaryTerm}
-        glossary={glossary}
-        width={DEFAULT_PANEL_WIDTH}
-        onWidthChange={() => {}}
-        onGlossaryClick={handleGlossaryClick}
-        onCriteriaClick={handleCriteriaClick}
-      />
+      {popoverTerm && popoverAnchor && (
+        <GlossaryPopover
+          term={popoverTerm}
+          anchor={popoverAnchor}
+          onClose={() => setPopoverAnchor(null)}
+          onOpenInGlossary={() => {
+            setPopoverAnchor(null);
+            setView('glossary');
+          }}
+        />
+      )}
 
       <Toast toasts={toasts} onDismiss={hideToast} />
 

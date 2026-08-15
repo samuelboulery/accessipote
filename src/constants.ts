@@ -13,11 +13,6 @@ export const AUDITS_STORAGE_KEY = 'rgaa-audits';
 
 export const ANIMATION_DELAY_MS = 350;
 
-// Panneau de glossaire redimensionnable — retiré avec GlossarySidePanel (phase 7).
-export const MIN_PANEL_WIDTH = 300;
-export const MAX_PANEL_WIDTH = 800;
-export const DEFAULT_PANEL_WIDTH = 400;
-
 // PDF Export
 export const PDF_Y_POS_LIMIT = 250;
 export const PDF_START_Y_POS = 40;
