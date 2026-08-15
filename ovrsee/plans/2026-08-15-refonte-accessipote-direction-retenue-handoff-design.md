@@ -153,6 +153,23 @@
         "src/utils/parseMarkdown.tsx",
         "tailwind.config.js"
       ]
+    },
+    {
+      "sha": "87c4628",
+      "date": "2026-08-15",
+      "files": [
+        "CLAUDE.md",
+        "src/components/AuditScreen.test.tsx",
+        "src/components/BulkActions.tsx",
+        "src/components/CriteriaDetail.tsx",
+        "src/components/ErrorBoundary.tsx",
+        "src/components/GlossaryScreen.test.tsx",
+        "src/components/HomeScreen.test.tsx",
+        "src/components/NewAuditForm.test.tsx",
+        "src/components/StatusButtons.tsx",
+        "src/components/ThemeRail.test.tsx",
+        "src/utils/statusPresentation.ts"
+      ]
     }
   ]
 }

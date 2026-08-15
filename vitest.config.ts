@@ -23,11 +23,13 @@ export default defineConfig({
         'src/main.tsx',
         'src/vite-env.d.ts',
       ],
+      // Calés un peu sous le niveau atteint : ils doivent rattraper une
+      // régression, pas casser le build au premier test ajouté ailleurs.
       thresholds: {
-        lines: 6,
-        functions: 50,
-        branches: 69,
-        statements: 6,
+        lines: 80,
+        functions: 85,
+        branches: 90,
+        statements: 80,
       },
     },
   },
