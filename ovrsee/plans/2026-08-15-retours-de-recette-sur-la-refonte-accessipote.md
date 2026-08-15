@@ -1,9 +1,9 @@
 ---
 {
-  "status": "open",
+  "status": "closed",
   "title": "Retours de recette sur la refonte Accessipote",
   "opened": "2026-08-15",
-  "closed": null,
+  "closed": "2026-08-15",
   "commits": [
     {
       "sha": "bd2d53b",
@@ -75,6 +75,17 @@
         "src/hooks/useDarkMode.ts",
         "src/types/index.ts",
         "src/utils/formatRelativeTime.ts"
+      ]
+    },
+    {
+      "sha": "6be2861",
+      "date": "2026-08-15",
+      "files": [
+        "src/App.tsx",
+        "src/components/AuditSwitcher.tsx",
+        "src/components/HomeScreen.test.tsx",
+        "src/components/HomeScreen.tsx",
+        "src/components/NewAuditForm.tsx"
       ]
     }
   ]

@@ -49,6 +49,7 @@ function setup(overrides = {}) {
       audits={AUDITS}
       glossaryCount={284}
       criteriaCount={106}
+      themeCount={13}
       onOpenAudit={onOpenAudit}
       onCreateAudit={onCreateAudit}
       onOpenGlossary={onOpenGlossary}
@@ -81,14 +82,42 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Tes audits')).toBeInTheDocument();
   });
 
-  it('n\'affiche pas le sous-titre « Tes audits » quand aucun audit n\'existe', () => {
+  it('garde le sous-titre « Tes audits » même sans audit', () => {
+    // La colonne conserve son en-tête : l'invitation prend la place de la
+    // liste, elle ne laisse pas un creux.
     setup({ audits: [] });
-    expect(screen.queryByText('Tes audits')).not.toBeInTheDocument();
+    expect(screen.getByText('Tes audits')).toBeInTheDocument();
   });
 
-  it('masque la liste d\'audits quand elle est vide', () => {
+  it('remplace la liste par une invitation quand aucun audit n\'existe', () => {
     setup({ audits: [] });
-    expect(screen.queryByRole('list')).not.toBeInTheDocument();
+
+    expect(screen.getByText(/Aucun audit pour l'instant/)).toBeInTheDocument();
+    expect(screen.getByText(/106 critères à statuer/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Supprimer l'audit/ })).not.toBeInTheDocument();
+  });
+
+  it('retire l\'invitation dès qu\'un audit existe', () => {
+    setup({ audits: [AUDITS[0]] });
+    expect(screen.queryByText(/Aucun audit pour l'instant/)).not.toBeInTheDocument();
+  });
+
+  it('crée un audit depuis l\'invitation', async () => {
+    const user = userEvent.setup();
+    const { onCreateAudit } = setup({ audits: [] });
+
+    await user.click(screen.getByRole('button', { name: /Démarrer un premier audit/ }));
+
+    expect(onCreateAudit).toHaveBeenCalled();
+  });
+
+  it('donne le poids du référentiel en chiffres', () => {
+    setup();
+
+    expect(screen.getByText('106')).toBeInTheDocument();
+    expect(screen.getByText('13')).toBeInTheDocument();
+    expect(screen.getByText('thèmes')).toBeInTheDocument();
+    expect(screen.getByText('définitions')).toBeInTheDocument();
   });
 
   it('affiche la liste d\'audits avec leurs noms', () => {

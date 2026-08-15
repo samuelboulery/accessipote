@@ -2,7 +2,7 @@
 {
   "id": "T-0014",
   "titre": "Refondre l'écran d'accueil",
-  "colonne": "en-cours",
+  "colonne": "fait",
   "priorite": "moyenne",
   "tags": [
     "recette",

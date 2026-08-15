@@ -292,6 +292,7 @@ function App() {
               audits={homeAudits}
               glossaryCount={glossary.length}
               criteriaCount={criteriaList.length}
+              themeCount={themes.length}
               onOpenAudit={handleOpenAudit}
               onCreateAudit={() => setIsCreating(true)}
               onOpenGlossary={() => setView('glossary')}

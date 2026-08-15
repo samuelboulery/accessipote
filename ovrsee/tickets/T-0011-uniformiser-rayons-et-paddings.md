@@ -2,7 +2,7 @@
 {
   "id": "T-0011",
   "titre": "Uniformiser les rayons et les paddings",
-  "colonne": "en-cours",
+  "colonne": "fait",
   "priorite": "haute",
   "tags": [
     "recette",

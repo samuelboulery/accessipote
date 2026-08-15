@@ -2,7 +2,7 @@
 {
   "id": "T-0013",
   "titre": "Sélecteur d'audit et pied de barre latérale",
-  "colonne": "en-cours",
+  "colonne": "fait",
   "priorite": "haute",
   "tags": [
     "recette",

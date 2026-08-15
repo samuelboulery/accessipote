@@ -2,7 +2,7 @@
 {
   "id": "T-0012",
   "titre": "Compléter la sélection groupée",
-  "colonne": "en-cours",
+  "colonne": "fait",
   "priorite": "haute",
   "tags": [
     "recette",
