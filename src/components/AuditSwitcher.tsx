@@ -90,7 +90,7 @@ export default function AuditSwitcher({
                     }}
                     aria-current={isActive ? 'true' : undefined}
                     className={[
-                      'flex w-full items-center gap-2 rounded-ctrl p-3 text-left',
+                      'flex w-full items-start gap-2 rounded-ctrl p-3 text-left',
                       isActive ? 'bg-sunk font-semibold' : '',
                     ].join(' ')}
                   >
@@ -99,7 +99,9 @@ export default function AuditSwitcher({
                       size={16}
                       strokeWidth={2.6}
                       aria-hidden="true"
-                      className={isActive ? '' : 'invisible'}
+                      // Alignée sur la ligne du nom, pas centrée entre le nom
+                      // et le ratio.
+                      className={`mt-[3px] flex-shrink-0 ${isActive ? '' : 'invisible'}`}
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-body">{audit.name}</span>

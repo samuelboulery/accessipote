@@ -53,7 +53,8 @@ function App() {
   const { toasts, showToast, hideToast } = useToast();
   const { mode: themeMode, cycle: cycleTheme } = useDarkMode();
   const isMobile = useIsMobile();
-  const { audits, activeAudit, createAudit, updateAudit, setActiveAuditId } = useAudits();
+  const { audits, activeAudit, createAudit, updateAudit, deleteAudit, setActiveAuditId } =
+    useAudits();
 
   const [view, setView] = useState<View>('home');
   const [isCreating, setIsCreating] = useState(false);
@@ -161,6 +162,15 @@ function App() {
       setView('audit');
     },
     [setActiveAuditId],
+  );
+
+  const handleDeleteAudit = useCallback(
+    (auditId: string) => {
+      const removed = audits.find(audit => audit.id === auditId);
+      deleteAudit(auditId);
+      if (removed) showToast(`Audit « ${removed.name} » supprimé.`, 'info');
+    },
+    [audits, deleteAudit, showToast],
   );
 
   const handleCreateAudit = useCallback(
@@ -285,6 +295,7 @@ function App() {
               onOpenAudit={handleOpenAudit}
               onCreateAudit={() => setIsCreating(true)}
               onOpenGlossary={() => setView('glossary')}
+              onDeleteAudit={handleDeleteAudit}
             />
           ))}
 

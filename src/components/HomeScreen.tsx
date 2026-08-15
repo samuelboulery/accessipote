@@ -1,4 +1,5 @@
-import { Plus, ChevronRight, BookOpen } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, ChevronRight, BookOpen, Trash2 } from 'lucide-react';
 import type { Audit } from '../types';
 import AuditRing from './AuditRing';
 import { formatRelativeTime } from '../utils/formatRelativeTime';
@@ -16,6 +17,7 @@ interface HomeScreenProps {
   onOpenAudit: (auditId: string) => void;
   onCreateAudit: () => void;
   onOpenGlossary: () => void;
+  onDeleteAudit: (auditId: string) => void;
 }
 
 const MODE_LABEL = {
@@ -24,8 +26,8 @@ const MODE_LABEL = {
 } as const;
 
 /**
- * Ni tuile de logo ni mot-symbole ici : la barre latérale les porte déjà, les
- * répéter ne dit rien de plus.
+ * Pas de cadre ici : l'écran s'assoit directement sur la surface du panneau.
+ * Un conteneur arrondi dans un conteneur arrondi n'ajoutait qu'une épaisseur.
  */
 export default function HomeScreen({
   audits,
@@ -34,11 +36,15 @@ export default function HomeScreen({
   onOpenAudit,
   onCreateAudit,
   onOpenGlossary,
+  onDeleteAudit,
 }: HomeScreenProps) {
+  // Confirmation en place plutôt qu'une modale : la suppression est
+  // irréversible — il n'y a pas de backend pour récupérer un audit effacé.
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const hasAudits = audits.length > 0;
 
   return (
-    <div className="flex min-h-full flex-col justify-between gap-8 rounded-card bg-bg p-6">
+    <div className="flex min-h-full flex-col justify-between gap-8">
       <header className="max-w-[52ch]">
         <p className="font-mono text-meta uppercase tracking-[0.08em] text-ink-muted">RGAA 4.1</p>
         <h1 className="mt-2 text-screen font-semibold [text-wrap:balance]">
@@ -61,35 +67,81 @@ export default function HomeScreen({
               {audits.map(({ audit, evaluated, total }) => {
                 const share = total > 0 ? evaluated / total : 0;
                 const percentage = Math.round(share * 100);
+                const isPendingDelete = pendingDeleteId === audit.id;
 
                 return (
-                  <li key={audit.id}>
-                    <button
-                      type="button"
-                      onClick={() => onOpenAudit(audit.id)}
-                      className="grid w-full grid-cols-[48px_1fr_auto_16px] items-center gap-4 rounded-card border-1 border-border bg-surface p-4 text-left"
-                    >
-                      <AuditRing
-                        size={48}
-                        segments={[{ key: 'evalues', share, color: 'var(--a-ink)' }]}
-                        label={`${percentage} % évalué`}
-                      />
-                      <span className="min-w-0">
-                        <span className="block truncate text-lead font-semibold">{audit.name}</span>
-                        <span className="mt-1 block text-dense text-ink-muted">
-                          {MODE_LABEL[audit.mode]} · modifié {formatRelativeTime(audit.updatedAt)}
-                        </span>
-                      </span>
-                      <span className="text-right">
-                        <span className="block font-mono text-body font-semibold">
-                          {percentage}%
-                        </span>
-                        <span className="mt-1 block font-mono text-meta text-ink-muted">
-                          {evaluated} / {total}
-                        </span>
-                      </span>
-                      <ChevronRight size={16} aria-hidden="true" className="text-ink-muted" />
-                    </button>
+                  <li key={audit.id} className="rounded-card bg-sunk p-4">
+                    {isPendingDelete ? (
+                      <div className="flex flex-wrap items-center gap-3">
+                        <p className="min-w-0 flex-1 text-body">
+                          Supprimer « {audit.name} » ?
+                          <span className="block text-dense text-ink-muted">
+                            {evaluated > 0
+                              ? `Ses ${evaluated} critère${evaluated > 1 ? 's' : ''} évalué${evaluated > 1 ? 's' : ''}, ses notes et ses pages seront perdus.`
+                              : 'Ses notes et ses pages seront perdues.'}{' '}
+                            Rien ne permet de les récupérer.
+                          </span>
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setPendingDeleteId(null)}
+                          className="target-44 h-ctrl flex-shrink-0 rounded-ctrl border-1 border-border bg-surface px-3 text-body"
+                        >
+                          Annuler
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onDeleteAudit(audit.id);
+                            setPendingDeleteId(null);
+                          }}
+                          className="target-44 flex h-ctrl flex-shrink-0 items-center gap-2 rounded-ctrl bg-ko px-3 text-body font-semibold text-surface"
+                        >
+                          <Trash2 size={16} aria-hidden="true" />
+                          Supprimer
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => onOpenAudit(audit.id)}
+                          className="grid min-w-0 flex-1 grid-cols-[48px_1fr_auto_16px] items-center gap-4 text-left"
+                        >
+                          <AuditRing
+                            size={48}
+                            segments={[{ key: 'evalues', share, color: 'var(--a-ink)' }]}
+                            label={`${percentage} % évalué`}
+                          />
+                          <span className="min-w-0">
+                            <span className="block truncate text-lead font-semibold">
+                              {audit.name}
+                            </span>
+                            <span className="mt-1 block text-dense text-ink-muted">
+                              {MODE_LABEL[audit.mode]} · modifié{' '}
+                              {formatRelativeTime(audit.updatedAt)}
+                            </span>
+                          </span>
+                          <span className="text-right">
+                            <span className="block font-mono text-body font-semibold">
+                              {percentage}%
+                            </span>
+                            <span className="mt-1 block font-mono text-meta text-ink-muted">
+                              {evaluated} / {total}
+                            </span>
+                          </span>
+                          <ChevronRight size={16} aria-hidden="true" className="text-ink-muted" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPendingDeleteId(audit.id)}
+                          aria-label={`Supprimer l'audit ${audit.name}`}
+                          className="target-44 flex h-ctrl w-ctrl flex-shrink-0 items-center justify-center rounded-ctrl text-ink-muted"
+                        >
+                          <Trash2 size={16} aria-hidden="true" />
+                        </button>
+                      </div>
+                    )}
                   </li>
                 );
               })}

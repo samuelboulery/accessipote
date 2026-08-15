@@ -65,7 +65,7 @@ export default function NewAuditForm({
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-card bg-bg p-6">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -80,7 +80,7 @@ export default function NewAuditForm({
 
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col gap-4 rounded-card border-1 border-border bg-surface p-4"
+        className="flex flex-col gap-4 rounded-card bg-sunk p-4"
       >
         <div>
           <label htmlFor="audit-name" className="mb-2 block text-body font-semibold">

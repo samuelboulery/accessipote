@@ -43,6 +43,7 @@ function setup(overrides = {}) {
   const onOpenAudit = vi.fn();
   const onCreateAudit = vi.fn();
   const onOpenGlossary = vi.fn();
+  const onDeleteAudit = vi.fn();
   render(
     <HomeScreen
       audits={AUDITS}
@@ -51,10 +52,11 @@ function setup(overrides = {}) {
       onOpenAudit={onOpenAudit}
       onCreateAudit={onCreateAudit}
       onOpenGlossary={onOpenGlossary}
+      onDeleteAudit={onDeleteAudit}
       {...overrides}
     />,
   );
-  return { onOpenAudit, onCreateAudit, onOpenGlossary };
+  return { onOpenAudit, onCreateAudit, onOpenGlossary, onDeleteAudit };
 }
 
 describe('HomeScreen', () => {
@@ -166,5 +168,79 @@ describe('HomeScreen', () => {
   it('affiche la date relative de modification pour chaque audit', () => {
     setup();
     expect(screen.getByText(/modifié il y a/)).toBeInTheDocument();
+  });
+
+  describe('Suppression d\'un audit', () => {
+    it('propose de supprimer chaque audit', () => {
+      setup();
+      expect(
+        screen.getByRole('button', { name: "Supprimer l'audit Refonte lamairie.fr" }),
+      ).toBeInTheDocument();
+    });
+
+    it('demande confirmation avant de supprimer', async () => {
+      const user = userEvent.setup();
+      const { onDeleteAudit } = setup();
+
+      await user.click(
+        screen.getByRole('button', { name: "Supprimer l'audit Refonte lamairie.fr" }),
+      );
+
+      // Rien n'est supprimé au premier clic : c'est irréversible.
+      expect(onDeleteAudit).not.toHaveBeenCalled();
+      expect(screen.getByText(/Supprimer « Refonte lamairie.fr » ?/)).toBeInTheDocument();
+    });
+
+    it('annonce que la perte est définitive', async () => {
+      const user = userEvent.setup();
+      setup();
+
+      await user.click(
+        screen.getByRole('button', { name: "Supprimer l'audit Refonte lamairie.fr" }),
+      );
+
+      expect(screen.getByText(/Rien ne permet de les récupérer/)).toBeInTheDocument();
+    });
+
+    it('supprime après confirmation', async () => {
+      const user = userEvent.setup();
+      const { onDeleteAudit } = setup();
+
+      await user.click(
+        screen.getByRole('button', { name: "Supprimer l'audit Refonte lamairie.fr" }),
+      );
+      await user.click(screen.getByRole('button', { name: 'Supprimer' }));
+
+      expect(onDeleteAudit).toHaveBeenCalledWith('a1');
+    });
+
+    it('renonce à la suppression sur Annuler', async () => {
+      const user = userEvent.setup();
+      const { onDeleteAudit } = setup();
+
+      await user.click(
+        screen.getByRole('button', { name: "Supprimer l'audit Refonte lamairie.fr" }),
+      );
+      await user.click(screen.getByRole('button', { name: 'Annuler' }));
+
+      expect(onDeleteAudit).not.toHaveBeenCalled();
+      expect(screen.queryByText(/Supprimer « Refonte/)).not.toBeInTheDocument();
+    });
+
+    it('ne met en confirmation que l\'audit visé', async () => {
+      const user = userEvent.setup();
+      setup();
+
+      await user.click(
+        screen.getByRole('button', { name: "Supprimer l'audit Refonte lamairie.fr" }),
+      );
+
+      // Le second audit garde son bouton de suppression : il n'est pas entré
+      // en confirmation avec le premier.
+      expect(
+        screen.getByRole('button', { name: "Supprimer l'audit API v2" }),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/Supprimer « API v2 »/)).not.toBeInTheDocument();
+    });
   });
 });

@@ -58,6 +58,24 @@
         "src/components/Sidebar.test.tsx",
         "src/index.css"
       ]
+    },
+    {
+      "sha": "1c431c1",
+      "date": "2026-08-15",
+      "files": [
+        "src/App.tsx",
+        "src/components/DarkModeToggle.test.tsx",
+        "src/components/DarkModeToggle.tsx",
+        "src/components/HomeScreen.tsx",
+        "src/components/MobileTabBar.test.tsx",
+        "src/components/MobileTabBar.tsx",
+        "src/components/Sidebar.test.tsx",
+        "src/components/Sidebar.tsx",
+        "src/hooks/useDarkMode.test.ts",
+        "src/hooks/useDarkMode.ts",
+        "src/types/index.ts",
+        "src/utils/formatRelativeTime.ts"
+      ]
     }
   ]
 }
