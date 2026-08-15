@@ -10,12 +10,12 @@ export default function DarkModeToggle({ isDark, onToggle }: DarkModeToggleProps
     <button
       onClick={onToggle}
       aria-label={isDark ? 'Désactiver le mode sombre' : 'Activer le mode sombre'}
-      className="p-2 rounded-lg transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
+      className="target-44 flex h-ctrl w-ctrl flex-shrink-0 items-center justify-center rounded-ctrl border-1 border-border bg-surface"
     >
       {isDark ? (
-        <Sun className="w-5 h-5 text-yellow-500" />
+        <Sun size={16} aria-hidden="true" />
       ) : (
-        <Moon className="w-5 h-5 text-gray-700" />
+        <Moon size={16} aria-hidden="true" />
       )}
     </button>
   );

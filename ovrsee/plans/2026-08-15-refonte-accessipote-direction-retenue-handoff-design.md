@@ -107,6 +107,24 @@
         "src/utils/getProgressColorClass.ts",
         "src/utils/summaryView.ts"
       ]
+    },
+    {
+      "sha": "49c8153",
+      "date": "2026-08-15",
+      "files": [
+        "src/App.tsx",
+        "src/components/AuditScreen.tsx",
+        "src/components/BulkActions.test.tsx",
+        "src/components/BulkActions.tsx",
+        "src/components/CriteriaItem.test.tsx",
+        "src/components/CriteriaItem.tsx",
+        "src/components/CriteriaList.test.tsx",
+        "src/components/CriteriaList.tsx",
+        "src/components/MobileTabBar.test.tsx",
+        "src/components/MobileTabBar.tsx",
+        "src/components/StatusButtons.test.tsx",
+        "src/components/StatusButtons.tsx"
+      ]
     }
   ]
 }

@@ -60,15 +60,19 @@ export default {
 
     // [taille, { lineHeight, letterSpacing }] — l'approche et l'interligne
     // sont attachés au pas : impossible d'utiliser une taille sans eux.
+    //
+    // En rem et non en px : à racine 16px les valeurs rendues sont celles du
+    // handoff (12, 13, 14, 16, 20, 24, 32, 42), mais le zoom texte du
+    // navigateur agit dessus — sans quoi RGAA 10.4 n'est pas tenu.
     fontSize: {
-      meta:     ['12px', { lineHeight: '1.5', letterSpacing: '0'        }],
-      dense:    ['13px', { lineHeight: '1.5', letterSpacing: '0'        }],
-      body:     ['14px', { lineHeight: '1.5', letterSpacing: '0'        }],
-      lead:     ['16px', { lineHeight: '1.5', letterSpacing: '-0.01em'  }],
-      criteria: ['20px', { lineHeight: '1.4', letterSpacing: '-0.02em'  }],
-      section:  ['24px', { lineHeight: '1.2', letterSpacing: '-0.02em'  }],
-      screen:   ['32px', { lineHeight: '1.2', letterSpacing: '-0.02em'  }],
-      display:  ['42px', { lineHeight: '1.1', letterSpacing: '-0.03em'  }],
+      meta:     ['0.75rem', { lineHeight: '1.5', letterSpacing: '0'        }],
+      dense:    ['0.8125rem', { lineHeight: '1.5', letterSpacing: '0'        }],
+      body:     ['0.875rem', { lineHeight: '1.5', letterSpacing: '0'        }],
+      lead:     ['1rem', { lineHeight: '1.5', letterSpacing: '-0.01em'  }],
+      criteria: ['1.25rem', { lineHeight: '1.4', letterSpacing: '-0.02em'  }],
+      section:  ['1.5rem', { lineHeight: '1.2', letterSpacing: '-0.02em'  }],
+      screen:   ['2rem', { lineHeight: '1.2', letterSpacing: '-0.02em'  }],
+      display:  ['2.625rem', { lineHeight: '1.1', letterSpacing: '-0.03em'  }],
     },
 
     fontFamily: {

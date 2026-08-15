@@ -71,7 +71,7 @@ export default function NewAuditForm({
           type="button"
           onClick={onCancel}
           aria-label="Retour"
-          className="flex h-ctrl w-ctrl items-center justify-center rounded-ctrl border-1 border-border bg-surface"
+          className="target-44 flex h-ctrl w-ctrl items-center justify-center rounded-ctrl border-1 border-border bg-surface"
         >
           <ChevronLeft size={16} aria-hidden="true" />
         </button>

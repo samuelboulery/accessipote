@@ -64,7 +64,7 @@ function BulkActions({
       <button
         type="button"
         onClick={onClearStatus}
-        className="flex h-ctrl items-center rounded-ctrl border-1 border-[#5A5A5A] px-3 text-body font-semibold"
+        className="target-44 flex h-ctrl items-center rounded-ctrl border-1 border-[#5A5A5A] px-3 text-body font-semibold"
       >
         Effacer le statut
       </button>

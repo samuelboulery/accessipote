@@ -41,9 +41,9 @@ describe('Toast', () => {
     );
 
     const toast = container.querySelector('[data-testid="toast-toast-1"]');
-    expect(toast).toHaveClass('bg-green-100');
-    expect(toast).toHaveClass('text-green-800');
-    expect(toast).toHaveClass('border-green-300');
+    expect(toast).toHaveClass('bg-ok-bg');
+    expect(toast).toHaveClass('text-ok-fg');
+    expect(toast).toHaveClass('border-ok-line');
   });
 
   it('should apply correct background color for error type', () => {
@@ -56,9 +56,9 @@ describe('Toast', () => {
     );
 
     const toast = container.querySelector('[data-testid="toast-toast-1"]');
-    expect(toast).toHaveClass('bg-red-100');
-    expect(toast).toHaveClass('text-red-800');
-    expect(toast).toHaveClass('border-red-300');
+    expect(toast).toHaveClass('bg-ko-bg');
+    expect(toast).toHaveClass('text-ko-fg');
+    expect(toast).toHaveClass('border-ko-line');
   });
 
   it('should apply correct background color for info type', () => {
@@ -71,9 +71,9 @@ describe('Toast', () => {
     );
 
     const toast = container.querySelector('[data-testid="toast-toast-1"]');
-    expect(toast).toHaveClass('bg-blue-100');
-    expect(toast).toHaveClass('text-blue-800');
-    expect(toast).toHaveClass('border-blue-300');
+    expect(toast).toHaveClass('bg-sunk');
+    expect(toast).toHaveClass('text-ink');
+    expect(toast).toHaveClass('border-border');
   });
 
   it('should have a close button with aria-label', () => {

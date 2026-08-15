@@ -50,7 +50,7 @@ export function parseMarkdownLinks(
             type: 'button',
             onClick: () => options.onCriteriaClick!(slug),
             'aria-label': `Voir le critère ${slug}`,
-            className: 'text-blue-600 hover:text-blue-800 underline cursor-pointer',
+            className: 'cursor-help underline decoration-dotted decoration-2 underline-offset-2',
           },
           linkText
         )
@@ -65,7 +65,7 @@ export function parseMarkdownLinks(
             type: 'button',
             onClick: () => options.onGlossaryClick(slug),
             'aria-label': `Voir la définition de ${linkText} dans le glossaire`,
-            className: 'text-blue-600 hover:text-blue-800 underline cursor-pointer',
+            className: 'cursor-help underline decoration-dotted decoration-2 underline-offset-2',
           },
           linkText
         )

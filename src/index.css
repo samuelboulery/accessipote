@@ -43,6 +43,19 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  /* Un contrôle de 40px de haut ne tient pas la cible minimale de 44px. Le
+     pseudo-élément étend la zone cliquable sans changer le rendu. */
+  .target-44 {
+    position: relative;
+  }
+  .target-44::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+  }
+}
+
 body {
   margin: 0;
   font-family: var(--a-font-sans);

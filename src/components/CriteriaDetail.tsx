@@ -5,6 +5,7 @@ import { parseMarkdownLinks } from '../utils/parseMarkdown';
 import { parseInlineCode } from '../utils/parseInlineCode';
 import { cleanCriteriaTitle } from '../utils/stripMarkdown';
 import StatusButtons from './StatusButtons';
+import { getSelectableStatuses } from '../utils/statusPresentation';
 
 interface CriteriaDetailProps {
   criterion: CriteriaRGAA;
@@ -64,6 +65,36 @@ export default function CriteriaDetail({
       handler();
     };
   }, [criteriaId]);
+
+  const statuses = getSelectableStatuses(mode);
+
+  // Raccourcis du critère déplié. Ignorés dès qu'un champ a le focus : sinon
+  // taper « j » dans une note ferait changer de critère.
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+
+      const key = event.key.toLowerCase();
+      if (key === 'j' && next) {
+        event.preventDefault();
+        onNavigate(next.id);
+      } else if (key === 'k' && previous) {
+        event.preventDefault();
+        onNavigate(previous.id);
+      } else if (key === '1' || key === '2' || key === '3') {
+        event.preventDefault();
+        const chosen = statuses[Number(key) - 1];
+        if (chosen) {
+          onStatusChange(criteriaId, chosen.key === currentStatus ? '' : (chosen.key as CriteriaStatus));
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [criteriaId, currentStatus, next, previous, onNavigate, onStatusChange, statuses]);
 
   const tests = criterion.tests ?? [];
   const checkedCount = tests.filter(test => checkedTests.includes(test.id)).length;
@@ -183,7 +214,7 @@ export default function CriteriaDetail({
                     type="button"
                     onClick={() => onPagesChange(criteriaId, pages.filter(p => p !== url))}
                     aria-label={`Retirer la page ${url}`}
-                    className="flex h-ctrl w-ctrl flex-shrink-0 items-center justify-center rounded-ctrl text-ink-muted"
+                    className="target-44 flex h-ctrl w-ctrl flex-shrink-0 items-center justify-center rounded-ctrl text-ink-muted"
                   >
                     <Trash2 size={16} aria-hidden="true" />
                   </button>
@@ -203,12 +234,12 @@ export default function CriteriaDetail({
                 }}
                 aria-label="Adresse de la page à ajouter"
                 placeholder="https://exemple.fr/page"
-                className="h-ctrl min-w-0 flex-1 rounded-ctrl border-1 border-border bg-surface px-3 text-body"
+                className="h-touch min-w-0 flex-1 rounded-ctrl border-1 border-border bg-surface px-3 text-body"
               />
               <button
                 type="button"
                 onClick={addPage}
-                className="flex h-ctrl items-center gap-1 rounded-ctrl border-1 border-dashed border-dashed px-3 text-body"
+                className="target-44 flex h-ctrl items-center gap-1 rounded-ctrl border-1 border-dashed border-dashed px-3 text-body"
               >
                 <Plus size={16} aria-hidden="true" />
                 Ajouter
@@ -223,7 +254,7 @@ export default function CriteriaDetail({
           <button
             type="button"
             onClick={() => onNavigate(previous.id)}
-            className="flex h-ctrl items-center gap-2 rounded-ctrl border-1 border-border bg-surface px-3 text-body"
+            className="target-44 flex h-ctrl items-center gap-2 rounded-ctrl border-1 border-border bg-surface px-3 text-body"
           >
             <ChevronLeft size={16} aria-hidden="true" />
             <span className="font-mono text-meta">{previous.id}</span>
@@ -234,14 +265,14 @@ export default function CriteriaDetail({
         )}
 
         <span className="flex-1 text-center font-mono text-meta text-ink-muted">
-          Entrée pour valider · J / K pour naviguer
+          1 2 3 pour statuer · J / K pour naviguer
         </span>
 
         {next && (
           <button
             type="button"
             onClick={() => onNavigate(next.id)}
-            className="flex h-ctrl items-center gap-2 rounded-ctrl bg-ink px-3 text-body text-surface"
+            className="target-44 flex h-ctrl items-center gap-2 rounded-ctrl bg-ink px-3 text-body text-surface"
           >
             <span className="font-mono text-meta">{next.id}</span>
             <span className="max-w-[24ch] truncate">{cleanCriteriaTitle(next.title)}</span>

@@ -43,15 +43,16 @@
   --a-font-sans: 'Instrument Sans', system-ui, sans-serif;
   --a-font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-  /* 8 pas. Aucune valeur en demi-pixel. */
-  --a-text-display:  42px;  /* titre de page */
-  --a-text-screen:   32px;  /* titre d'écran */
-  --a-text-section:  24px;  /* titre de section */
+  /* 8 pas. En rem : mêmes tailles rendues à racine 16px, mais le zoom
+     texte du navigateur agit dessus (RGAA 10.4). */
+  --a-text-display:  2.625rem;  /* titre de page */
+  --a-text-screen:   2rem;  /* titre d'écran */
+  --a-text-section:  1.5rem;  /* titre de section */
   --a-text-criteria: 20px;  /* intitulé de critère déplié */
-  --a-text-lead:     16px;  /* texte courant porteur */
-  --a-text-body:     14px;  /* interface */
-  --a-text-dense:    13px;  /* secondaire dense */
-  --a-text-meta:     12px;  /* méta, mono, capitales */
+  --a-text-lead:     1rem;  /* texte courant porteur */
+  --a-text-body:     0.875rem;  /* interface */
+  --a-text-dense:    0.8125rem;  /* secondaire dense */
+  --a-text-meta:     0.75rem;  /* méta, mono, capitales */
 
   /* Approche liée à la taille (jamais une valeur unique) */
   --a-track-display:  -0.03em;
@@ -77,14 +78,14 @@
 
   /* ---- Rayons : concentriques (voir README § Rayons) ---- */
   --a-radius-box:    8px;    /* case à cocher */
-  --a-radius-ctrl:  12px;    /* champ, bouton, chip mono */
-  --a-radius-card:  24px;    /* carte  = 12 + 12 */
+  --a-radius-ctrl:  0.75rem;    /* champ, bouton, chip mono */
+  --a-radius-card:  1.5rem;    /* carte  = 12 + 12 */
   --a-radius-panel: 40px;    /* panneau = 24 + 16 */
   --a-radius-frame: 48px;    /* cadre  = 40 + 8 */
   --a-radius-pill: 999px;    /* pastille de statut, jauge */
 
   /* ---- Hauteurs de contrôle ---- */
-  --a-h-chip:  32px;
+  --a-h-chip:  2rem;
   --a-h-ctrl:  40px;   /* défaut desktop */
   --a-h-touch: 44px;   /* cible minimale desktop */
   --a-h-prim:  48px;   /* action primaire + tout le mobile */

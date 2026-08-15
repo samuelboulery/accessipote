@@ -64,7 +64,7 @@ export default function SearchFilters({
           aria-label="Rechercher un critère"
           aria-keyshortcuts="Control+K Meta+K"
           placeholder="Rechercher un critère"
-          className="h-ctrl w-full rounded-card border-1 border-border bg-surface pl-8 pr-14 text-body"
+          className="h-touch w-full rounded-card border-1 border-border bg-surface pl-8 pr-14 text-body"
         />
         <span
           aria-hidden="true"
@@ -79,7 +79,7 @@ export default function SearchFilters({
           type="button"
           onClick={() => setIsOpen(open => !open)}
           aria-expanded={isOpen}
-          className="flex h-ctrl items-center gap-2 rounded-ctrl border-1 border-border bg-surface px-3 text-body"
+          className="target-44 flex h-ctrl items-center gap-2 rounded-ctrl border-1 border-border bg-surface px-3 text-body"
         >
           <SlidersHorizontal size={16} aria-hidden="true" />
           Filtrer
@@ -100,7 +100,7 @@ export default function SearchFilters({
                 id="filter-level"
                 value={filters.level}
                 onChange={event => update({ level: event.target.value })}
-                className="h-ctrl w-full rounded-ctrl border-1 border-border bg-surface px-2 text-body"
+                className="h-touch w-full rounded-ctrl border-1 border-border bg-surface px-2 text-body"
               >
                 <option value="">Tous les niveaux</option>
                 {levels.map(level => (
@@ -119,7 +119,7 @@ export default function SearchFilters({
                 id="filter-status"
                 value={filters.status}
                 onChange={event => update({ status: event.target.value })}
-                className="h-ctrl w-full rounded-ctrl border-1 border-border bg-surface px-2 text-body"
+                className="h-touch w-full rounded-ctrl border-1 border-border bg-surface px-2 text-body"
               >
                 <option value="">Tous les statuts</option>
                 {getSelectableStatuses(mode).map(({ key, label }) => (
@@ -134,7 +134,7 @@ export default function SearchFilters({
               <button
                 type="button"
                 onClick={() => update({ level: '', status: '' })}
-                className="h-ctrl rounded-ctrl border-1 border-border text-body"
+                className="target-44 h-ctrl rounded-ctrl border-1 border-border text-body"
               >
                 Effacer les filtres
               </button>

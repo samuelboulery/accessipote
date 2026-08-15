@@ -139,7 +139,7 @@ export default function ExportButton({ mode, progress, criteriaList, onShowToast
         ref={exportMarkdownButtonRef}
         onClick={handleExportMarkdown}
         aria-keyshortcuts="Control+e Meta+e"
-        className="flex h-ctrl items-center gap-2 rounded-ctrl bg-ink px-3 text-body font-semibold text-surface"
+        className="target-44 flex h-ctrl items-center gap-2 rounded-ctrl bg-ink px-3 text-body font-semibold text-surface"
       >
         <Copy size={16} aria-hidden="true" />
         Exporter
@@ -148,7 +148,7 @@ export default function ExportButton({ mode, progress, criteriaList, onShowToast
         <button
           onClick={handleExportPDF}
           disabled={isExportingPDF}
-          className="flex h-ctrl items-center gap-2 rounded-ctrl border-1 border-border bg-surface px-3 text-body disabled:opacity-50"
+          className="target-44 flex h-ctrl items-center gap-2 rounded-ctrl border-1 border-border bg-surface px-3 text-body disabled:opacity-50"
         >
           <Download size={16} aria-hidden="true" />
           {isExportingPDF ? 'Export…' : 'PDF'}

@@ -52,9 +52,11 @@ describe('DarkModeToggle', () => {
     const mockOnToggle = vi.fn();
     render(<DarkModeToggle isDark={false} onToggle={mockOnToggle} />);
 
+    // 40px de haut, cible portée à 44px par la classe target-44.
     const button = screen.getByRole('button');
-    expect(button).toHaveClass('p-2');
-    expect(button).toHaveClass('rounded-lg');
-    expect(button).toHaveClass('transition-colors');
+    expect(button).toHaveClass('h-ctrl');
+    expect(button).toHaveClass('w-ctrl');
+    expect(button).toHaveClass('rounded-ctrl');
+    expect(button).toHaveClass('target-44');
   });
 });

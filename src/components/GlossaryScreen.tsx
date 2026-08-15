@@ -86,7 +86,8 @@ export default function GlossaryScreen({
             onClick={() => setLetter(null)}
             aria-pressed={letter === null}
             className={[
-              'h-6 rounded-ctrl px-2 font-mono text-meta',
+              'relative h-chip rounded-ctrl px-3 font-mono text-meta',
+              "before:absolute before:inset-x-0 before:-top-[6px] before:-bottom-[6px] before:content-['']",
               letter === null ? 'bg-ink text-surface' : 'bg-sunk',
             ].join(' ')}
           >
@@ -99,7 +100,8 @@ export default function GlossaryScreen({
               onClick={() => setLetter(current => (current === l ? null : l))}
               aria-pressed={letter === l}
               className={[
-                'h-6 w-6 rounded-ctrl font-mono text-meta',
+                'relative h-chip w-chip rounded-ctrl font-mono text-meta',
+                "before:absolute before:inset-x-0 before:-top-[6px] before:-bottom-[6px] before:content-['']",
                 letter === l ? 'bg-ink text-surface' : 'bg-sunk',
               ].join(' ')}
             >
@@ -124,7 +126,7 @@ export default function GlossaryScreen({
               maxLength={MAX_SEARCH_LENGTH}
               aria-label="Rechercher un terme du glossaire"
               placeholder="Rechercher un terme"
-              className="h-ctrl w-full rounded-card border-1 border-border bg-surface pl-8 pr-3 text-body"
+              className="h-touch w-full rounded-card border-1 border-border bg-surface pl-8 pr-3 text-body"
             />
           </div>
 
@@ -205,7 +207,7 @@ export default function GlossaryScreen({
                     setSearch('');
                     setLetter(null);
                   }}
-                  className="h-ctrl rounded-ctrl border-1 border-border bg-surface px-3 text-body"
+                  className="target-44 h-ctrl rounded-ctrl border-1 border-border bg-surface px-3 text-body"
                 >
                   Effacer la recherche
                 </button>

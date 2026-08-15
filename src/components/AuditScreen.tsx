@@ -153,7 +153,7 @@ export default function AuditScreen({
             <button
               type="button"
               onClick={() => onExpand(null)}
-              className="flex h-ctrl items-center gap-2 rounded-ctrl border-1 border-border bg-surface px-3 text-body"
+              className="target-44 flex h-ctrl items-center gap-2 rounded-ctrl border-1 border-border bg-surface px-3 text-body"
             >
               <ChevronLeft size={16} aria-hidden="true" />
               Retour à la liste
@@ -207,7 +207,7 @@ export default function AuditScreen({
                 <button
                   type="button"
                   onClick={() => onFiltersChange({ search: '', level: '', status: '' })}
-                  className="h-ctrl rounded-ctrl border-1 border-border bg-surface px-3 text-body"
+                  className="target-44 h-ctrl rounded-ctrl border-1 border-border bg-surface px-3 text-body"
                 >
                   Effacer les filtres
                 </button>

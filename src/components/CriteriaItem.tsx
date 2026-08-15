@@ -48,13 +48,15 @@ function CriteriaItem({
       className={`rounded-card border-1 p-3 ${cardClass}`}
     >
       <div className="mb-3 flex flex-wrap items-center gap-3">
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={event => onSelectedChange(criterion.id, event.target.checked)}
-          aria-label={`Sélectionner le critère ${criterion.id}`}
-          className="h-icon-lg w-icon-lg cursor-pointer rounded-box"
-        />
+        <label className="-m-3 flex h-touch w-touch cursor-pointer items-center justify-center">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={event => onSelectedChange(criterion.id, event.target.checked)}
+            aria-label={`Sélectionner le critère ${criterion.id}`}
+            className="h-icon-lg w-icon-lg cursor-pointer rounded-box"
+          />
+        </label>
         <span className="rounded-ctrl bg-sunk px-2 py-1 font-mono text-meta font-semibold">
           {criterion.id}
         </span>
@@ -98,7 +100,7 @@ function CriteriaItem({
         <button
           type="button"
           onClick={() => onExpand(criterion.id)}
-          className="text-body underline underline-offset-2"
+          className="py-3 text-body underline underline-offset-2"
         >
           Voir les tests
         </button>

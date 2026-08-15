@@ -57,7 +57,9 @@ function ThemeRail({ themes, activeTheme, onThemeChange }: ThemeRailProps) {
             tabIndex={isActive ? 0 : -1}
             onClick={() => onThemeChange(theme)}
             className={[
-              'flex h-chip flex-shrink-0 items-center gap-2 rounded-pill px-3 text-body',
+              'relative flex h-chip flex-shrink-0 items-center gap-2 rounded-pill px-3 text-body',
+              // 32px de haut, mais la cible réelle est portée à 44px.
+              "before:absolute before:inset-x-0 before:-top-[6px] before:-bottom-[6px] before:content-['']",
               isActive
                 ? 'bg-ink font-semibold text-surface'
                 : 'border-1 border-border bg-surface font-medium',
