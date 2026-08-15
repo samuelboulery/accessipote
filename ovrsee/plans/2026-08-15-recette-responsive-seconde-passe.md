@@ -1,9 +1,9 @@
 ---
 {
-  "status": "open",
+  "status": "closed",
   "title": "Recette responsive — seconde passe",
   "opened": "2026-08-15",
-  "closed": null,
+  "closed": "2026-08-16",
   "commits": [
     {
       "sha": "2c647de",
@@ -43,6 +43,11 @@
         "src/components/GlossaryScreen.test.tsx",
         "src/components/GlossaryScreen.tsx"
       ]
+    },
+    {
+      "sha": "6748e6a",
+      "date": "2026-08-16",
+      "files": []
     }
   ]
 }
