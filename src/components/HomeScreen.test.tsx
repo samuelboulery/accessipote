@@ -46,9 +46,7 @@ function setup(overrides = {}) {
   render(
     <HomeScreen
       audits={AUDITS}
-      glossaryCount={284}
       criteriaCount={106}
-      themeCount={13}
       onOpenAudit={onOpenAudit}
       onCreateAudit={onCreateAudit}
       onDeleteAudit={onDeleteAudit}
@@ -59,21 +57,8 @@ function setup(overrides = {}) {
 }
 
 describe('HomeScreen', () => {
-  it('affiche le sur-titre RGAA 4.1 sans logo ni mot-symbole', () => {
-    setup();
-    expect(screen.getByText('RGAA 4.1')).toBeInTheDocument();
-    expect(screen.queryByText('Accessipote')).not.toBeInTheDocument();
-  });
 
-  it('affiche le titre principal', () => {
-    setup();
-    expect(screen.getByText('Ton pote qui connaît le RGAA par cœur.')).toBeInTheDocument();
-  });
 
-  it('affiche l\'accroche avec le nombre de critères', () => {
-    setup();
-    expect(screen.getByText(/Les 106 critères/)).toBeInTheDocument();
-  });
 
   it('affiche le sous-titre « Tes audits » quand des audits existent', () => {
     setup({ audits: [AUDITS[0]] });
@@ -109,14 +94,6 @@ describe('HomeScreen', () => {
     expect(onCreateAudit).toHaveBeenCalled();
   });
 
-  it('donne le poids du référentiel en chiffres', () => {
-    setup();
-
-    expect(screen.getByText('106')).toBeInTheDocument();
-    expect(screen.getByText('13')).toBeInTheDocument();
-    expect(screen.getByText('thèmes')).toBeInTheDocument();
-    expect(screen.getByText('définitions')).toBeInTheDocument();
-  });
 
   it('affiche la liste d\'audits avec leurs noms', () => {
     setup();
@@ -268,10 +245,4 @@ describe('HomeScreen', () => {
     expect(liste).toHaveClass('xl:grid-cols-2');
   });
 
-  it('ne double pas le glossaire, que la barre latérale porte déjà', () => {
-    setup();
-    expect(screen.queryByRole('button', { name: /Glossaire/ })).not.toBeInTheDocument();
-    // Le nombre de définitions reste, mais comme chiffre, pas comme bouton.
-    expect(screen.getByText('définitions')).toBeInTheDocument();
-  });
 });

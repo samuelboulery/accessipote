@@ -15,6 +15,7 @@ import { useIsMobile } from './hooks/useIsMobile';
 import Sidebar, { type View } from './components/Sidebar';
 import MobileTabBar from './components/MobileTabBar';
 import HomeScreen from './components/HomeScreen';
+import HomeHero from './components/HomeHero';
 import NewAuditForm from './components/NewAuditForm';
 import AuditScreen from './components/AuditScreen';
 import SummaryTab from './components/SummaryTab';
@@ -273,12 +274,21 @@ function App() {
         />
       )}
 
-      <main
-        className={[
-          'flex flex-1 flex-col overflow-y-auto bg-surface p-4',
-          isMobile ? 'pb-two' : 'my-2 rounded-l-card shadow-panel',
-        ].join(' ')}
-      >
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        {view === 'home' && !isCreating && (
+          <HomeHero
+            criteriaCount={criteriaList.length}
+            themeCount={themes.length}
+            glossaryCount={glossary.length}
+          />
+        )}
+
+        <main
+          className={[
+            'flex flex-1 flex-col overflow-y-auto bg-surface p-4',
+            isMobile ? 'pb-two' : 'my-2 rounded-l-card shadow-panel',
+          ].join(' ')}
+        >
         {view === 'home' &&
           (isCreating ? (
             <NewAuditForm
@@ -290,9 +300,7 @@ function App() {
           ) : (
             <HomeScreen
               audits={homeAudits}
-              glossaryCount={glossary.length}
               criteriaCount={criteriaList.length}
-              themeCount={themes.length}
               onOpenAudit={handleOpenAudit}
               onCreateAudit={() => setIsCreating(true)}
               onDeleteAudit={handleDeleteAudit}
@@ -351,7 +359,8 @@ function App() {
             onCriteriaClick={handleCriteriaClick}
           />
         )}
-      </main>
+        </main>
+      </div>
 
       {popoverTerm && popoverAnchor && (
         <GlossaryPopover

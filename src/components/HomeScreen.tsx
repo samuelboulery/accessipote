@@ -12,10 +12,8 @@ export interface AuditSummary {
 
 interface HomeScreenProps {
   audits: AuditSummary[];
-  /** Sert la ligne de chiffres, pas un bouton : le glossaire vit dans la barre. */
-  glossaryCount: number;
+  /** Sert le texte de l'invitation quand aucun audit n'existe. */
   criteriaCount: number;
-  themeCount: number;
   onOpenAudit: (auditId: string) => void;
   onCreateAudit: () => void;
   onDeleteAudit: (auditId: string) => void;
@@ -27,16 +25,12 @@ const MODE_LABEL = {
 } as const;
 
 /**
- * Deux colonnes : le titre avait besoin de quelque chose en face de lui. Empilé
- * sur une seule colonne, il flottait dans son coin avec un vide au centre.
- *
- * Ni tuile de logo ni mot-symbole ici : la barre latérale les porte déjà.
+ * Ne porte plus que les audits : le titre et l'accroche sont remontés hors du
+ * panneau, dans HomeHero.
  */
 export default function HomeScreen({
   audits,
-  glossaryCount,
   criteriaCount,
-  themeCount,
   onOpenAudit,
   onCreateAudit,
   onDeleteAudit,
@@ -46,44 +40,9 @@ export default function HomeScreen({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const hasAudits = audits.length > 0;
 
-  const figures = [
-    { value: criteriaCount, label: `critère${criteriaCount > 1 ? 's' : ''}` },
-    { value: themeCount, label: `thème${themeCount > 1 ? 's' : ''}` },
-    { value: glossaryCount, label: `définition${glossaryCount > 1 ? 's' : ''}` },
-  ];
 
   return (
-    <div className="flex min-h-full flex-col gap-8">
-      <header>
-        <p className="font-mono text-meta uppercase tracking-[0.08em] text-ink-muted">RGAA 4.1</p>
-        <h1 className="mt-3 max-w-[20ch] text-hero font-bold [text-wrap:balance]">
-          Ton pote qui connaît le RGAA par cœur.
-        </h1>
-        <p className="mt-4 max-w-[58ch] text-lead text-ink-muted">
-          Les {criteriaCount} critères, thème par thème, sans que tu aies à retenir lequel vient
-          après lequel. Tu nommes ton audit, tu le reprends quand tu veux, et tes notes comme tes
-          pages restent dans ce navigateur — rien ne part ailleurs.
-        </p>
-
-        {/* Le poids du référentiel, en chiffres : c'est ce que l'outil couvre. */}
-        <ul className="mt-6 flex flex-wrap items-baseline gap-4">
-          {figures.map(({ value, label }, index) => (
-            <li key={label} className="flex items-baseline gap-4">
-              {index > 0 && (
-                <span aria-hidden="true" className="text-ink-muted">
-                  ·
-                </span>
-              )}
-              <span className="flex items-baseline gap-2">
-                <span className="font-mono text-section font-semibold">{value}</span>
-                <span className="text-dense text-ink-muted">{label}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </header>
-
-      <div className="flex flex-1 flex-col gap-4">
+    <div className="flex min-h-full flex-col gap-4">
         <h2 className="text-meta font-semibold uppercase tracking-[0.08em] text-ink-muted">
           Tes audits
         </h2>
@@ -201,7 +160,6 @@ export default function HomeScreen({
           </button>
         )}
 
-      </div>
     </div>
   );
 }
