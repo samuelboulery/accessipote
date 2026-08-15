@@ -16,7 +16,6 @@ const AUDIT: Audit = {
   notes: {},
   pages: {},
   checkedTests: {},
-  lastTouchedCriteriaId: undefined,
 };
 
 const COUNTS = { conforme: 29, ecarts: 12, nonApplicable: 7, aEvaluer: 58 };
@@ -33,7 +32,7 @@ function setup(overrides = {}) {
   const onNavigate = vi.fn();
   const onSelectAudit = vi.fn();
   const onCreateAudit = vi.fn();
-  const onToggleDark = vi.fn();
+  const onCycleTheme = vi.fn();
   render(
     <Sidebar
       view="audit"
@@ -44,12 +43,12 @@ function setup(overrides = {}) {
       audits={AUDITS}
       onSelectAudit={onSelectAudit}
       onCreateAudit={onCreateAudit}
-      isDark={false}
-      onToggleDark={onToggleDark}
+      themeMode="light"
+      onCycleTheme={onCycleTheme}
       {...overrides}
     />,
   );
-  return { onNavigate, onSelectAudit, onCreateAudit, onToggleDark };
+  return { onNavigate, onSelectAudit, onCreateAudit, onCycleTheme };
 }
 
 describe('Sidebar', () => {
@@ -120,22 +119,19 @@ describe('Sidebar', () => {
 
   it('affiche la bascule clair/sombre au pied de la barre', async () => {
     const user = userEvent.setup();
-    const { onToggleDark } = setup();
+    const { onCycleTheme } = setup();
 
-    const toggleButton = screen.getByRole('button', { name: /Activer le mode sombre/ });
+    const toggleButton = screen.getByRole('button', { name: /Thème :/ });
     expect(toggleButton).toBeInTheDocument();
 
     await user.click(toggleButton);
-    expect(onToggleDark).toHaveBeenCalled();
+    expect(onCycleTheme).toHaveBeenCalled();
   });
 
-  it('supporte le dernier critère modifié en lecture', () => {
-    const auditWithCriteria: typeof AUDIT = {
-      ...AUDIT,
-      lastTouchedCriteriaId: '1.1',
-    };
-    setup({ activeAudit: auditWithCriteria });
-    // Vérifie que le composant accepte le champ sans erreur
-    expect(screen.getByText(/Enregistré/)).toBeInTheDocument();
+  it('tient l\'indicateur de sauvegarde sur une seule ligne', () => {
+    setup();
+    // Sur deux lignes, la coche se retrouvait centrée entre les deux au lieu
+    // de s'aligner sur la première.
+    expect(screen.getByText(/Enregistré/)).toHaveClass('truncate');
   });
 });

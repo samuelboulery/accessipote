@@ -2,12 +2,13 @@ import { memo } from 'react';
 import { Home, List, BarChart3, BookOpen } from 'lucide-react';
 import type { View } from './Sidebar';
 import DarkModeToggle from './DarkModeToggle';
+import type { ThemeMode } from '../hooks/useDarkMode';
 
 interface MobileTabBarProps {
   view: View;
   onNavigate: (view: View) => void;
-  isDark: boolean;
-  onToggleDark: () => void;
+  themeMode: ThemeMode;
+  onCycleTheme: () => void;
 }
 
 const TABS: Array<{ view: View; label: string; Icon: typeof Home }> = [
@@ -18,7 +19,7 @@ const TABS: Array<{ view: View; label: string; Icon: typeof Home }> = [
 ];
 
 /** Cibles à 48px : 44px est le plancher desktop, 48 le plancher tactile. */
-function MobileTabBar({ view, onNavigate, isDark, onToggleDark }: MobileTabBarProps) {
+function MobileTabBar({ view, onNavigate, themeMode, onCycleTheme }: MobileTabBarProps) {
   return (
     <div className="fixed inset-x-0 bottom-0 z-20 flex items-center gap-2 border-t border-separator bg-surface p-2">
       <nav aria-label="Navigation principale" className="flex flex-1">
@@ -44,7 +45,7 @@ function MobileTabBar({ view, onNavigate, isDark, onToggleDark }: MobileTabBarPr
 
       {/* Hors du <nav> : ce n'est pas une destination, elle ne doit pas être
           annoncée comme telle. */}
-      <DarkModeToggle isDark={isDark} onToggle={onToggleDark} />
+      <DarkModeToggle mode={themeMode} onCycle={onCycleTheme} />
     </div>
   );
 }

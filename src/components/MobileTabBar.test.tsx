@@ -5,7 +5,7 @@ import MobileTabBar from './MobileTabBar';
 
 describe('MobileTabBar', () => {
   it('nomme chaque destination par son contenu', () => {
-    render(<MobileTabBar view="audit" onNavigate={vi.fn()} isDark={false} onToggleDark={vi.fn()} />);
+    render(<MobileTabBar view="audit" onNavigate={vi.fn()} themeMode="light" onCycleTheme={vi.fn()} />);
 
     for (const label of ['Accueil', 'Audit', 'Synthèse', 'Glossaire']) {
       expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
@@ -13,7 +13,7 @@ describe('MobileTabBar', () => {
   });
 
   it('marque la destination courante avec aria-current', () => {
-    render(<MobileTabBar view="glossary" onNavigate={vi.fn()} isDark={false} onToggleDark={vi.fn()} />);
+    render(<MobileTabBar view="glossary" onNavigate={vi.fn()} themeMode="light" onCycleTheme={vi.fn()} />);
 
     expect(screen.getByRole('button', { name: 'Glossaire' })).toHaveAttribute(
       'aria-current',
@@ -25,7 +25,7 @@ describe('MobileTabBar', () => {
   it('remonte la navigation demandée', async () => {
     const user = userEvent.setup();
     const onNavigate = vi.fn();
-    render(<MobileTabBar view="home" onNavigate={onNavigate} isDark={false} onToggleDark={vi.fn()} />);
+    render(<MobileTabBar view="home" onNavigate={onNavigate} themeMode="light" onCycleTheme={vi.fn()} />);
 
     await user.click(screen.getByRole('button', { name: 'Synthèse' }));
 
@@ -33,7 +33,7 @@ describe('MobileTabBar', () => {
   });
 
   it('donne aux onglets une cible tactile de 48px', () => {
-    render(<MobileTabBar view="home" onNavigate={vi.fn()} isDark={false} onToggleDark={vi.fn()} />);
+    render(<MobileTabBar view="home" onNavigate={vi.fn()} themeMode="light" onCycleTheme={vi.fn()} />);
     expect(screen.getByRole('button', { name: 'Accueil' })).toHaveClass('h-prim');
   });
 });

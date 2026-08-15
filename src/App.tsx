@@ -51,7 +51,7 @@ function App() {
   const exportMarkdownButtonRef = useRef<HTMLButtonElement>(null);
 
   const { toasts, showToast, hideToast } = useToast();
-  const { isDark, toggle: toggleDarkMode } = useDarkMode();
+  const { mode: themeMode, cycle: cycleTheme } = useDarkMode();
   const isMobile = useIsMobile();
   const { audits, activeAudit, createAudit, updateAudit, setActiveAuditId } = useAudits();
 
@@ -125,7 +125,7 @@ function App() {
       const next = { ...activeAudit.progress };
       if (status === '') delete next[criteriaId];
       else next[criteriaId] = { status } as (typeof next)[string];
-      patchAudit({ progress: next, lastTouchedCriteriaId: criteriaId });
+      patchAudit({ progress: next });
     },
     [activeAudit, patchAudit],
   );
@@ -133,10 +133,7 @@ function App() {
   const handleCheckedTestsChange = useCallback(
     (criteriaId: string, testIds: string[]) => {
       if (!activeAudit) return;
-      patchAudit({
-        checkedTests: { ...activeAudit.checkedTests, [criteriaId]: testIds },
-        lastTouchedCriteriaId: criteriaId,
-      });
+      patchAudit({ checkedTests: { ...activeAudit.checkedTests, [criteriaId]: testIds } });
     },
     [activeAudit, patchAudit],
   );
@@ -144,10 +141,7 @@ function App() {
   const handleNoteChange = useCallback(
     (criteriaId: string, note: string) => {
       if (!activeAudit) return;
-      patchAudit({
-        notes: { ...activeAudit.notes, [criteriaId]: note },
-        lastTouchedCriteriaId: criteriaId,
-      });
+      patchAudit({ notes: { ...activeAudit.notes, [criteriaId]: note } });
     },
     [activeAudit, patchAudit],
   );
@@ -155,10 +149,7 @@ function App() {
   const handlePagesChange = useCallback(
     (criteriaId: string, pages: string[]) => {
       if (!activeAudit) return;
-      patchAudit({
-        pages: { ...activeAudit.pages, [criteriaId]: pages },
-        lastTouchedCriteriaId: criteriaId,
-      });
+      patchAudit({ pages: { ...activeAudit.pages, [criteriaId]: pages } });
     },
     [activeAudit, patchAudit],
   );
@@ -267,8 +258,8 @@ function App() {
             setView('home');
             setIsCreating(true);
           }}
-          isDark={isDark}
-          onToggleDark={toggleDarkMode}
+          themeMode={themeMode}
+          onCycleTheme={cycleTheme}
         />
       )}
 
@@ -367,8 +358,8 @@ function App() {
         <MobileTabBar
           view={view}
           onNavigate={setView}
-          isDark={isDark}
-          onToggleDark={toggleDarkMode}
+          themeMode={themeMode}
+          onCycleTheme={cycleTheme}
         />
       )}
 

@@ -41,7 +41,7 @@ export default function HomeScreen({
     <div className="flex min-h-full flex-col justify-between gap-8 rounded-card bg-bg p-6">
       <header className="max-w-[52ch]">
         <p className="font-mono text-meta uppercase tracking-[0.08em] text-ink-muted">RGAA 4.1</p>
-        <h1 className="mt-2 text-screen font-semibold">
+        <h1 className="mt-2 text-screen font-semibold [text-wrap:balance]">
           Ton pote qui connaît le RGAA par cœur.
         </h1>
         <p className="mt-3 text-lead text-ink-muted">

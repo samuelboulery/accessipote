@@ -39,6 +39,25 @@
         "src/tokens.css",
         "tsconfig.app.json"
       ]
+    },
+    {
+      "sha": "90482d0",
+      "date": "2026-08-15",
+      "files": [
+        "src/App.tsx",
+        "src/components/AuditScreen.test.tsx",
+        "src/components/AuditScreen.tsx",
+        "src/components/AuditSwitcher.tsx",
+        "src/components/CriteriaDetail.test.tsx",
+        "src/components/CriteriaDetail.tsx",
+        "src/components/CriteriaItem.tsx",
+        "src/components/GlossaryScreen.test.tsx",
+        "src/components/GlossaryScreen.tsx",
+        "src/components/HomeScreen.test.tsx",
+        "src/components/HomeScreen.tsx",
+        "src/components/Sidebar.test.tsx",
+        "src/index.css"
+      ]
     }
   ]
 }

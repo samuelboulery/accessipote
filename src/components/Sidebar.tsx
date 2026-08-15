@@ -1,6 +1,7 @@
 import { memo, useEffect, useState } from 'react';
 import { Home, List, BarChart3, BookOpen, Check } from 'lucide-react';
 import type { Audit } from '../types';
+import type { ThemeMode } from '../hooks/useDarkMode';
 import AccessipoteLogo from './AccessipoteLogo';
 import AuditRing from './AuditRing';
 import AuditSwitcher, { type SwitchableAudit } from './AuditSwitcher';
@@ -27,8 +28,8 @@ interface SidebarProps {
   audits: SwitchableAudit[];
   onSelectAudit: (auditId: string) => void;
   onCreateAudit: () => void;
-  isDark: boolean;
-  onToggleDark: () => void;
+  themeMode: ThemeMode;
+  onCycleTheme: () => void;
 }
 
 const NAV: Array<{ view: View; label: string; Icon: typeof Home }> = [
@@ -47,8 +48,8 @@ function Sidebar({
   audits,
   onSelectAudit,
   onCreateAudit,
-  isDark,
-  onToggleDark,
+  themeMode,
+  onCycleTheme,
 }: SidebarProps) {
   // « il y a 2 minutes » se figerait sans ce battement : rien ne provoque de
   // rendu entre deux modifications.
@@ -154,21 +155,18 @@ function Sidebar({
 
       {/* Pied de colonne : la bascule doit être atteignable des quatre écrans,
           pas seulement de l'audit. */}
-      <div className="mt-auto flex items-end gap-2">
+      <div className="mt-auto flex items-center gap-2">
         {activeAudit && (
-          <p className="min-w-0 flex-1 text-dense text-ink-muted">
-            <span className="flex items-center gap-1">
-              <Check size={12} strokeWidth={2.6} aria-hidden="true" className="flex-shrink-0" />
-              Enregistré {formatRelativeTime(activeAudit.updatedAt)}
+          // `truncate` plutôt qu'un retour à la ligne : sur deux lignes, la
+          // coche se retrouvait centrée entre les deux au lieu de la première.
+          <p className="flex min-w-0 flex-1 items-center gap-1 truncate text-dense text-ink-muted">
+            <Check size={12} strokeWidth={2.6} aria-hidden="true" className="flex-shrink-0" />
+            <span className="truncate">
+              Enregistré {formatRelativeTime(activeAudit.updatedAt, new Date(), 'short')}
             </span>
-            {activeAudit.lastTouchedCriteriaId && (
-              <span className="mt-1 block truncate font-mono text-meta">
-                Modifié : {activeAudit.lastTouchedCriteriaId}
-              </span>
-            )}
           </p>
         )}
-        <DarkModeToggle isDark={isDark} onToggle={onToggleDark} />
+        <DarkModeToggle mode={themeMode} onCycle={onCycleTheme} />
       </div>
     </div>
   );
