@@ -84,7 +84,7 @@ export function parseGlossaryHtml(
                 key: key,
                 type: 'button',
                 onClick: () => options.onCriteriaClick?.(anchor),
-                className: 'text-blue-600 hover:text-blue-800 underline cursor-pointer',
+                className: 'cursor-pointer underline underline-offset-2',
               },
               ...children
             );
@@ -98,7 +98,7 @@ export function parseGlossaryHtml(
                 key: key,
                 type: 'button',
                 onClick: () => options.onGlossaryClick?.(anchor),
-                className: 'text-blue-600 hover:text-blue-800 underline cursor-pointer',
+                className: 'cursor-pointer underline underline-offset-2',
               },
               ...children
             );
@@ -115,7 +115,7 @@ export function parseGlossaryHtml(
                 href: href,
                 target: '_blank',
                 rel: 'noopener noreferrer',
-                className: 'text-blue-600 hover:text-blue-800 underline',
+                className: 'underline underline-offset-2',
               },
               ...children
             );

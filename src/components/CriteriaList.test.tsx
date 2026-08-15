@@ -1,38 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import CriteriaList from './CriteriaList';
 import type { CriteriaRGAA } from '../types';
 
-// ResizeObserver mock that fires callbacks immediately so the virtualizer
-// can compute visible items even in JSDOM (which has no layout engine).
-class FiringResizeObserver {
-  private cb: ResizeObserverCallback;
-  constructor(cb: ResizeObserverCallback) { this.cb = cb; }
-  observe(target: Element) {
-    // Provide a fixed non-zero size so the virtualizer can compute visible items in JSDOM
-    const fakeRect = { height: 600, width: 800, top: 0, left: 0, bottom: 600, right: 800, x: 0, y: 0, toJSON: () => ({}) };
-    this.cb(
-      [{ target, contentRect: fakeRect, borderBoxSize: [{ blockSize: 600, inlineSize: 800 }], contentBoxSize: [{ blockSize: 600, inlineSize: 800 }], devicePixelContentBoxSize: [] } as unknown as ResizeObserverEntry],
-      this as unknown as ResizeObserver,
-    );
-  }
-  unobserve() {}
-  disconnect() {}
-}
-
-beforeEach(() => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (globalThis as any).ResizeObserver = FiringResizeObserver;
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
 const makeCriteria = (count: number): CriteriaRGAA[] =>
   Array.from({ length: count }, (_, i) => ({
     id: `${Math.floor(i / 6) + 1}.${(i % 6) + 1}`,
-    title: `Critère ${i + 1} — titre de test`,
+    title: `Critère ${i + 1}`,
     url: 'https://example.com',
     theme: `Thème ${Math.floor(i / 6) + 1}`,
     level: 'A',
@@ -43,123 +17,83 @@ const defaultProps = {
   progress: {},
   onStatusChange: vi.fn(),
   onGlossaryClick: vi.fn(),
+  onExpand: vi.fn(),
+  selection: new Set<string>(),
+  onSelectedChange: vi.fn(),
 };
 
 describe('CriteriaList', () => {
-  describe('Empty state', () => {
-    it('should show empty message when no criteria', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('État vide', () => {
+    it('devrait afficher le composant vide quand aucun critère', () => {
       render(<CriteriaList criteria={[]} {...defaultProps} />);
-      expect(screen.getByText(/aucun critère/i)).toBeTruthy();
-    });
-  });
-
-  describe('Rendering', () => {
-    it('should display heading with criteria count', () => {
-      const criteria = makeCriteria(10);
-      render(<CriteriaList criteria={criteria} {...defaultProps} />);
-      expect(screen.getByText(/Liste des critères \(10\)/)).toBeTruthy();
+      expect(screen.getByText(/Aucun critère ne correspond/)).toBeInTheDocument();
     });
 
-    it('should update heading count when criteria list changes', () => {
-      const criteria = makeCriteria(5);
-      render(<CriteriaList criteria={criteria} {...defaultProps} />);
-      expect(screen.getByText(/Liste des critères \(5\)/)).toBeTruthy();
-    });
-
-    it('should render with 78 criteria without crashing', () => {
-      const criteria = makeCriteria(78);
-      const { container } = render(
-        <CriteriaList criteria={criteria} {...defaultProps} />
-      );
-      expect(container.querySelector('h2')).toBeTruthy();
-      expect(screen.getByText(/Liste des critères \(78\)/)).toBeTruthy();
-    });
-  });
-
-  describe('Virtualization structure', () => {
-    it('should have a scrollable container', () => {
-      const criteria = makeCriteria(20);
-      const { container } = render(
-        <CriteriaList criteria={criteria} {...defaultProps} />
-      );
-      // The scroll container should exist with overflow-y style
-      const scrollContainer = container.querySelector('[data-testid="criteria-scroll-container"]');
-      expect(scrollContainer).toBeTruthy();
-    });
-
-    it('should not render all 78 items in DOM at once (virtualization)', () => {
-      // Mock getBoundingClientRect so virtualizer knows it has limited height
-      vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
-        if ((this as HTMLElement).dataset?.testid === 'criteria-scroll-container') {
-          return { height: 600, width: 800, top: 0, left: 0, bottom: 600, right: 800, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
-        }
-        return { height: 0, width: 0, top: 0, left: 0, bottom: 0, right: 0, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
-      });
-
-      const criteria = makeCriteria(78);
-      const { container } = render(
-        <CriteriaList criteria={criteria} {...defaultProps} />
-      );
-
-      const criteriaItems = container.querySelectorAll('[id^="criteria-"]');
-      // With virtualization and 600px container, expect far fewer than 78 items
-      expect(criteriaItems.length).toBeLessThan(78);
-    });
-  });
-
-  describe('Callbacks', () => {
-    it('should pass onStatusChange to rendered items', () => {
-      const onStatusChange = vi.fn();
-      const criteria = makeCriteria(3);
+    it('devrait afficher un emptyState personnalisé si fourni', () => {
       render(
         <CriteriaList
-          criteria={criteria}
+          criteria={[]}
           {...defaultProps}
-          onStatusChange={onStatusChange}
+          emptyState={<div>État personnalisé</div>}
         />
       );
-      // Component renders without errors
-      expect(screen.getByText(/Liste des critères \(3\)/)).toBeTruthy();
+      expect(screen.getByText('État personnalisé')).toBeInTheDocument();
     });
   });
 
-  describe('Dark mode', () => {
-    it('should render in design-system mode without errors', () => {
+  describe('Rendu', () => {
+    it('devrait rendre une ul avec un li par critère', () => {
+      const criteria = makeCriteria(3);
+      const { container } = render(<CriteriaList criteria={criteria} {...defaultProps} />);
+      const ul = container.querySelector('ul');
+      expect(ul).toBeInTheDocument();
+      const items = ul?.querySelectorAll('li');
+      expect(items).toHaveLength(3);
+    });
+
+    it('devrait rendre TOUS les critères dans le DOM (pas de virtualiseur)', () => {
+      const criteria = makeCriteria(14);
+      const { container } = render(<CriteriaList criteria={criteria} {...defaultProps} />);
+      const criteriaItems = container.querySelectorAll('[id^="criteria-"]');
+      expect(criteriaItems).toHaveLength(14);
+    });
+
+    it('devrait rendre 78 critères en entier sans virtualiseur', () => {
+      const criteria = makeCriteria(78);
+      const { container } = render(<CriteriaList criteria={criteria} {...defaultProps} />);
+      const criteriaItems = container.querySelectorAll('[id^="criteria-"]');
+      expect(criteriaItems).toHaveLength(78);
+    });
+
+    it('devrait appeler onExpand au clic sur « Voir les tests »', () => {
+      const onExpand = vi.fn();
+      const criteria = makeCriteria(1);
+      render(<CriteriaList criteria={criteria} {...defaultProps} onExpand={onExpand} />);
+      const button = screen.getByText('Voir les tests');
+      button.click();
+      expect(onExpand).toHaveBeenCalledWith(criteria[0].id);
+    });
+  });
+
+  describe('Mode design-system', () => {
+    it('devrait rendre sans erreur en mode design-system', () => {
       const criteria = makeCriteria(5);
-      const { container } = render(
-        <CriteriaList criteria={criteria} {...defaultProps} mode="design-system" />
-      );
-      expect(container.querySelector('h2')).toBeTruthy();
+      render(<CriteriaList criteria={criteria} {...defaultProps} mode="design-system" />);
+      expect(screen.getByText('Critère 1')).toBeInTheDocument();
     });
   });
 
   describe('Performance', () => {
-    it('should render 78 criteria in under 2000ms', () => {
+    it('devrait rendre 78 critères en moins de 2000ms', () => {
       const criteria = makeCriteria(78);
-
       const start = performance.now();
       render(<CriteriaList criteria={criteria} {...defaultProps} />);
       const elapsed = performance.now() - start;
-
       expect(elapsed).toBeLessThan(2000);
-    });
-
-    it('should re-render filtered list (5 criteria) faster than full list (78 criteria)', () => {
-      const largeCriteria = makeCriteria(78);
-      const smallCriteria = makeCriteria(5);
-
-      const start1 = performance.now();
-      const { unmount } = render(<CriteriaList criteria={largeCriteria} {...defaultProps} />);
-      const largeTime = performance.now() - start1;
-      unmount();
-
-      const start2 = performance.now();
-      render(<CriteriaList criteria={smallCriteria} {...defaultProps} />);
-      const smallTime = performance.now() - start2;
-
-      // Seuil généreux pour les runners CI partagés (plus lents qu'en local)
-      expect(largeTime).toBeLessThan(2000);
-      expect(smallTime).toBeLessThan(2000);
     });
   });
 });

@@ -2,13 +2,14 @@
 
 ## Présentation du projet
 Outil d'audit RGAA 4.1 (accessibilité web française) en React.
-Deux modes : Classic (audit standard) et Design System.
+Le travail est un **audit nommé** (créé, daté, reprenable), avec un mode figé à
+la création : Classic (audit standard) ou Design System.
 Cible : auditeurs accessibilité, équipes design, développeurs.
 URL dev : http://localhost:5173
 
 ## Stack technique
 - React 19 + TypeScript strict + Vite 7
-- Tailwind CSS 3 (pas de CSS custom sauf App.css/index.css)
+- Tailwind CSS 3, échelle restreinte aux jetons du design (voir `src/tokens.css`)
 - Lucide React pour les icônes
 - jsPDF pour les exports PDF
 - Vitest + Testing Library pour les tests
@@ -19,7 +20,7 @@ URL dev : http://localhost:5173
 2. Jamais de console.log en production
 3. Jamais de alert() ou confirm() — utiliser des composants UI dédiés
 4. Ne pas modifier criteria.json ni glossary.json (données RGAA officielles)
-5. Ne pas casser le schéma localStorage (migration dans useLocalStorage.ts)
+5. Ne jamais écrire ni supprimer `localStorage['rgaa-progress']` (données v1, lecture seule)
 6. Ne pas introduire de nouvelle librairie sans demande explicite
 7. Immutabilité — ne jamais muter les objets ou tableaux directement
 8. 80% de couverture de tests minimum
@@ -32,13 +33,15 @@ URL dev : http://localhost:5173
 - `src/types/index.ts` → Source de vérité pour tous les types
 
 ## Commandes disponibles
-- npm run dev → serveur de développement (port 5173)
-- npm run build → build TypeScript + Vite
-- npm run test:run → tests unitaires (non-watch, pour CI)
-- npm run test → Vitest (watch)
-- npm run test:coverage → rapport de couverture
-- npm run lint → ESLint
-- npm run scrape:wcag → mise à jour des ancres WCAG
+Gestionnaire de paquets : **pnpm** exclusivement.
+
+- pnpm dev → serveur de développement (port 5173)
+- pnpm build → build TypeScript + Vite
+- pnpm test:run → tests unitaires (non-watch, pour CI)
+- pnpm test → Vitest (watch)
+- pnpm test:coverage → rapport de couverture
+- pnpm lint → ESLint
+- pnpm scrape:wcag → mise à jour des ancres WCAG
 
 ## Pièges connus
 - CSP : `index.html` a une CSP stricte sans `'unsafe-inline'`. En dev, le plugin `devCspPlugin`
@@ -46,6 +49,19 @@ URL dev : http://localhost:5173
 - `coverage/` doit être dans `globalIgnores` de `eslint.config.js` (fichiers générés).
 - Tests de performance dans `CriteriaList.test.tsx` : seuils à 2000ms (pas 200ms) car les
   runners CI sont plus lents qu'en local.
+- L'échelle Tailwind par défaut est **remplacée** par celle du design : `text-sm`,
+  `rounded-lg`, `p-5`, `text-gray-600` n'existent plus. Une classe hors système ne
+  produit aucun style — c'est volontaire, ça rend les dérives visibles.
+- Les tailles de police sont en `rem` et non en `px` : le zoom texte du navigateur
+  doit agir dessus (RGAA 10.4).
+- Un contrôle de 40px de haut porte la classe `target-44` (pseudo-élément qui étend
+  la zone cliquable). Un `<input>` ne pouvant pas porter de pseudo-élément, il passe
+  directement à 44px.
+- Statut = `src/utils/statusPresentation.ts`, source unique. Jamais la couleur seule :
+  chaque statut porte une icône de forme distincte et un libellé.
+- Compteurs de synthèse = `src/utils/summaryView.ts`, source unique. « évalués »
+  (conforme + écarts + non applicable) n'est pas « tranchés » (conforme + écarts) :
+  deux dénominateurs différents.
 - `src/data/criteria.json` et `glossary.json` : ne jamais modifier (données RGAA officielles).
 
 ## Subagents disponibles
@@ -55,6 +71,15 @@ URL dev : http://localhost:5173
 - /build-fix → résolution erreurs build TypeScript
 - /pre-commit → vérification avant commit (lint + build + tests)
 - /audit-a11y → audit accessibilité des composants
+
+## Architecture des écrans
+
+Barre latérale de 244px et quatre destinations (`view` en state dans `App.tsx`, pas
+de routeur) : Accueil, Audit, Synthèse, Glossaire. L'audit se parcourt **un thème à
+la fois** via `ThemeRail` — le thème est la navigation, pas un filtre.
+
+- `src/hooks/useAudits.ts` → CRUD des audits sur `localStorage['rgaa-audits']`
+- `src/utils/migrateProgress.ts` → migration v1 vers v2, sans toucher à l'ancienne clé
 
 ## Contexte métier
 - RGAA = Référentiel Général d'Amélioration de l'Accessibilité (France)

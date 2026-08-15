@@ -1,89 +1,75 @@
-import { CheckSquare, XSquare } from 'lucide-react';
-import { useState, useEffect, memo } from 'react';
-import type { Mode, CriteriaStatus } from '../types';
+import { memo } from 'react';
+import type { CriteriaStatus, Mode } from '../types';
+import { getSelectableStatuses } from '../utils/statusPresentation';
 
 interface BulkActionsProps {
+  selectedCount: number;
   mode: Mode;
-  displayedCriteriaCount: number;
-  onSelectAll: (status: CriteriaStatus) => void;
+  onApply: (status: CriteriaStatus) => void;
+  onClearStatus: () => void;
   onDeselectAll: () => void;
 }
 
+/**
+ * N'apparaît qu'avec une sélection, et annonce son cardinal. L'ancien « tout
+ * sélectionner » agissait sur la liste filtrée courante : l'utilisateur ne
+ * voyait pas ce qu'il allait modifier.
+ */
 function BulkActions({
+  selectedCount,
   mode,
-  displayedCriteriaCount,
-  onSelectAll,
+  onApply,
+  onClearStatus,
   onDeselectAll,
 }: BulkActionsProps) {
-  const [selectedStatus, setSelectedStatus] = useState<CriteriaStatus>(
-    mode === 'classic' ? 'conforme' : 'default-compliant'
-  );
+  if (selectedCount === 0) return null;
 
-  // Réinitialiser le statut sélectionné quand le mode change
-  useEffect(() => {
-    setSelectedStatus(mode === 'classic' ? 'conforme' : 'default-compliant');
-  }, [mode]);
-
-  const statusOptions =
-    mode === 'classic'
-      ? [
-          { value: 'conforme', label: 'Conforme' },
-          { value: 'non-conforme', label: 'Non conforme' },
-          { value: 'non-applicable', label: 'Non applicable' },
-        ]
-      : [
-          { value: 'default-compliant', label: 'Conforme par défaut' },
-          { value: 'project-implementation', label: 'À mettre en place' },
-          { value: 'non-applicable', label: 'Non applicable' },
-        ];
+  const statuses = getSelectableStatuses(mode);
 
   return (
-    <div className="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 rounded-lg shadow-sm p-4 mb-6">
-      <div className="flex flex-col lg:flex-row lg:items-center gap-3">
-        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 shrink-0">
-          Actions en masse ({displayedCriteriaCount} critères) :
-        </span>
+    <div
+      role="region"
+      aria-label="Actions groupées"
+      className="sticky bottom-4 z-20 flex flex-wrap items-center gap-3 rounded-card bg-ink p-4 text-surface shadow-panel"
+    >
+      <span className="font-mono text-body font-semibold">
+        {selectedCount} critère{selectedCount > 1 ? 's' : ''} sélectionné
+        {selectedCount > 1 ? 's' : ''}
+      </span>
+      <button
+        type="button"
+        onClick={onDeselectAll}
+        className="text-body underline underline-offset-2"
+      >
+        Tout désélectionner
+      </button>
 
-        <div className="flex flex-col lg:flex-row gap-2 lg:items-center flex-1">
-          <fieldset className="flex flex-wrap gap-x-4 gap-y-1.5">
-            <legend className="sr-only">Choisir un statut</legend>
-            {statusOptions.map(opt => (
-              <label key={opt.value} className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="bulk-status"
-                  value={opt.value}
-                  checked={selectedStatus === opt.value}
-                  onChange={() => setSelectedStatus(opt.value as CriteriaStatus)}
-                  className="w-4 h-4 accent-black dark:accent-white cursor-pointer"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{opt.label}</span>
-              </label>
-            ))}
-          </fieldset>
+      <span className="flex-1" />
 
-          <div className="flex gap-2">
-            <button
-              onClick={() => onSelectAll(selectedStatus)}
-              className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-3 py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
-            >
-              <CheckSquare className="w-4 h-4" />
-              Appliquer à tous
-            </button>
+      {statuses.map(({ key, label, Icon }, index) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => onApply(key)}
+          className={[
+            'flex h-ctrl items-center gap-2 rounded-ctrl px-3 text-body font-semibold',
+            index === 0 ? 'bg-surface text-ink' : 'border-1 border-[#5A5A5A]',
+          ].join(' ')}
+        >
+          <Icon size={16} strokeWidth={2.6} aria-hidden="true" />
+          {label}
+        </button>
+      ))}
 
-            <button
-              onClick={onDeselectAll}
-              className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-3 py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow font-semibold"
-            >
-              <XSquare className="w-4 h-4" />
-              Tout effacer
-            </button>
-          </div>
-        </div>
-      </div>
+      <button
+        type="button"
+        onClick={onClearStatus}
+        className="target-44 flex h-ctrl items-center rounded-ctrl border-1 border-[#5A5A5A] px-3 text-body font-semibold"
+      >
+        Effacer le statut
+      </button>
     </div>
   );
 }
 
 export default memo(BulkActions);
-

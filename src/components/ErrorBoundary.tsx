@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
+import { logError } from '../utils/logger';
 
 interface Props {
   children: ReactNode;
@@ -27,8 +28,9 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Logger l'erreur dans un service de monitoring
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // logError se tait hors développement : rien ne doit fuir en console en
+    // production, pas même une trace d'erreur.
+    logError('Erreur interceptée par ErrorBoundary:', error, errorInfo);
   }
 
   render() {
@@ -40,11 +42,11 @@ export default class ErrorBoundary extends Component<Props, State> {
 
       // UI de fallback par défaut
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-4 sm:p-8">
-            <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
+        <div className="flex min-h-screen items-center justify-center bg-bg p-4">
+          <div className="w-full max-w-md rounded-card bg-surface p-6 shadow-panel">
+            <div className="mx-auto mb-4 flex h-two w-two items-center justify-center rounded-pill bg-ko-bg">
               <svg
-                className="w-8 h-8 text-red-600"
+                className="h-8 w-8 text-ko-fg"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -58,18 +60,18 @@ export default class ErrorBoundary extends Component<Props, State> {
                 />
               </svg>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-900 mb-2">
+            <h1 className="mb-2 text-center text-section font-semibold">
               Une erreur s'est produite
             </h1>
-            <p className="text-center text-gray-600 mb-6">
+            <p className="mb-6 text-center text-body text-ink-muted">
               L'application a rencontré un problème. Veuillez rafraîchir la page ou réessayer plus tard.
             </p>
             {this.state.error && import.meta.env.DEV && (
               <details className="mb-4">
-                <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
+                <summary className="cursor-pointer text-dense text-ink-muted">
                   Détails de l'erreur (mode développement)
                 </summary>
-                <pre className="mt-2 text-xs bg-gray-100 p-3 rounded overflow-auto">
+                <pre className="mt-2 overflow-auto rounded-ctrl bg-sunk p-3 font-mono text-meta">
                   {this.state.error.toString()}
                 </pre>
               </details>
@@ -79,7 +81,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 this.setState({ hasError: false, error: null });
                 window.location.reload();
               }}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="h-prim w-full rounded-ctrl bg-ink text-body font-semibold text-surface"
             >
               Rafraîchir la page
             </button>

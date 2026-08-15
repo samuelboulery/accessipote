@@ -1,0 +1,141 @@
+/* ============================================================
+   Accessipote — jetons de design (contraste maximal)
+   Source de vérité : « Accessipote - Direction retenue.dc.html », bloc 09.
+   Toutes les valeurs de contraste sont mesurées sur la surface d'accueil
+   indiquée en commentaire.
+   ============================================================ */
+
+:root {
+  /* ---- Surfaces (clair) ---- */
+  --a-bg:            #E8E8E8;  /* fond d'application / cadres */
+  --a-surface:       #FFFFFF;  /* panneaux, cartes */
+  --a-surface-sunk:  #F2F2F2;  /* champs, badges mono, zones inertes */
+  --a-border:        #C9C9C9;  /* bordure de composant (3,0:1 sur blanc) */
+  --a-separator:     #E4E4E4;  /* filet interne */
+  --a-track:         #D6D6D6;  /* piste de jauge et d'anneau */
+  --a-dashed:        #9A9A9A;  /* bordure pointillée (affordance d'ajout) */
+
+  /* ---- Encre (clair) ---- */
+  --a-ink:           #000000;  /* 21:1 sur blanc */
+  --a-ink-muted:     #404040;  /* 10,4:1 sur blanc — SEUL gris secondaire */
+
+  /* ---- Statuts (clair) — calés sur AAA (>= 7:1) ---- */
+  --a-ok:            #0F5C37;  /* trait de jauge / anneau */
+  --a-ok-bg:         #DFF0E7;
+  --a-ok-fg:         #0B4127;  /* 11,2:1 sur --a-ok-bg */
+  --a-ok-card-bg:    #F4FAF7;
+  --a-ok-card-bd:    #BCD9C9;
+
+  --a-ko:            #8F1D16;
+  --a-ko-bg:         #F7E1DF;
+  --a-ko-fg:         #6B1610;  /* 10,7:1 sur --a-ko-bg */
+  --a-ko-card-bg:    #FBF5F4;
+  --a-ko-card-bd:    #E2C4C1;
+
+  --a-na-bg:         #E8E8E8;
+  --a-na-fg:         #404040;
+  --a-na-bar:        #9A9A9A;  /* trait de jauge « non applicable » */
+
+  --a-todo-bg:       #EDEDED;
+  --a-todo-fg:       #404040;
+
+  /* ---- Bannière d'accueil ----
+     Sombre dans les deux thèmes : c'est un bloc inversé, pas une surface.
+     Le neutre chaud clair ne se voyait pas, et toute teinte franche se lirait
+     comme un statut. */
+  --a-banner-from:  #000000;
+  --a-banner-to:    #2E2E2E;
+  --a-banner-ink:   #FFFFFF;  /* 21:1 sur le début du dégradé */
+  --a-banner-muted: #C4C4C4;  /* 8,4:1 sur la fin du dégradé */
+  /* Fusion normale : sur un fond quasi noir, `overlay` n'a presque rien à
+     lever et le grain disparaissait. Le grain étant fin, il lui faut plus
+     d'opacité qu'un motif large pour rester perceptible. */
+  --a-banner-grain: 0.3;
+  --a-banner-grain-blend: normal;
+
+  /* ---- Typographie ---- */
+  --a-font-sans: 'Instrument Sans', system-ui, sans-serif;
+  --a-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Seul pas de texte lu par une règle CSS (le code en ligne du glossaire) ;
+     l'échelle complète vit dans tailwind.config.js, qui en est la source. */
+  --a-text-dense: 0.8125rem;
+
+  /* ---- Rayons : trois valeurs ----
+     En px : un rayon ne doit pas grandir avec le zoom texte, seules les
+     tailles de police le doivent.
+     Le padding d'un conteneur vaut au moins son rayon moins celui de son
+     enfant. À égalité l'enfant épouse la courbe ; au-dessus il respire ; en
+     dessous il mord le coin. */
+  --a-radius-ctrl:  12px;    /* case, bouton, champ, chip mono */
+  --a-radius-card:  24px;    /* carte, panneau, modale */
+  --a-radius-pill: 999px;    /* pastille de statut, jauge */
+
+  /* ---- Focus ---- */
+  --a-focus-ring: 0 0 0 2px #FFFFFF, 0 0 0 5px #000000;
+}
+
+/* ============================================================
+   Sombre — mêmes rôles, rampe distincte.
+   Les statuts sont éclaircis pour tenir >= 7:1 sur #131313.
+   ============================================================ */
+:root.dark,
+[data-theme='dark'] {
+  --a-bg:            #000000;
+  --a-surface:       #131313;
+  --a-surface-sunk:  #1C1C1C;
+  --a-border:        #3A3A3A;
+  --a-separator:     #2E2E2E;
+  --a-track:         #2E2E2E;
+  --a-dashed:        #767676;
+
+  --a-ink:           #FFFFFF;
+  --a-ink-muted:     #C4C4C4;  /* 11,6:1 sur #131313 */
+
+  --a-ok:            #7FDCAA;
+  --a-ok-bg:         #0D2A1C;
+  --a-ok-fg:         #7FDCAA;
+  --a-ok-card-bg:    #131F1D;
+  --a-ok-card-bd:    #3F8F66;
+
+  --a-ko:            #FFA9A0;
+  --a-ko-bg:         #2E0F0C;
+  --a-ko-fg:         #FFA9A0;
+  --a-ko-card-bg:    #1E1616;
+  --a-ko-card-bd:    #A2504A;
+
+  --a-na-bg:         #1F1F1F;
+  --a-na-fg:         #E0E0E0;
+  --a-na-bar:        #9A9A9A;
+
+  --a-todo-bg:       #1F1F1F;
+  --a-todo-fg:       #C4C4C4;
+
+  /* En sombre le fond de l'app est noir : la bannière remonte d'un cran pour
+     rester un bloc distinct plutôt que de s'y fondre. */
+  --a-banner-from:  #2E2E2E;
+  --a-banner-to:    #131313;
+  --a-banner-ink:   #FFFFFF;
+  --a-banner-muted: #C4C4C4;
+  --a-banner-grain: 0.26;
+  --a-banner-grain-blend: normal;
+
+  --a-focus-ring: 0 0 0 2px #000000, 0 0 0 5px #FFFFFF;
+}
+
+/* ============================================================
+   Préférences système — à respecter, ce sont des critères RGAA.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root { --a-border: #000000; --a-separator: #000000; --a-ink-muted: #000000; }
+  :root.dark { --a-border: #FFFFFF; --a-separator: #FFFFFF; --a-ink-muted: #FFFFFF; }
+}

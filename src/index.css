@@ -1,19 +1,41 @@
-/* Chelsea Market — auto-hébergée pour éviter les dépendances externes */
+@import './tokens.css';
+
+/* Instrument Sans et JetBrains Mono — auto-hébergées pour éviter les dépendances externes.
+   Ce sont des polices variables : un seul fichier par sous-ensemble couvre toute la plage
+   de graisses, d'où le `font-weight` en intervalle. */
 @font-face {
-  font-family: 'Chelsea Market';
+  font-family: 'Instrument Sans';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 400 700;
   font-display: swap;
-  src: url('/fonts/chelsea-market-latin.woff2') format('woff2');
+  src: url('/fonts/instrument-sans-var-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
-  font-family: 'Chelsea Market';
+  font-family: 'Instrument Sans';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 400 700;
   font-display: swap;
-  src: url('/fonts/chelsea-market-latin-ext.woff2') format('woff2');
+  src: url('/fonts/instrument-sans-var-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-var-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-var-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
@@ -21,83 +43,179 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  /* Un contrôle de 40px de haut ne tient pas la cible minimale de 44px. Le
+     pseudo-élément étend la zone cliquable sans changer le rendu. */
+  .target-44 {
+    position: relative;
+  }
+  .target-44::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+  }
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: var(--a-font-sans);
+  background: var(--a-bg);
+  color: var(--a-ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: var(--a-font-mono);
 }
 
-/* Styles pour les balises code dans le glossaire */
+/* Définitions du glossaire.
+   Le reset de Tailwind retire marges et puces : sans ces règles, les 119
+   définitions se lisent comme un seul bloc, paragraphes et listes confondus. */
+.prose {
+  color: var(--a-ink-muted);
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose > :last-child {
+  margin-bottom: 0;
+}
+
+.prose p {
+  margin: 0 0 1em;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.prose ul,
+.prose ol {
+  margin: 0 0 1em;
+  padding-left: 1.5em;
+  line-height: 1.6;
+}
+
+.prose ul {
+  list-style: disc;
+}
+
+.prose ol {
+  list-style: decimal;
+}
+
+.prose li {
+  margin-bottom: 0.5em;
+}
+
+.prose li::marker {
+  color: var(--a-border);
+}
+
+.prose strong,
+.prose b {
+  font-weight: 600;
+  color: var(--a-ink);
+}
+
+.prose em,
+.prose i {
+  font-style: italic;
+}
+
+.prose a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.prose blockquote {
+  margin: 0 0 1em;
+  padding-left: 1em;
+  border-left: 2px solid var(--a-border);
+}
+
+.prose hr {
+  margin: 1.5em 0;
+  border: 0;
+  border-top: 1px solid var(--a-separator);
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  margin: 1.5em 0 0.5em;
+  font-weight: 600;
+  color: var(--a-ink);
+}
+
+/* Balises code du glossaire — cf. README § 05, fiche de terme */
 .prose code {
-  background-color: #f3f4f6;
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-  font-family: 'Courier New', Courier, monospace;
-  color: #1f2937;
+  background-color: var(--a-surface-sunk);
+  color: var(--a-ink);
+  padding: 2px 6px;
+  border-radius: var(--a-radius-ctrl);
+  font-size: var(--a-text-dense);
+  font-family: var(--a-font-mono);
 }
 
-.dark .prose code {
-  background-color: #374151;
-  color: #e5e7eb;
+/* Bannière d'accueil : dégradé neutre chaud + grain.
+   Le grain est un bruit SVG en data: URI. La CSP l'autorise — `img-src`
+   couvre les background-image et accepte `data:`. */
+.banner {
+  color: var(--a-banner-ink);
+  background-image: linear-gradient(135deg, var(--a-banner-from), var(--a-banner-to));
+  isolation: isolate;
+  position: relative;
 }
 
-/* Styles pour les boutons radio en noir */
-input[type="radio"] {
-  accent-color: black;
+.banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--a-banner-grain);
+  background-size: 120px 120px;
+  mix-blend-mode: var(--a-banner-grain-blend);
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27240%27%20height%3D%27240%27%3E%3Cfilter%20id%3D%27g%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.7%27%20numOctaves%3D%274%27%20stitchTiles%3D%27stitch%27%2F%3E%3CfeColorMatrix%20type%3D%27saturate%27%20values%3D%270%27%2F%3E%3C%2Ffilter%3E%3Crect%20width%3D%27240%27%20height%3D%27240%27%20filter%3D%27url%28%23g%29%27%2F%3E%3C%2Fsvg%3E");
 }
 
-.dark input[type="radio"] {
-  accent-color: white;
+/* En contraste renforcé, le grain ne fait que brouiller le texte. */
+@media (prefers-contrast: more) {
+  .banner::after { display: none; }
 }
 
-/* Police Chelsea Market pour le titre principal */
-.font-chelsea-market {
-  font-family: 'Chelsea Market', cursive;
+/* Cases et radios natifs : la teinte par défaut du navigateur est hors système. */
+input[type='radio'],
+input[type='checkbox'] {
+  accent-color: var(--a-ink);
 }
 
-/* Dark mode overrides for prose paragraphs and lists */
-.dark .prose p {
-  color: #d1d5db;
+/* Focus visible partout : liseré clair puis anneau contrasté. Ne jamais poser
+   `outline: none` sans ce remplacement. */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--a-focus-ring);
 }
 
-.dark .prose ul,
-.dark .prose ol {
-  color: #d1d5db;
+* {
+  scrollbar-color: var(--a-border) var(--a-surface-sunk);
 }
 
-.dark .prose li {
-  color: #d1d5db;
-}
-
-/* Scrollbars en dark mode */
-.dark * {
-  scrollbar-color: #4b5563 #1f2937;
-}
-
-.dark ::-webkit-scrollbar {
+::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-.dark ::-webkit-scrollbar-track {
-  background: #1f2937;
+::-webkit-scrollbar-track {
+  background: var(--a-surface-sunk);
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background-color: #4b5563;
+::-webkit-scrollbar-thumb {
+  background-color: var(--a-border);
   border-radius: 4px;
-  border: 2px solid #1f2937;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background-color: #6b7280;
+  border: 2px solid var(--a-surface-sunk);
 }

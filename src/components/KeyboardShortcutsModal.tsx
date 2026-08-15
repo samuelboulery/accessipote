@@ -78,22 +78,22 @@ export default function KeyboardShortcutsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="keyboard-shortcuts-title"
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-md mx-4 overflow-hidden"
+        className="mx-4 w-full max-w-md overflow-hidden rounded-card bg-surface shadow-panel"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between border-b border-separator p-4">
           <h2
             id="keyboard-shortcuts-title"
-            className="text-lg font-semibold text-gray-900 dark:text-gray-100"
+            className="text-lead font-semibold"
           >
             Raccourcis clavier
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+            className="target-44 flex h-ctrl w-ctrl items-center justify-center rounded-ctrl"
             aria-label="Fermer les raccourcis clavier"
           >
-            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <X size={16} aria-hidden="true" />
           </button>
         </div>
 
@@ -103,7 +103,7 @@ export default function KeyboardShortcutsModal({
             if (categoryShortcuts.length === 0) return null;
             return (
               <div key={category}>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
+                <h3 className="mb-2 text-meta font-semibold uppercase tracking-[0.08em] text-ink-muted">
                   {CATEGORY_LABELS[category]}
                 </h3>
                 <ul className="space-y-2">
@@ -112,14 +112,14 @@ export default function KeyboardShortcutsModal({
                       key={shortcut.action}
                       className="flex items-center justify-between gap-2 sm:gap-4"
                     >
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                      <span className="text-body">
                         {shortcut.description}
                       </span>
                       <span className="flex items-center gap-1 shrink-0">
                         {shortcut.keys.map((key, i) => (
                           <kbd
                             key={i}
-                            className="inline-flex items-center px-2 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-xs font-mono text-gray-700 dark:text-gray-300"
+                            className="inline-flex items-center rounded-ctrl border-1 border-b-2 border-border bg-sunk px-2 font-mono text-meta font-semibold"
                           >
                             {key}
                           </kbd>

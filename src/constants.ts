@@ -5,12 +5,12 @@
 
 // URLs et clés
 export const OFFICIAL_RGAA_URL = 'https://accessibilite.numerique.gouv.fr/methode/criteres-et-tests/#';
+/** Progression v1, anonyme. Conservée en lecture seule : c'est le seul filet de
+ *  sécurité d'un utilisateur qui aurait 106 critères de travail dedans. */
 export const LOCAL_STORAGE_KEY = 'rgaa-progress';
+/** Magasin v2 : audits nommés. */
+export const AUDITS_STORAGE_KEY = 'rgaa-audits';
 
-// Panel dimensions
-export const MIN_PANEL_WIDTH = 300;
-export const MAX_PANEL_WIDTH = 800;
-export const DEFAULT_PANEL_WIDTH = 400;
 export const ANIMATION_DELAY_MS = 350;
 
 // PDF Export

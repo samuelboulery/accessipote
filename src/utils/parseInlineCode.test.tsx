@@ -38,7 +38,7 @@ describe('parseInlineCode', () => {
     const result = parseInlineCode('`test`');
     const { container } = render(React.createElement(React.Fragment, null, ...result));
     const code = container.querySelector('code');
-    expect(code?.className).toContain('px-1.5');
+    expect(code?.className).toContain('bg-sunk');
     expect(code?.className).toContain('font-mono');
   });
 

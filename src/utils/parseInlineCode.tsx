@@ -12,7 +12,7 @@ import type { ReactNode } from 'react';
  * parseInlineCode("Utilise la balise `<img>` pour les images")
  * // Retourne: ["Utilise la balise ", <code>img</code>, " pour les images"]
  */
-export function parseInlineCode(text: string, className = 'px-1.5 py-0.5 bg-gray-100 rounded text-sm font-mono text-gray-800'): ReactNode[] {
+export function parseInlineCode(text: string, className = 'rounded-ctrl bg-sunk px-1 py-1 font-mono text-meta'): ReactNode[] {
   return text.split(/`([^`]+)`/g).map((part, index) => {
     // Les parties impaires sont du code
     if (index % 2 === 1) {

@@ -1,114 +1,90 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import type { Progress, CriteriaFilters, GlossaryTerm, ClassicStatus, CriteriaRawData } from './types';
-import useLocalStorage from './hooks/useLocalStorage';
-import { useFilters } from './hooks/useFilters';
-import { useProgress } from './hooks/useProgress';
+import { useState, useMemo, useCallback, useRef } from 'react';
+import type {
+  CriteriaFilters,
+  CriteriaStatus,
+  CriteriaRawData,
+  GlossaryTerm,
+  Progress,
+} from './types';
+import { useAudits, type NewAuditInput } from './hooks/useAudits';
 import { useDebounce } from './hooks/useDebounce';
 import useToast from './hooks/useToast';
 import { useDarkMode } from './hooks/useDarkMode';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { LOCAL_STORAGE_KEY, DEFAULT_PANEL_WIDTH } from './constants';
-import ModeSelector from './components/ModeSelector';
-import SearchFilters from './components/SearchFilters';
-import CriteriaList from './components/CriteriaList';
+import { useIsMobile } from './hooks/useIsMobile';
+import Sidebar, { type View } from './components/Sidebar';
+import MobileTabBar from './components/MobileTabBar';
+import HomeScreen from './components/HomeScreen';
+import HomeHero from './components/HomeHero';
+import NewAuditForm from './components/NewAuditForm';
+import AuditScreen from './components/AuditScreen';
+import SummaryTab from './components/SummaryTab';
+import GlossaryScreen from './components/GlossaryScreen';
+import GlossaryPopover from './components/GlossaryPopover';
 import ExportButton from './components/ExportButton';
-import ProgressBar from './components/ProgressBar';
-import GlossarySidePanel from './components/GlossarySidePanel';
-import BulkActions from './components/BulkActions';
 import Toast from './components/Toast';
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
-import DarkModeToggle from './components/DarkModeToggle';
-import SummaryTab from './components/SummaryTab';
 import criteriaRawData from './data/criteria.json';
 import glossaryRawData from './data/glossary.json';
 import { transformCriteriaData } from './utils/transformCriteria';
-import { BookOpen } from 'lucide-react';
+import { titleToSlug } from './utils/transformGlossary';
 
 function App() {
-  const criteriaList = useMemo(() => {
-    return transformCriteriaData(criteriaRawData as CriteriaRawData);
-  }, []);
+  const criteriaList = useMemo(
+    () => transformCriteriaData(criteriaRawData as CriteriaRawData),
+    [],
+  );
+  const glossary = useMemo(() => glossaryRawData.glossary as GlossaryTerm[], []);
 
-  // Charger le glossaire
-  const glossary = useMemo(() => {
-    return glossaryRawData.glossary as GlossaryTerm[];
-  }, []);
+  const themes = useMemo(
+    () => [...new Set(criteriaList.map(c => c.theme))],
+    [criteriaList],
+  );
+  const criteriaCountByTheme = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const criterion of criteriaList) {
+      counts[criterion.theme] = (counts[criterion.theme] ?? 0) + 1;
+    }
+    return counts;
+  }, [criteriaList]);
 
-  // Refs pour les raccourcis clavier
   const searchInputRef = useRef<HTMLInputElement>(null);
   const exportMarkdownButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Toast notifications
   const { toasts, showToast, hideToast } = useToast();
+  const { mode: themeMode, cycle: cycleTheme } = useDarkMode();
+  const isMobile = useIsMobile();
+  const { audits, activeAudit, createAudit, updateAudit, deleteAudit, setActiveAuditId } =
+    useAudits();
 
-  // Dark mode
-  const { isDark, toggle: toggleDarkMode } = useDarkMode();
+  const [view, setView] = useState<View>('home');
+  const [isCreating, setIsCreating] = useState(false);
+  const [activeTheme, setActiveTheme] = useState(themes[0]);
+  const [expandedCriteriaId, setExpandedCriteriaId] = useState<string | null>(null);
+  const [filters, setFilters] = useState<CriteriaFilters>({ search: '', level: '', status: '' });
 
-  const [mode, setMode] = useState<'classic' | 'design-system'>('classic');
-  const [activeTab, setActiveTab] = useState<'audit' | 'synthese'>('audit');
-
-  interface OldProgressFormat {
-    criteria: Record<string, { status: string }>;
-  }
-
-  const [progress, setProgress] = useLocalStorage<Progress>(LOCAL_STORAGE_KEY, {
-    classic: {},
-    designSystem: {},
-  }, (oldValue: unknown): Progress => {
-    // Migration des anciennes données vers le nouveau format
-    if (oldValue && typeof oldValue === 'object' && 'criteria' in oldValue) {
-      // Si on a l'ancien format avec 'criteria'
-      const oldProgressValue = oldValue as OldProgressFormat;
-      // Conversion des anciens statuts vers ClassicStatus
-      const classicProgress: Progress['classic'] = {};
-      for (const [key, value] of Object.entries(oldProgressValue.criteria)) {
-        if (['conforme', 'non-conforme', 'non-applicable'].includes(value.status)) {
-          classicProgress[key] = { status: value.status as ClassicStatus };
-        }
-      }
-      return {
-        classic: classicProgress,
-        designSystem: {},
-      };
-    }
-    return oldValue as Progress;
-  });
-  
-  const [filters, setFilters] = useState<CriteriaFilters>({
-    search: '',
-    themes: [],
-    level: '',
-    status: '',
-  });
-
-  // Debouncer la recherche pour optimiser les performances
-  const debouncedSearch = useDebounce(filters.search, 300);
-  
-  // Créer un objet de filtres avec la recherche debouncée (mémorisé)
-  const debouncedFilters = useMemo(() => ({
-    search: debouncedSearch,
-    themes: filters.themes,
-    level: filters.level,
-    status: filters.status,
-  }), [filters.themes, filters.level, filters.status, debouncedSearch]);
-
-  // States pour le glossaire
-  const [glossaryOpen, setGlossaryOpen] = useState(false);
   const [selectedGlossaryTerm, setSelectedGlossaryTerm] = useState<string | undefined>();
-  const [glossaryWidth, setGlossaryWidth] = useState(DEFAULT_PANEL_WIDTH);
-  const [targetCriteriaId, setTargetCriteriaId] = useState<string | null>(null);
+  const [popoverAnchor, setPopoverAnchor] = useState<DOMRect | null>(null);
 
+  const debouncedSearch = useDebounce(filters.search, 300);
+  const debouncedFilters = useMemo(
+    () => ({ search: debouncedSearch, level: filters.level, status: filters.status }),
+    [debouncedSearch, filters.level, filters.status],
+  );
+
+  /**
+   * Le terme cliqué a le focus au moment du clic : c'est ainsi qu'on récupère
+   * son rectangle sans avoir à faire descendre l'événement dans parseMarkdown.
+   */
   const handleGlossaryClick = useCallback((slug: string) => {
+    const trigger = document.activeElement;
     setSelectedGlossaryTerm(slug);
-    setGlossaryOpen(true);
-  }, []);
-
-  const handleCloseGlossary = useCallback(() => {
-    setGlossaryOpen(false);
+    setPopoverAnchor(trigger instanceof HTMLElement ? trigger.getBoundingClientRect() : null);
   }, []);
 
   const handleGlossaryToggle = useCallback(() => {
-    setGlossaryOpen(prev => !prev);
+    setPopoverAnchor(null);
+    setView(current => (current === 'glossary' ? 'audit' : 'glossary'));
   }, []);
 
   const { shortcuts, isHelpModalOpen, closeHelpModal } = useKeyboardShortcuts({
@@ -117,212 +93,295 @@ function App() {
     onGlossaryToggle: handleGlossaryToggle,
   });
 
-  const handleModeChange = useCallback((newMode: 'classic' | 'design-system') => {
-    setMode(newMode);
-  }, []);
+  /**
+   * Le glossaire renvoie vers un critère : basculer sur son thème puis lui donner
+   * le focus. Sans virtualiseur, l'élément est présent dès le rendu suivant — plus
+   * besoin de le poursuivre avec un setTimeout.
+   */
+  const handleCriteriaClick = useCallback(
+    (criteriaId: string) => {
+      const criterion = criteriaList.find(c => c.id === criteriaId);
+      if (!criterion) return;
 
-  // Utiliser le hook useFilters pour la logique de filtrage
-  const currentProgressForMode = useMemo(() => {
-    return mode === 'classic' ? progress.classic : progress.designSystem;
-  }, [progress, mode]);
+      setView('audit');
+      setPopoverAnchor(null);
+      setActiveTheme(criterion.theme);
+      setExpandedCriteriaId(null);
+      queueMicrotask(() => {
+        document.getElementById(`criteria-${criteriaId}`)?.focus();
+      });
+    },
+    [criteriaList],
+  );
 
-  const {
-    filteredCriteria,
-    uniqueThemes,
-    progressPercentage,
-  } = useFilters(criteriaList, debouncedFilters, currentProgressForMode);
+  const patchAudit = useCallback(
+    (patch: Parameters<typeof updateAudit>[1]) => {
+      if (activeAudit) updateAudit(activeAudit.id, patch);
+    },
+    [activeAudit, updateAudit],
+  );
 
-  // Utiliser le hook useProgress pour la gestion du progrès
-  const {
-    handleCriteriaStatusChange,
-    handleSelectAll,
-    handleDeselectAll,
-    currentProgress,
-  } = useProgress(progress, setProgress, mode, filteredCriteria);
+  const handleStatusChange = useCallback(
+    (criteriaId: string, status: CriteriaStatus | '') => {
+      if (!activeAudit) return;
+      const next = { ...activeAudit.progress };
+      if (status === '') delete next[criteriaId];
+      else next[criteriaId] = { status } as (typeof next)[string];
+      patchAudit({ progress: next });
+    },
+    [activeAudit, patchAudit],
+  );
 
-  // Gérer le clic sur un critère depuis le glossaire
-  const handleCriteriaClick = useCallback((criteriaId: string) => {
-    // Trouver le critère dans la liste complète
-    const criterion = criteriaList.find(c => c.id === criteriaId);
-    if (!criterion) return;
-    
-    // Vérifier si le critère est dans la liste filtrée
-    const isVisible = filteredCriteria.some(c => c.id === criteriaId);
-    
-    if (!isVisible) {
-      // Le critère n'est pas visible, réinitialiser les filtres de thème
-      setFilters(prev => ({
-        ...prev,
-        themes: [],
-      }));
-      // Sauvegarder l'ID pour le scroll différé
-      setTargetCriteriaId(criteriaId);
-    } else {
-      // Le critère est visible, scroller immédiatement
-      const element = document.getElementById(`criteria-${criteriaId}`);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+  const handleCheckedTestsChange = useCallback(
+    (criteriaId: string, testIds: string[]) => {
+      if (!activeAudit) return;
+      patchAudit({ checkedTests: { ...activeAudit.checkedTests, [criteriaId]: testIds } });
+    },
+    [activeAudit, patchAudit],
+  );
+
+  const handleNoteChange = useCallback(
+    (criteriaId: string, note: string) => {
+      if (!activeAudit) return;
+      patchAudit({ notes: { ...activeAudit.notes, [criteriaId]: note } });
+    },
+    [activeAudit, patchAudit],
+  );
+
+  const handlePagesChange = useCallback(
+    (criteriaId: string, pages: string[]) => {
+      if (!activeAudit) return;
+      patchAudit({ pages: { ...activeAudit.pages, [criteriaId]: pages } });
+    },
+    [activeAudit, patchAudit],
+  );
+
+  const handleOpenAudit = useCallback(
+    (auditId: string) => {
+      setActiveAuditId(auditId);
+      setExpandedCriteriaId(null);
+      setView('audit');
+    },
+    [setActiveAuditId],
+  );
+
+  const handleDeleteAudit = useCallback(
+    (auditId: string) => {
+      const removed = audits.find(audit => audit.id === auditId);
+      deleteAudit(auditId);
+      if (removed) showToast(`Audit « ${removed.name} » supprimé.`, 'info');
+    },
+    [audits, deleteAudit, showToast],
+  );
+
+  const handleCreateAudit = useCallback(
+    (input: NewAuditInput) => {
+      createAudit(input);
+      setIsCreating(false);
+      setActiveTheme(input.themes[0] ?? themes[0]);
+      setExpandedCriteriaId(null);
+      setView('audit');
+      showToast(`Audit « ${input.name} » créé.`, 'success');
+    },
+    [createAudit, themes, showToast],
+  );
+
+  /** Les thèmes retenus au périmètre de l'audit ; [] signifie « tous ». */
+  const auditThemes = useMemo(() => {
+    if (!activeAudit || activeAudit.themes.length === 0) return themes;
+    return themes.filter(theme => activeAudit.themes.includes(theme));
+  }, [activeAudit, themes]);
+
+  const auditCriteria = useMemo(
+    () => criteriaList.filter(criterion => auditThemes.includes(criterion.theme)),
+    [criteriaList, auditThemes],
+  );
+
+  const sidebarCounts = useMemo(() => {
+    const tally = { conforme: 0, ecarts: 0, nonApplicable: 0, aEvaluer: 0 };
+    for (const criterion of auditCriteria) {
+      const status = activeAudit?.progress[criterion.id]?.status;
+      if (status === 'conforme' || status === 'default-compliant') tally.conforme += 1;
+      else if (status === 'non-conforme' || status === 'project-implementation') tally.ecarts += 1;
+      else if (status === 'non-applicable') tally.nonApplicable += 1;
+      else tally.aEvaluer += 1;
     }
-  }, [criteriaList, filteredCriteria]);
+    return tally;
+  }, [auditCriteria, activeAudit]);
 
-  // Gérer le scroll différé vers un critère cible
-  useEffect(() => {
-    if (targetCriteriaId) {
-      // Attendre que le DOM soit mis à jour
-      setTimeout(() => {
-        const element = document.getElementById(`criteria-${targetCriteriaId}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        setTargetCriteriaId(null);
-      }, 100);
-    }
-  }, [targetCriteriaId, filteredCriteria]);
+  const homeAudits = useMemo(
+    () =>
+      audits.map(audit => {
+        const scoped =
+          audit.themes.length === 0
+            ? criteriaList
+            : criteriaList.filter(c => audit.themes.includes(c.theme));
+        return {
+          audit,
+          evaluated: scoped.filter(c => audit.progress[c.id]).length,
+          total: scoped.length,
+        };
+      }),
+    [audits, criteriaList],
+  );
+
+  /** `SummaryTab` et l'export attendent encore la forme v1, à deux modes. */
+  const progressForMode = useMemo((): Progress => {
+    if (!activeAudit) return { classic: {}, designSystem: {} };
+    return activeAudit.mode === 'classic'
+      ? { classic: activeAudit.progress as Progress['classic'], designSystem: {} }
+      : { classic: {}, designSystem: activeAudit.progress as Progress['designSystem'] };
+  }, [activeAudit]);
+
+  const popoverTerm = useMemo(
+    () =>
+      selectedGlossaryTerm
+        ? glossary.find(term => titleToSlug(term.title) === selectedGlossaryTerm) ?? null
+        : null,
+    [glossary, selectedGlossaryTerm],
+  );
+
+  const isThemeInAudit = auditThemes.includes(activeTheme);
+  const currentTheme = isThemeInAudit ? activeTheme : auditThemes[0];
+
+  const exportButton = activeAudit ? (
+    <ExportButton
+      mode={activeAudit.mode}
+      progress={progressForMode}
+      criteriaList={auditCriteria}
+      onShowToast={showToast}
+      exportMarkdownButtonRef={exportMarkdownButtonRef}
+    />
+  ) : null;
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex overflow-hidden">
-      <div className="flex-1 overflow-y-auto">
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
-          <header className="mb-4 sm:mb-12 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900 py-4 sm:py-0 -mx-4 px-4 sm:mx-0 sm:px-0">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-              <div>
-                <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 font-chelsea-market">
-                  Accessipote
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 text-base">
-                  Ton meilleur pote pour vérifier la conformité aux critères d'accessibilité RGAA !
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <DarkModeToggle isDark={isDark} onToggle={toggleDarkMode} />
-                <button
-                  onClick={handleGlossaryToggle}
-                  aria-keyshortcuts="g"
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-all shadow-sm hover:shadow font-medium"
-                >
-                  <BookOpen className="w-5 h-5" />
-                  Glossaire
-                </button>
-              </div>
-            </div>
-          </header>
+    <div className="flex h-screen overflow-hidden bg-bg">
+      {!isMobile && (
+        <Sidebar
+          view={view}
+          onNavigate={setView}
+          activeAudit={activeAudit}
+          counts={sidebarCounts}
+          total={auditCriteria.length}
+          audits={homeAudits}
+          onSelectAudit={handleOpenAudit}
+          onCreateAudit={() => {
+            setView('home');
+            setIsCreating(true);
+          }}
+          themeMode={themeMode}
+          onCycleTheme={cycleTheme}
+        />
+      )}
 
-          <ModeSelector mode={mode} onModeChange={handleModeChange} />
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        {view === 'home' && !isCreating && (
+          <HomeHero
+            criteriaCount={criteriaList.length}
+            themeCount={themes.length}
+            glossaryCount={glossary.length}
+          />
+        )}
 
-          <ProgressBar progress={progressPercentage} />
+        <main
+          className={[
+            'flex flex-1 flex-col overflow-y-auto bg-surface p-6',
+            isMobile ? 'pb-two' : 'my-2 rounded-l-card shadow-panel',
+          ].join(' ')}
+        >
+        {view === 'home' &&
+          (isCreating ? (
+            <NewAuditForm
+              themes={themes}
+              criteriaCountByTheme={criteriaCountByTheme}
+              onCancel={() => setIsCreating(false)}
+              onSubmit={handleCreateAudit}
+            />
+          ) : (
+            <HomeScreen
+              audits={homeAudits}
+              criteriaCount={criteriaList.length}
+              onOpenAudit={handleOpenAudit}
+              onCreateAudit={() => setIsCreating(true)}
+              onDeleteAudit={handleDeleteAudit}
+            />
+          ))}
 
-          {/* Tab navigation */}
-          <div
-            role="tablist"
-            aria-label="Navigation principale"
-            className="flex gap-4 my-8 border-b border-gray-300 dark:border-gray-700"
-            onKeyDown={(e) => {
-              if (e.key === 'ArrowRight') setActiveTab('synthese');
-              else if (e.key === 'ArrowLeft') setActiveTab('audit');
-            }}
-          >
-            <button
-              role="tab"
-              id="tab-audit"
-              aria-selected={activeTab === 'audit'}
-              aria-controls="panel-audit"
-              onClick={() => setActiveTab('audit')}
-              className={`px-4 py-3 font-medium transition-all ${
-                activeTab === 'audit'
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
-              }`}
-            >
-              Audit
-            </button>
-            <button
-              role="tab"
-              id="tab-synthese"
-              aria-selected={activeTab === 'synthese'}
-              aria-controls="panel-synthese"
-              onClick={() => setActiveTab('synthese')}
-              className={`px-4 py-3 font-medium transition-all ${
-                activeTab === 'synthese'
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
-              }`}
-            >
-              Synthèse
-            </button>
-          </div>
+        {view === 'audit' &&
+          (activeAudit ? (
+            <AuditScreen
+              audit={activeAudit}
+              criteriaList={auditCriteria}
+              themes={auditThemes}
+              activeTheme={currentTheme}
+              onThemeChange={theme => {
+                setActiveTheme(theme);
+                setExpandedCriteriaId(null);
+              }}
+              filters={debouncedFilters}
+              onFiltersChange={setFilters}
+              expandedCriteriaId={expandedCriteriaId}
+              onExpand={setExpandedCriteriaId}
+              onStatusChange={handleStatusChange}
+              onCheckedTestsChange={handleCheckedTestsChange}
+              onNoteChange={handleNoteChange}
+              onPagesChange={handlePagesChange}
+              onGlossaryClick={handleGlossaryClick}
+              searchInputRef={searchInputRef}
+              toolbarActions={exportButton}
+            />
+          ) : (
+            <p className="text-body text-ink-muted">
+              Aucun audit ouvert. Reprends-en un depuis l'accueil, ou démarres-en un nouveau.
+            </p>
+          ))}
 
-          {/* Audit tab content */}
-          {activeTab === 'audit' && (
-            <div
-              role="tabpanel"
-              id="panel-audit"
-              aria-labelledby="tab-audit"
-              className="pb-20 sm:pb-0"
-            >
-              <SearchFilters
-                filters={filters}
-                onFiltersChange={setFilters}
-                themes={uniqueThemes}
-                mode={mode}
-                inputRef={searchInputRef}
-              />
+        {view === 'summary' &&
+          (activeAudit ? (
+            <SummaryTab
+              criteriaList={auditCriteria}
+              progress={progressForMode}
+              mode={activeAudit.mode}
+              actions={exportButton}
+            />
+          ) : (
+            <p className="text-body text-ink-muted">
+              Aucun audit ouvert. Reprends-en un depuis l'accueil pour voir sa synthèse.
+            </p>
+          ))}
 
-              {filteredCriteria.length > 0 && (
-                <BulkActions
-                  mode={mode}
-                  displayedCriteriaCount={filteredCriteria.length}
-                  onSelectAll={handleSelectAll}
-                  onDeselectAll={handleDeselectAll}
-                />
-              )}
-
-              <CriteriaList
-                criteria={filteredCriteria}
-                mode={mode}
-                progress={currentProgress}
-                onStatusChange={handleCriteriaStatusChange}
-                onGlossaryClick={handleGlossaryClick}
-              />
-
-              <ExportButton
-                mode={mode}
-                progress={progress}
-                criteriaList={criteriaList}
-                onShowToast={showToast}
-                exportMarkdownButtonRef={exportMarkdownButtonRef}
-              />
-            </div>
-          )}
-
-          {/* Synthèse tab content */}
-          {activeTab === 'synthese' && (
-            <div
-              role="tabpanel"
-              id="panel-synthese"
-              aria-labelledby="tab-synthese"
-            >
-              <SummaryTab
-                criteriaList={criteriaList}
-                progress={progress}
-                mode={mode}
-                isDark={isDark}
-              />
-            </div>
-          )}
-        </div>
+        {view === 'glossary' && (
+          <GlossaryScreen
+            glossary={glossary}
+            criteriaList={criteriaList}
+            selectedSlug={selectedGlossaryTerm}
+            onSelectTerm={setSelectedGlossaryTerm}
+            onCriteriaClick={handleCriteriaClick}
+          />
+        )}
+        </main>
       </div>
 
-      <GlossarySidePanel
-        isOpen={glossaryOpen}
-        onClose={handleCloseGlossary}
-        selectedTerm={selectedGlossaryTerm}
-        glossary={glossary}
-        width={glossaryWidth}
-        onWidthChange={setGlossaryWidth}
-        onGlossaryClick={handleGlossaryClick}
-        onCriteriaClick={handleCriteriaClick}
-      />
+      {popoverTerm && popoverAnchor && (
+        <GlossaryPopover
+          term={popoverTerm}
+          anchor={popoverAnchor}
+          onClose={() => setPopoverAnchor(null)}
+          onOpenInGlossary={() => {
+            setPopoverAnchor(null);
+            setView('glossary');
+          }}
+        />
+      )}
+
+      {isMobile && (
+        <MobileTabBar
+          view={view}
+          onNavigate={setView}
+          themeMode={themeMode}
+          onCycleTheme={cycleTheme}
+        />
+      )}
 
       <Toast toasts={toasts} onDismiss={hideToast} />
 

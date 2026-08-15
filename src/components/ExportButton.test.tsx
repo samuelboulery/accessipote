@@ -58,22 +58,22 @@ describe('ExportButton', () => {
     vi.restoreAllMocks();
   });
 
-  it('devrait afficher le bouton "Copier en Markdown"', () => {
+  it('devrait afficher le bouton d\'export Markdown', () => {
     render(<ExportButton {...defaultProps} />);
     // Bouton desktop visible dans le DOM
-    const buttons = screen.getAllByText('Copier en Markdown');
+    const buttons = screen.getAllByRole('button', { name: 'Exporter' });
     expect(buttons.length).toBeGreaterThan(0);
   });
 
   it('devrait afficher le bouton PDF en mode classic', () => {
     render(<ExportButton {...defaultProps} />);
-    const pdfButtons = screen.getAllByText(/Exporter en PDF|PDF/);
+    const pdfButtons = screen.getAllByRole('button', { name: /PDF/ });
     expect(pdfButtons.length).toBeGreaterThan(0);
   });
 
   it('ne devrait pas afficher le bouton PDF en mode design-system', () => {
     render(<ExportButton {...defaultProps} mode="design-system" />);
-    expect(screen.queryByText('Exporter en PDF')).toBeNull();
+    expect(screen.queryByRole('button', { name: /PDF/ })).toBeNull();
     expect(screen.queryByText('PDF')).toBeNull();
   });
 
@@ -87,7 +87,7 @@ describe('ExportButton', () => {
     const onShowToast = vi.fn();
     render(<ExportButton {...defaultProps} onShowToast={onShowToast} />);
 
-    const markdownButtons = screen.getAllByText('Copier en Markdown');
+    const markdownButtons = screen.getAllByRole('button', { name: 'Exporter' });
     fireEvent.click(markdownButtons[0]);
 
     await waitFor(() => {
@@ -106,7 +106,7 @@ describe('ExportButton', () => {
     const onShowToast = vi.fn();
     render(<ExportButton {...defaultProps} mode="design-system" onShowToast={onShowToast} />);
 
-    const markdownButtons = screen.getAllByText('Copier en Markdown');
+    const markdownButtons = screen.getAllByRole('button', { name: 'Exporter' });
     fireEvent.click(markdownButtons[0]);
 
     await waitFor(() => {
@@ -156,7 +156,7 @@ describe('ExportButton', () => {
     const onShowToast = vi.fn();
     render(<ExportButton {...defaultProps} onShowToast={onShowToast} />);
 
-    const pdfButtons = screen.getAllByText(/Exporter en PDF/);
+    const pdfButtons = screen.getAllByRole('button', { name: /PDF|Export…/ });
     fireEvent.click(pdfButtons[0]);
 
     await waitFor(() => {
@@ -164,21 +164,21 @@ describe('ExportButton', () => {
     });
   });
 
-  it('devrait afficher "Export en cours..." pendant l\'export PDF', async () => {
+  it('devrait signaler l\'export PDF en cours', async () => {
     // Retarder la résolution pour capturer l'état intermédiaire
     vi.mocked(await import('jspdf')).default = vi.fn(() => {
       return new Promise<void>(() => {
         // Promise volontairement non résolue pour tester l'état de chargement
-      }) as unknown as ReturnType<typeof mockJsPDFInstance.constructor>;
+      }) as unknown as typeof mockJsPDFInstance;
     }) as never;
 
     render(<ExportButton {...defaultProps} />);
-    const pdfButtons = screen.getAllByText(/Exporter en PDF/);
+    const pdfButtons = screen.getAllByRole('button', { name: /PDF|Export…/ });
     fireEvent.click(pdfButtons[0]);
 
     // Vérifier l'état d'export en cours
     await waitFor(() => {
-      const exportingButton = screen.queryByText(/Export en cours/);
+      const exportingButton = screen.queryByText(/Export…/);
       expect(exportingButton !== null || mockSave.mock.calls.length > 0).toBe(true);
     });
   });
@@ -191,7 +191,7 @@ describe('ExportButton', () => {
     });
 
     render(<ExportButton {...defaultProps} onShowToast={onShowToast} />);
-    const pdfButtons = screen.getAllByText(/Exporter en PDF/);
+    const pdfButtons = screen.getAllByRole('button', { name: /PDF|Export…/ });
     fireEvent.click(pdfButtons[0]);
 
     await waitFor(() => {
@@ -205,7 +205,7 @@ describe('ExportButton', () => {
   it('ne devrait pas déclencher l\'export PDF en mode design-system', () => {
     render(<ExportButton {...defaultProps} mode="design-system" />);
     // Le bouton PDF n'est pas rendu en mode design-system
-    expect(screen.queryByText('Exporter en PDF')).toBeNull();
+    expect(screen.queryByRole('button', { name: /PDF/ })).toBeNull();
     expect(screen.queryByText('PDF')).toBeNull();
   });
 });
