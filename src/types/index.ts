@@ -67,6 +67,31 @@ export interface Progress {
   };
 }
 
+/** Un audit nommé, reprenable. Le mode est figé à la création. */
+export interface Audit {
+  id: string;
+  name: string;
+  scope?: string;
+  mode: Mode;
+  /** Thèmes retenus au périmètre ; [] signifie « tous ». */
+  themes: string[];
+  createdAt: string;
+  updatedAt: string;
+  progress: Progress['classic'] | Progress['designSystem'];
+  /** criteriaId -> note d'audit */
+  notes: Record<string, string>;
+  /** criteriaId -> URLs concernées */
+  pages: Record<string, string[]>;
+  /** criteriaId -> ids des tests cochés */
+  checkedTests: Record<string, string[]>;
+}
+
+export interface AuditStore {
+  version: 2;
+  audits: Audit[];
+  activeAuditId: string | null;
+}
+
 export interface CriteriaFilters {
   search: string;
   themes: string[];

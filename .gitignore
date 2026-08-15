@@ -43,3 +43,7 @@ coverage
 
 # Fichiers de planning locaux
 CLAUDE_CODE_PLAN.md
+
+# Captures d'écran ovrsee : régénérées à chaque commit, purge auto côté
+# disque (30j puis 1/semaine) — inutile de les suivre dans git.
+ovrsee/pages/shots/

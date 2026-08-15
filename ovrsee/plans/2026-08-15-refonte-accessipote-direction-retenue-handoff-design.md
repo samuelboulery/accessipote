@@ -4,7 +4,24 @@
   "title": "Refonte Accessipote — direction retenue (handoff design)",
   "opened": "2026-08-15",
   "closed": null,
-  "commits": []
+  "commits": [
+    {
+      "sha": "caaa1bc",
+      "date": "2026-08-15",
+      "files": [
+        "ovrsee.config.json",
+        "public/fonts/chelsea-market-latin-ext.woff2",
+        "public/fonts/chelsea-market-latin.woff2",
+        "public/fonts/instrument-sans-var-latin-ext.woff2",
+        "public/fonts/instrument-sans-var-latin.woff2",
+        "public/fonts/jetbrains-mono-var-latin-ext.woff2",
+        "public/fonts/jetbrains-mono-var-latin.woff2",
+        "src/index.css",
+        "src/tokens.css",
+        "tailwind.config.js"
+      ]
+    }
+  ]
 }
 ---
 
