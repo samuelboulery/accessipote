@@ -46,7 +46,7 @@
     "dompurify": "^3.4.13",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
-    "lucide-react": "^0.548.0",
+    "lucide-react": "^1.31.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
