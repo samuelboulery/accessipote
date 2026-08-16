@@ -15,7 +15,7 @@ le navigateur, le mode d'audit et les étapes, plus vite c'est corrigé.
 
 ## Monter l'environnement
 
-Prérequis : **Node 20 ou plus** (la CI teste 20 et 22) et **pnpm**, dont la
+Prérequis : **Node 22.22 ou plus** (la CI teste 22 et 24) et **pnpm**, dont la
 version est figée par le champ `packageManager` de `package.json`.
 
 ```bash
