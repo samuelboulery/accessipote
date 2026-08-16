@@ -13,11 +13,13 @@
       Police Chelsea Market auto-hébergée dans /public/fonts/ (pas de dépendance Google Fonts)
 
       default-src 'self'         : par défaut, uniquement les assets locaux
-      script-src 'self'          : scripts Vite uniquement — React 19 ne génère pas de code inline
+      script-src 'self' + static.cloudflareinsights.com : scripts Vite (React 19 ne génère pas
+                                   de code inline) + la balise de mesure d'audience
       style-src 'self'           : CSS Tailwind compilé (app.css) + @font-face local dans index.css
       font-src 'self'            : polices locales uniquement (/fonts/*.woff2)
       img-src 'self' data: blob: : assets locaux + data URIs + blob: (jsPDF)
-      connect-src 'self'         : pas de requêtes vers des API externes
+      connect-src 'self' + cloudflareinsights.com : destination de la mesure d'audience,
+                                   aucune autre API externe
       base-uri 'self'            : empêche les injections de base URL
       form-action 'self'         : soumettre les formulaires uniquement en local
       object-src 'none'          : bloque les plugins legacy (Flash, Java)
@@ -26,11 +28,11 @@
     -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self';
+      script-src 'self' https://static.cloudflareinsights.com;
       style-src 'self';
       font-src 'self';
       img-src 'self' data: blob:;
-      connect-src 'self';
+      connect-src 'self' https://cloudflareinsights.com;
       base-uri 'self';
       form-action 'self';
       object-src 'none';
@@ -116,5 +118,24 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!--
+      Mesure d'audience Cloudflare Web Analytics : sans cookie, sans stockage sur
+      le poste, sans empreinte de navigateur. Elle relève donc de l'exemption de
+      consentement de la CNIL — pas de bandeau, et aucune donnée d'audit ne sort
+      du navigateur, la promesse de la page reste vraie.
+
+      Le jeton est public par nature (il est lu dans le HTML de chaque visite) :
+      ce n'est pas un secret, il n'a rien à faire dans une variable
+      d'environnement. Le remplacer par celui du tableau de bord Cloudflare
+      (Analytics & Logs → Web Analytics → Add a site).
+
+      L'attribut data-cf-beacon est une donnée, pas du script inline : la CSP
+      stricte l'accepte tel quel.
+    -->
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "d7d9c19c53ca4a03a5ba8feb3f839095"}'
+    ></script>
   </body>
 </html>
