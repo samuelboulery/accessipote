@@ -18,8 +18,13 @@ const mockJsPDFInstance = {
   lastAutoTable: { finalY: 100 },
 };
 
+// Le composant fait `new jsPDF()`. L'implémentation du mock doit donc être une
+// fonction classique : depuis Vitest 4, `vi.fn` n'enveloppe plus l'implémentation
+// fournie, et une fonction fléchée ne peut pas être appelée avec `new`.
 vi.mock('jspdf', () => ({
-  default: vi.fn(() => mockJsPDFInstance),
+  default: vi.fn(function () {
+    return mockJsPDFInstance;
+  }),
 }));
 
 const mockAutoTable = vi.fn();
@@ -166,7 +171,9 @@ describe('ExportButton', () => {
 
   it('devrait signaler l\'export PDF en cours', async () => {
     // Retarder la résolution pour capturer l'état intermédiaire
-    vi.mocked(await import('jspdf')).default = vi.fn(() => {
+    // Même contrainte que le mock du module : appelée avec `new`, donc pas de
+    // fonction fléchée.
+    vi.mocked(await import('jspdf')).default = vi.fn(function () {
       return new Promise<void>(() => {
         // Promise volontairement non résolue pour tester l'état de chargement
       }) as unknown as typeof mockJsPDFInstance;

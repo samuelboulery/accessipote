@@ -11,8 +11,8 @@ dans votre navigateur, sans compte et sans serveur.
 [**→ Ouvrir l'application**](https://accessipote.fr)
 
 [![CI](https://github.com/samuelboulery/accessipote/actions/workflows/ci.yml/badge.svg)](https://github.com/samuelboulery/accessipote/actions/workflows/ci.yml)
-[![Couverture 86 %](https://img.shields.io/badge/couverture-86%25-0F5C37)](#tests-et-qualité)
-[![611 tests](https://img.shields.io/badge/tests-611-0F5C37)](#tests-et-qualité)
+[![Couverture 97 %](https://img.shields.io/badge/couverture-97%25-0F5C37)](#tests-et-qualité)
+[![629 tests](https://img.shields.io/badge/tests-629-0F5C37)](#tests-et-qualité)
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-000000)](LICENSE)
 [![RGAA 4.1](https://img.shields.io/badge/RGAA-4.1-428AC2)](https://accessibilite.numerique.gouv.fr/)
 
@@ -173,8 +173,8 @@ touche à l'affichage d'un statut, et
 
 ## Tests et qualité
 
-**611 tests** répartis sur 45 fichiers, **86 % de couverture** en lignes et
-93 % en branches. La CI les rejoue sur Node 20 et 22 à chaque poussée.
+**629 tests** répartis sur 46 fichiers, **97 % de couverture** en lignes et
+90 % en branches. La CI les rejoue sur Node 20 et 22 à chaque poussée.
 
 ```bash
 pnpm test          # mode surveillance

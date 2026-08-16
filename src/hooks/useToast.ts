@@ -10,7 +10,10 @@ interface UseToastReturn {
 
 export default function useToast(): UseToastReturn {
   const [toasts, setToasts] = useState<Record<string, ToastMessage>>({});
-  const timersRef = useRef<Record<string, NodeJS.Timeout>>({});
+  // `ReturnType<typeof setTimeout>` plutôt que `NodeJS.Timeout` : ce code tourne
+  // dans un navigateur, où setTimeout renvoie un nombre. Le type Node n'était
+  // visible que parce qu'une dépendance de test le tirait dans la portée globale.
+  const timersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const hideToast = useCallback((id: string) => {
     // Clear the timer if it exists
