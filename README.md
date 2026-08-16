@@ -73,7 +73,7 @@ un critère.
 
 ## Démarrage
 
-Prérequis : **Node 20 ou plus**. Le gestionnaire de paquets est **pnpm**, dont
+Prérequis : **Node 22.22 ou plus**. Le gestionnaire de paquets est **pnpm**, dont
 la version est figée par le champ `packageManager`.
 
 ```bash
@@ -175,7 +175,7 @@ touche à l'affichage d'un statut, et
 ## Tests et qualité
 
 **629 tests** répartis sur 46 fichiers, **97 % de couverture** en lignes et
-90 % en branches. La CI les rejoue sur Node 20 et 22 à chaque poussée.
+90 % en branches. La CI les rejoue sur Node 22 et 24 à chaque poussée.
 
 ```bash
 pnpm test          # mode surveillance
