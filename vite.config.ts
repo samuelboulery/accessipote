@@ -27,12 +27,20 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Séparer les vendor libraries pour optimiser le cache
-          'react-vendor': ['react', 'react-dom'],
-          'pdf-vendor': ['jspdf', 'jspdf-autotable'],
-          'ui-vendor': ['lucide-react'],
-          'dompurify-vendor': ['dompurify'],
+        // Séparer les vendor libraries pour optimiser le cache. Rollup 5, qui
+        // arrive avec Vite 8, n'accepte plus la forme objet : le découpage se
+        // déclare par une fonction qui reçoit le chemin de chaque module.
+        //
+        // jsPDF n'y figure volontairement pas. Le nommer en chunk manuel le
+        // rendait joignable depuis l'entrée, donc listé en `modulepreload` :
+        // les 234 ko de la chaîne PDF étaient téléchargés au chargement de la
+        // page, ce qui annulait l'import dynamique de ExportButton. Laissé à
+        // Rollup, cet import produit un chunk asynchrone, chargé à l'export.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return 'react-vendor';
+          if (/[\\/]node_modules[\\/]lucide-react[\\/]/.test(id)) return 'ui-vendor';
+          if (/[\\/]node_modules[\\/]dompurify[\\/]/.test(id)) return 'dompurify-vendor';
         },
       },
     },
