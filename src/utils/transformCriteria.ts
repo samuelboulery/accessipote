@@ -105,7 +105,7 @@ export function transformCriteriaData(data: CriteriaRawData): CriteriaRGAA[] {
     return result;
   } catch (error) {
     logError('Erreur lors de la transformation des critères:', error);
-    throw new Error('Échec de la transformation des données de critères');
+    throw new Error('Échec de la transformation des données de critères', { cause: error });
   }
 }
 
