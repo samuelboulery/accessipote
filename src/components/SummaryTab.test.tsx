@@ -189,6 +189,39 @@ describe('SummaryTab', () => {
       expect(text).toContain('Conforme par défaut');
       expect(text).toContain('À mettre en place');
     });
+
+    // Le nombre mesure une prise en charge, pas une conformité : l'annoncer
+    // comme une conformité ferait dire à l'audit quelque chose de faux sur le
+    // site — un design system peut couvrir la moitié des critères sans qu'aucune
+    // page ne soit conforme.
+    it('titre le taux « prise en charge », jamais « conformité »', () => {
+      const criteria = [
+        createMockCriteria('1.1', 'Images'),
+        createMockCriteria('1.2', 'Images'),
+      ];
+      const progress: AuditProgress = {
+        '1.1': { status: 'default-compliant' },
+        '1.2': { status: 'project-implementation' },
+      };
+
+      render(<SummaryTab criteriaList={criteria} progress={progress} mode="design-system" />);
+
+      expect(
+        screen.getByRole('heading', { name: 'Taux de prise en charge par le design system' }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: /conformité/i })).not.toBeInTheDocument();
+    });
+
+    it('garde « Taux de conformité » en mode classique', () => {
+      const criteria = [createMockCriteria('1.1', 'Images')];
+      const progress: AuditProgress = { '1.1': { status: 'conforme' } };
+
+      render(<SummaryTab criteriaList={criteria} progress={progress} mode="classic" />);
+
+      expect(
+        screen.getByRole('heading', { name: 'Taux de conformité' }),
+      ).toBeInTheDocument();
+    });
   });
 
   describe('Cohérence des dénominateurs', () => {

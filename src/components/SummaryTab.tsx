@@ -89,7 +89,7 @@ export default function SummaryTab({ criteriaList, progress, mode, actions }: Su
 
       <div className="flex flex-wrap gap-6">
         <div className="flex w-[400px] max-w-full flex-col gap-4 rounded-card border-1 border-border bg-surface p-4">
-          <h2 className="text-lead font-semibold">Taux de conformité</h2>
+          <h2 className="text-lead font-semibold">{view.rateLabel}</h2>
 
           <div className="flex items-center gap-4">
             <AuditRing
@@ -110,10 +110,7 @@ export default function SummaryTab({ criteriaList, progress, mode, actions }: Su
                 {view.buckets[0].count} {view.buckets[0].label.toLowerCase()} sur {view.settled}{' '}
                 critère{view.settled > 1 ? 's' : ''} tranché{view.settled > 1 ? 's' : ''}.
               </p>
-              <p className="mt-2 text-dense text-ink-muted">
-                Les critères non applicables sont exclus du calcul : ils ne peuvent être ni
-                conformes ni non conformes.
-              </p>
+              <p className="mt-2 text-dense text-ink-muted">{view.rateNote}</p>
             </div>
           </div>
 
