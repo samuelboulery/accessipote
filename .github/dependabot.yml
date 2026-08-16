@@ -9,16 +9,30 @@ updates:
     commit-message:
       prefix: "chore"
     groups:
-      # Une PR par famille plutôt qu'une par paquet : les outils de test et de
-      # build bougent ensemble, les traiter séparément ne fait que du bruit.
+      # Une PR par famille plutôt qu'une par paquet : les outils d'une même
+      # famille bougent ensemble, les traiter séparément ne fait que du bruit.
+      #
+      # Deux exceptions, apprises à l'usage. Un groupe ne doit réunir que des
+      # paquets qui montent sans arbitrage : dès qu'une montée majeure devient
+      # un chantier, elle doit arriver seule, sinon elle retient tout le groupe
+      # en otage.
+      #
+      #  - tailwindcss : la version 4 déplace la configuration dans le CSS et
+      #    supprime tailwind.config.js, donc toucherait tout le système de
+      #    jetons. Groupée avec Vite, elle bloquait une simple montée de Vite.
+      #  - jsdom : sa version 30 exige un plancher Node plus élevé, décision
+      #    qui engage les contributeurs et ne se prend pas au détour d'une
+      #    montée de Vitest.
+      #
+      # Leurs montées mineures restent groupées ; seules les majeures sortent.
       types:
         patterns: ["@types/*"]
       tests:
-        patterns: ["vitest", "@vitest/*", "@testing-library/*", "jsdom"]
+        patterns: ["vitest", "@vitest/*", "@testing-library/*"]
       lint:
         patterns: ["eslint", "@eslint/*", "eslint-plugin-*", "typescript-eslint", "globals"]
       build:
-        patterns: ["vite", "@vitejs/*", "tailwindcss", "postcss", "autoprefixer", "terser"]
+        patterns: ["vite", "@vitejs/*", "postcss", "autoprefixer", "terser"]
 
   - package-ecosystem: github-actions
     directory: /
