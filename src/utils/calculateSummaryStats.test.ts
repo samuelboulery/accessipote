@@ -179,7 +179,56 @@ describe('calculateSummaryStats', () => {
       expect(result.projectImplementation).toBe(1);
       expect(result.nonApplicable).toBe(1);
       expect(result.notEvaluated).toBe(0);
-      // Rate = (1 + 1) / (3 - 0 - 1) = 2 / 2 = 100%
+      // Part couverte par le design system : 1 / (1 + 1) = 50 %.
+      // Les non applicables sortent du calcul, ils ne sont à la charge de personne.
+      expect(result.globalRate).toBe(50);
+    });
+
+    it('n\'affiche pas 100 % quand tout reste à la charge du projet', () => {
+      const criteria = [
+        createMockCriteria('1.1', 'Images'),
+        createMockCriteria('1.2', 'Images'),
+      ];
+      const progress: Progress['designSystem'] = {
+        '1.1': { status: 'project-implementation' },
+        '1.2': { status: 'project-implementation' },
+      };
+
+      const result = calculateSummaryStats(criteria, progress, 'design-system');
+
+      expect(result.globalRate).toBe(0);
+    });
+
+    it('affiche 100 % quand le design system couvre tout', () => {
+      const criteria = [
+        createMockCriteria('1.1', 'Images'),
+        createMockCriteria('1.2', 'Images'),
+      ];
+      const progress: Progress['designSystem'] = {
+        '1.1': { status: 'default-compliant' },
+        '1.2': { status: 'default-compliant' },
+      };
+
+      const result = calculateSummaryStats(criteria, progress, 'design-system');
+
+      expect(result.globalRate).toBe(100);
+    });
+
+    it('ne compte pas les non applicables au dénominateur', () => {
+      const criteria = [
+        createMockCriteria('1.1', 'Images'),
+        createMockCriteria('1.2', 'Images'),
+        createMockCriteria('1.3', 'Images'),
+      ];
+      const progress: Progress['designSystem'] = {
+        '1.1': { status: 'default-compliant' },
+        '1.2': { status: 'non-applicable' },
+        '1.3': { status: 'non-applicable' },
+      };
+
+      const result = calculateSummaryStats(criteria, progress, 'design-system');
+
+      // 1 / 1, et non 1 / 3 : deux critères sortent du périmètre.
       expect(result.globalRate).toBe(100);
     });
   });
@@ -202,7 +251,8 @@ describe('calculateSummaryStats', () => {
       const imagesTheme = result.byTheme.find(t => t.theme === 'Images');
       expect(imagesTheme!.defaultCompliant).toBe(1);
       expect(imagesTheme!.projectImplementation).toBe(1);
-      expect(imagesTheme!.rate).toBe(100);
+      // Même définition que le taux global : 1 / (1 + 1).
+      expect(imagesTheme!.rate).toBe(50);
 
       const cadresTheme = result.byTheme.find(t => t.theme === 'Cadres');
       expect(cadresTheme!.nonApplicable).toBe(1);

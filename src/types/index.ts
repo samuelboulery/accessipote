@@ -67,6 +67,16 @@ export interface Progress {
   };
 }
 
+/**
+ * La progression d'un audit : un statut par critère évalué, à plat. Le mode de
+ * l'audit dit lesquels des statuts sont possibles — c'est lui qu'on transporte à
+ * côté, jamais un dictionnaire par mode dont un serait vide.
+ *
+ * `Progress`, au-dessus, ne sert plus qu'à la lecture de la v1, où une seule
+ * progression anonyme portait les deux modes de front.
+ */
+export type AuditProgress = Progress['classic'] | Progress['designSystem'];
+
 /** Un audit nommé, reprenable. Le mode est figé à la création. */
 export interface Audit {
   id: string;
@@ -77,7 +87,7 @@ export interface Audit {
   themes: string[];
   createdAt: string;
   updatedAt: string;
-  progress: Progress['classic'] | Progress['designSystem'];
+  progress: AuditProgress;
   /** criteriaId -> note d'audit */
   notes: Record<string, string>;
   /** criteriaId -> URLs concernées */

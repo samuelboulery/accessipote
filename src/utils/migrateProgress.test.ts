@@ -105,6 +105,21 @@ describe('migrateProgressToAudits', () => {
     expect(a.updatedAt).toBe(a.createdAt);
   });
 
+  it('ne laisse pas une clé __proto__ du localStorage changer le prototype de la progression', () => {
+    // JSON.parse fait de `__proto__` une propriété propre. Recopiée avec
+    // `result[cle] = ...` sur un objet littéral, elle passe par le setter
+    // hérité et remplace le prototype au lieu d'ajouter une entrée.
+    const raw = JSON.parse(
+      '{"classic":{"__proto__":{"status":"conforme"},"1.1":{"status":"conforme"}}}',
+    );
+
+    const progress = migrateProgressToAudits(raw).audits[0].progress;
+
+    expect(Object.getPrototypeOf(progress)).toBeNull();
+    expect('status' in progress).toBe(false);
+    expect(progress['1.1']).toEqual({ status: 'conforme' });
+  });
+
   it('ne mute pas la valeur d\'entrée', () => {
     const input = { classic: { '1.1': { status: 'conforme' } }, designSystem: {} };
     const snapshot = JSON.parse(JSON.stringify(input));

@@ -156,8 +156,18 @@ describe('HomeScreen', () => {
   });
 
   it('affiche la date relative de modification pour chaque audit', () => {
-    setup();
-    expect(screen.getByText(/modifié il y a/)).toBeInTheDocument();
+    // `formatRelativeTime` lit l'horloge. Sans date figée, la formulation dérive
+    // avec le jour où l'on teste — « hier », « avant-hier », « la semaine
+    // dernière » — et le test casse tout seul un matin. Le 20 place les deux
+    // audits à plusieurs jours, seule zone où « il y a N jours » est stable.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-20T10:00:00.000Z'));
+    try {
+      setup();
+      expect(screen.getAllByText(/modifié il y a/)).toHaveLength(AUDITS.length);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   describe('Suppression d\'un audit', () => {

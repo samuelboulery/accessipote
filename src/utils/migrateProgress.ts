@@ -36,7 +36,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function sanitizeProgress(raw: unknown, allowed: readonly string[]): Record<string, { status: string }> {
   if (!isRecord(raw)) return {};
 
-  const result: Record<string, { status: string }> = {};
+  // Sans prototype : les clés viennent du localStorage, et `result['__proto__']`
+  // sur un objet littéral passe par le setter hérité — il remplace le prototype
+  // au lieu d'ajouter une entrée.
+  const result: Record<string, { status: string }> = Object.create(null);
   for (const [criteriaId, entry] of Object.entries(raw)) {
     if (!isRecord(entry)) continue;
     const { status } = entry;

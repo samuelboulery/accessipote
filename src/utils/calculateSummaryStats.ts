@@ -1,4 +1,4 @@
-import type { CriteriaRGAA, Progress, ClassicStatus, DesignSystemStatus } from '../types';
+import type { AuditProgress, CriteriaRGAA, ClassicStatus, DesignSystemStatus } from '../types';
 
 export interface ThemeStats {
   theme: string;
@@ -27,7 +27,7 @@ export interface SummaryStats {
 
 export function calculateSummaryStats(
   criteriaList: CriteriaRGAA[],
-  progress: Progress['classic'] | Progress['designSystem'],
+  progress: AuditProgress,
   mode: 'classic' | 'design-system'
 ): SummaryStats {
   let conforme = 0;
@@ -98,35 +98,31 @@ export function calculateSummaryStats(
     const globalDenominator = conforme + nonConforme;
     globalRate = globalDenominator === 0 ? null : (conforme / globalDenominator) * 100;
   } else {
-    // DS coverage rate: compliant criteria / (total evaluated - non-applicable)
-    const evaluated = criteriaList.length - notEvaluated;
-    const dsDenominator = evaluated - nonApplicable;
-    globalRate = dsDenominator === 0 ? null : ((defaultCompliant + projectImplementation) / dsDenominator) * 100;
+    // Part des critères que le design system couvre déjà, face à ceux qui
+    // restent à la charge du projet. Les non applicables sortent du calcul : ils
+    // ne sont à la charge de personne.
+    //
+    // La formule précédente divisait (dc + pi) par (dc + pi) : elle valait 100 %
+    // dès qu'un critère était évalué, y compris sur un audit entièrement « à
+    // mettre en place côté projet ».
+    const dsDenominator = defaultCompliant + projectImplementation;
+    globalRate = dsDenominator === 0 ? null : (defaultCompliant / dsDenominator) * 100;
   }
 
-  // Calculate per-theme rates and build theme array maintaining order
-  const byTheme: ThemeStats[] = [];
-  const seenThemes = new Set<string>();
-
-  for (const criteria of criteriaList) {
-    if (!seenThemes.has(criteria.theme)) {
-      seenThemes.add(criteria.theme);
-      const themeData = themeStats.get(criteria.theme)!;
-      let themeRate: number | null;
-      if (mode === 'classic') {
-        const themeDenominator = themeData.conforme + themeData.nonConforme;
-        themeRate = themeDenominator === 0 ? null : (themeData.conforme / themeDenominator) * 100;
-      } else {
-        const themeEvaluated = themeData.defaultCompliant + themeData.projectImplementation + themeData.nonApplicable;
-        const themeDsDenominator = themeEvaluated - themeData.nonApplicable;
-        themeRate = themeDsDenominator === 0 ? null : ((themeData.defaultCompliant + themeData.projectImplementation) / themeDsDenominator) * 100;
-      }
-      byTheme.push({
-        ...themeData,
-        rate: themeRate,
-      });
+  // Une Map conserve l'ordre d'insertion : les thèmes ressortent déjà dans
+  // l'ordre où les critères les ont introduits, sans second parcours de la liste.
+  const byTheme: ThemeStats[] = [...themeStats.values()].map(themeData => {
+    let themeRate: number | null;
+    if (mode === 'classic') {
+      const themeDenominator = themeData.conforme + themeData.nonConforme;
+      themeRate = themeDenominator === 0 ? null : (themeData.conforme / themeDenominator) * 100;
+    } else {
+      // Même définition que le taux global.
+      const themeDsDenominator = themeData.defaultCompliant + themeData.projectImplementation;
+      themeRate = themeDsDenominator === 0 ? null : (themeData.defaultCompliant / themeDsDenominator) * 100;
     }
-  }
+    return { ...themeData, rate: themeRate };
+  });
 
   return {
     globalRate,

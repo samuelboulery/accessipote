@@ -3,15 +3,12 @@
  * Centralise les valeurs magiques, URLs et configurations
  */
 
-// URLs et clés
-export const OFFICIAL_RGAA_URL = 'https://accessibilite.numerique.gouv.fr/methode/criteres-et-tests/#';
+// Clés de stockage
 /** Progression v1, anonyme. Conservée en lecture seule : c'est le seul filet de
  *  sécurité d'un utilisateur qui aurait 106 critères de travail dedans. */
 export const LOCAL_STORAGE_KEY = 'rgaa-progress';
 /** Magasin v2 : audits nommés. */
 export const AUDITS_STORAGE_KEY = 'rgaa-audits';
-
-export const ANIMATION_DELAY_MS = 350;
 
 // PDF Export
 export const PDF_Y_POS_LIMIT = 250;
@@ -22,8 +19,6 @@ export const PDF_HEADER_Y_POS = 20;
 export const MAX_SEARCH_LENGTH = 200;
 
 // Export filenames
-export const MARKDOWN_FILENAME_CLASSIC = 'rapport-rgaa.md';
-export const MARKDOWN_FILENAME_DESIGN_SYSTEM = 'checklist-design-system.md';
 export const PDF_FILENAME = 'rapport-rgaa.pdf';
 
 // Regex patterns

@@ -1,12 +1,33 @@
-import type { CriteriaRGAA, ClassicStatus, Progress } from '../types';
+import type { AuditProgress, CriteriaRGAA, ClassicStatus } from '../types';
 import { cleanCriteriaTitle } from './stripMarkdown';
 
-export function exportClassicMarkdown(progress: Progress['classic'], criteriaList: CriteriaRGAA[]): string {
-  const lines: string[] = [];
-  lines.push('# Rapport de Conformité RGAA - Accessipote\n');
-  lines.push(`Date : ${new Date().toLocaleDateString('fr-FR')}\n`);
+function header(title: string): string[] {
+  return [`# ${title}\n`, `Date : ${new Date().toLocaleDateString('fr-FR')}\n`];
+}
 
-  const groupedCriteria = {
+function detailedSection(heading: string, criteria: CriteriaRGAA[]): string[] {
+  if (criteria.length === 0) return [];
+  return [
+    `## ${heading}\n`,
+    ...criteria.flatMap(c => [
+      `### ${c.id} - ${cleanCriteriaTitle(c.title)}`,
+      `${c.description}\n`,
+    ]),
+  ];
+}
+
+function tableSection(heading: string, criteria: CriteriaRGAA[]): string[] {
+  if (criteria.length === 0) return [];
+  return [
+    `## ${heading}\n`,
+    '| Numéro | Titre |',
+    '|--------|-------|',
+    ...criteria.map(c => `| ${c.id} | ${cleanCriteriaTitle(c.title)} |`),
+  ];
+}
+
+export function exportClassicMarkdown(progress: AuditProgress, criteriaList: CriteriaRGAA[]): string {
+  const grouped = {
     conforme: [] as CriteriaRGAA[],
     'non-conforme': [] as CriteriaRGAA[],
     'non-applicable': [] as CriteriaRGAA[],
@@ -14,49 +35,20 @@ export function exportClassicMarkdown(progress: Progress['classic'], criteriaLis
 
   criteriaList.forEach(criteria => {
     const status = progress[criteria.id]?.status;
-    if (status && groupedCriteria[status as ClassicStatus]) {
-      groupedCriteria[status as ClassicStatus].push(criteria);
+    if (status && grouped[status as ClassicStatus]) {
+      grouped[status as ClassicStatus].push(criteria);
     }
   });
 
-    // Section Conforme
-    if (groupedCriteria.conforme.length > 0) {
-      lines.push('## Critères Conformes\n');
-      groupedCriteria.conforme.forEach(criteria => {
-        const cleanTitle = cleanCriteriaTitle(criteria.title);
-        lines.push(`### ${criteria.id} - ${cleanTitle}`);
-        lines.push(`${criteria.description}\n`);
-      });
-    }
-
-    // Section Non Conforme
-    if (groupedCriteria['non-conforme'].length > 0) {
-      lines.push('## Critères Non Conformes\n');
-      groupedCriteria['non-conforme'].forEach(criteria => {
-        const cleanTitle = cleanCriteriaTitle(criteria.title);
-        lines.push(`### ${criteria.id} - ${cleanTitle}`);
-        lines.push(`${criteria.description}\n`);
-      });
-    }
-
-    // Section Non Applicable
-    if (groupedCriteria['non-applicable'].length > 0) {
-      lines.push('## Critères Non Applicables\n');
-      groupedCriteria['non-applicable'].forEach(criteria => {
-        const cleanTitle = cleanCriteriaTitle(criteria.title);
-        lines.push(`### ${criteria.id} - ${cleanTitle}`);
-        lines.push(`${criteria.description}\n`);
-      });
-    }
-
-  return lines.join('\n');
+  return [
+    ...header('Rapport de Conformité RGAA - Accessipote'),
+    ...detailedSection('Critères Conformes', grouped.conforme),
+    ...detailedSection('Critères Non Conformes', grouped['non-conforme']),
+    ...detailedSection('Critères Non Applicables', grouped['non-applicable']),
+  ].join('\n');
 }
 
-export function exportDesignSystemMarkdown(progress: Progress['designSystem'], criteriaList: CriteriaRGAA[]): string {
-  const lines: string[] = [];
-  lines.push('# Checklist Design System - Conformité RGAA - Accessipote\n');
-  lines.push(`Date : ${new Date().toLocaleDateString('fr-FR')}\n`);
-
+export function exportDesignSystemMarkdown(progress: AuditProgress, criteriaList: CriteriaRGAA[]): string {
   const defaultCompliant: CriteriaRGAA[] = [];
   const projectImplementation: CriteriaRGAA[] = [];
 
@@ -69,28 +61,11 @@ export function exportDesignSystemMarkdown(progress: Progress['designSystem'], c
     }
   });
 
-  // Tableau Conformité par défaut
-    if (defaultCompliant.length > 0) {
-      lines.push('## Conformes par défaut\n');
-      lines.push('| Numéro | Titre |');
-      lines.push('|--------|-------|');
-      defaultCompliant.forEach(criteria => {
-        const cleanTitle = cleanCriteriaTitle(criteria.title);
-        lines.push(`| ${criteria.id} | ${cleanTitle} |`);
-      });
-      lines.push('');
-    }
-
-  // Tableau À mettre en place côté projet
-    if (projectImplementation.length > 0) {
-      lines.push('## À mettre en place côté projet\n');
-      lines.push('| Numéro | Titre |');
-      lines.push('|--------|-------|');
-      projectImplementation.forEach(criteria => {
-        const cleanTitle = cleanCriteriaTitle(criteria.title);
-        lines.push(`| ${criteria.id} | ${cleanTitle} |`);
-      });
-    }
-
-  return lines.join('\n');
+  return [
+    ...header('Checklist Design System - Conformité RGAA - Accessipote'),
+    ...tableSection('Conformes par défaut', defaultCompliant),
+    // Ligne vide de séparation, émise dès que le premier tableau existe.
+    ...(defaultCompliant.length > 0 ? [''] : []),
+    ...tableSection('À mettre en place côté projet', projectImplementation),
+  ].join('\n');
 }

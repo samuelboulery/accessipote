@@ -21,12 +21,3 @@ export function logWarning(...args: unknown[]): void {
   }
 }
 
-/**
- * Log une information (uniquement en développement)
- */
-export function logInfo(...args: unknown[]): void {
-  if (import.meta.env.DEV) {
-    console.log(...args);
-  }
-}
-

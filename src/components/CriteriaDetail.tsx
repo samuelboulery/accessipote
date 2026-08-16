@@ -45,6 +45,7 @@ export default function CriteriaDetail({
   // chaque touche ferait une écriture localStorage par caractère.
   const [draftNote, setDraftNote] = useState(note);
   const [newPage, setNewPage] = useState('');
+  const [pageError, setPageError] = useState<string | null>(null);
   const criteriaId = criterion.id;
 
   // Changer de critère, ou recevoir une note modifiée ailleurs, doit réinitialiser
@@ -122,6 +123,18 @@ export default function CriteriaDetail({
   const addPage = () => {
     const url = newPage.trim();
     if (!url || pages.includes(url)) return;
+
+    // L'adresse finit dans un `href`. React neutralise déjà `javascript:` et les
+    // navigateurs refusent de naviguer vers `data:`, mais s'en remettre au
+    // framework, c'est ne pas valider. `type="url"` ne sert à rien ici : l'ajout
+    // part d'un clic ou d'Entrée, jamais d'une soumission de formulaire.
+    const parsed = URL.parse(url);
+    if (parsed?.protocol !== 'http:' && parsed?.protocol !== 'https:') {
+      setPageError('Adresse invalide : seules les adresses commençant par http:// ou https:// sont acceptées.');
+      return;
+    }
+
+    setPageError(null);
     onPagesChange(criteriaId, [...pages, url]);
     setNewPage('');
   };
@@ -236,7 +249,10 @@ export default function CriteriaDetail({
               <input
                 type="url"
                 value={newPage}
-                onChange={event => setNewPage(event.target.value)}
+                onChange={event => {
+                  setNewPage(event.target.value);
+                  setPageError(null);
+                }}
                 onKeyDown={event => {
                   if (event.key === 'Enter') {
                     event.preventDefault();
@@ -244,6 +260,8 @@ export default function CriteriaDetail({
                   }
                 }}
                 aria-label="Adresse de la page à ajouter"
+                aria-describedby={pageError ? `page-error-${criteriaId}` : undefined}
+                aria-invalid={pageError ? true : undefined}
                 placeholder="https://exemple.fr/page"
                 className="h-touch min-w-0 flex-1 rounded-ctrl border-1 border-border bg-surface px-3 text-body"
               />
@@ -256,6 +274,15 @@ export default function CriteriaDetail({
                 Ajouter
               </button>
             </div>
+            {pageError && (
+              <p
+                id={`page-error-${criteriaId}`}
+                role="alert"
+                className="mt-2 text-meta text-ko-fg"
+              >
+                {pageError}
+              </p>
+            )}
           </div>
 
           <div>

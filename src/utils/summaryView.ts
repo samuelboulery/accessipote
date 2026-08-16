@@ -1,6 +1,6 @@
 import type { Mode } from '../types';
 import type { SummaryStats, ThemeStats } from './calculateSummaryStats';
-import { getStatusPresentation, UNSET_STATUS } from './statusPresentation';
+import { getStatusPresentation } from './statusPresentation';
 
 export interface SummaryBucket {
   key: 'conforme' | 'ecarts' | 'nonApplicable' | 'aEvaluer';
@@ -12,6 +12,16 @@ export interface SummaryBucket {
 
 export interface SummaryView {
   buckets: SummaryBucket[];
+  /**
+   * Le taux ne mesure pas la même chose selon le mode : une conformité en
+   * classique, une prise en charge par le design system sinon. Les nommer
+   * pareil ferait dire à un audit design system quelque chose de faux sur le
+   * site audité — le design system peut couvrir la moitié des critères sans
+   * qu'aucune page ne soit conforme.
+   */
+  rateLabel: string;
+  /** Pourquoi les non applicables sortent du dénominateur, dans les termes du mode. */
+  rateNote: string;
   /** conforme + écarts + non applicable — sert l'avancement. */
   evaluated: number;
   /** conforme + écarts — sert le taux de conformité. Dénominateur différent. */
@@ -34,6 +44,8 @@ export function toSummaryView(stats: SummaryStats, mode: Mode): SummaryView {
 
   const okKey = mode === 'classic' ? 'conforme' : 'default-compliant';
   const koKey = mode === 'classic' ? 'non-conforme' : 'project-implementation';
+
+  const isClassic = mode === 'classic';
 
   const ok = getStatusPresentation(okKey, mode);
   const ko = getStatusPresentation(koKey, mode);
@@ -59,6 +71,12 @@ export function toSummaryView(stats: SummaryStats, mode: Mode): SummaryView {
         Icon: todo.Icon,
       },
     ],
+    rateLabel: isClassic
+      ? 'Taux de conformité'
+      : 'Taux de prise en charge par le design system',
+    rateNote: isClassic
+      ? 'Les critères non applicables sont exclus du calcul : ils ne peuvent être ni conformes ni non conformes.'
+      : 'Les critères non applicables sont exclus du calcul : ils ne sont à la charge ni du design system ni du projet.',
     evaluated: conforme + ecarts + stats.nonApplicable,
     settled: conforme + ecarts,
     total: stats.total,
@@ -77,5 +95,3 @@ export function themeCounts(theme: ThemeStats) {
     total: theme.total,
   };
 }
-
-export { UNSET_STATUS };

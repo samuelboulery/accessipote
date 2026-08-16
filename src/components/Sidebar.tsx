@@ -6,7 +6,7 @@ import AccessipoteLogo from './AccessipoteLogo';
 import AuditRing from './AuditRing';
 import AuditSwitcher, { type SwitchableAudit } from './AuditSwitcher';
 import DarkModeToggle from './DarkModeToggle';
-import { getStatusPresentation, UNSET_STATUS } from '../utils/statusPresentation';
+import { getSelectableStatuses, getStatusPresentation, UNSET_STATUS } from '../utils/statusPresentation';
 import { formatRelativeTime } from '../utils/formatRelativeTime';
 
 export type View = 'home' | 'audit' | 'summary' | 'glossary';
@@ -63,12 +63,18 @@ function Sidebar({
   const share = total > 0 ? evaluated / total : 0;
   const percentage = Math.round(share * 100);
 
-  const legend = [
-    { key: 'conforme' as const, count: counts.conforme },
-    { key: 'non-conforme' as const, count: counts.ecarts },
-    { key: 'non-applicable' as const, count: counts.nonApplicable },
-    { key: UNSET_STATUS, count: counts.aEvaluer },
-  ];
+  // Les clés dépendent du mode : « conforme » n'existe pas en design system, où
+  // le même seau s'appelle « conforme par défaut ». Les écrire en dur ici
+  // annulait le mode passé plus bas à getStatusPresentation.
+  const [ok, ko, na] = activeAudit ? getSelectableStatuses(activeAudit.mode) : [];
+  const legend = activeAudit
+    ? [
+        { key: ok.key, count: counts.conforme },
+        { key: ko.key, count: counts.ecarts },
+        { key: na.key, count: counts.nonApplicable },
+        { key: UNSET_STATUS, count: counts.aEvaluer },
+      ]
+    : [];
 
   return (
     <div className="flex w-[244px] flex-shrink-0 flex-col gap-6 px-3 py-4">

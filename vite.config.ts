@@ -1,4 +1,5 @@
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig } from 'vitest/config'
+import type { Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
@@ -49,5 +50,34 @@ export default defineConfig({
     minify: 'terser',
     // Chunk size warnings
     chunkSizeWarningLimit: 1000,
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    pool: 'forks',
+    setupFiles: './src/test/setup.ts',
+    css: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html', 'lcov'],
+      exclude: [
+        'node_modules/',
+        'src/test/',
+        '**/*.d.ts',
+        '**/*.config.*',
+        '**/mockData',
+        'dist',
+        'src/main.tsx',
+        'src/vite-env.d.ts',
+      ],
+      // Calés un peu sous le niveau atteint : ils doivent rattraper une
+      // régression, pas casser le build au premier test ajouté ailleurs.
+      thresholds: {
+        lines: 80,
+        functions: 85,
+        branches: 90,
+        statements: 80,
+      },
+    },
   },
 })

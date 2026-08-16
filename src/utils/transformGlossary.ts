@@ -1,5 +1,3 @@
-import type { GlossaryTerm } from '../types';
-
 /**
  * Convertit un titre en slug utilisable comme identifiant
  * Exemple: "Zone (d'une image réactive)" → "zone-d-une-image-reactive"
@@ -29,27 +27,6 @@ export function titleToSlug(title: string): string {
   result = result.replace(/^-|-$/g, ''); // Enlève les tirets en début et fin
   
   return result;
-}
-
-/**
- * Crée un mapping slug → GlossaryTerm pour accès rapide
- */
-export function createGlossaryMap(glossary: GlossaryTerm[]): Map<string, GlossaryTerm> {
-  const map = new Map<string, GlossaryTerm>();
-  
-  for (const term of glossary) {
-    const slug = titleToSlug(term.title);
-    map.set(slug, term);
-  }
-  
-  return map;
-}
-
-/**
- * Trouve un terme du glossaire par son slug
- */
-export function findGlossaryTermBySlug(slug: string, glossaryMap: Map<string, GlossaryTerm>): GlossaryTerm | undefined {
-  return glossaryMap.get(slug);
 }
 
 /**

@@ -1,0 +1,12 @@
+# Ce dépôt n'est pas un monorepo : pas de champ `packages`. Ce fichier existe
+# uniquement parce que depuis pnpm 10.16 les réglages vivent ici, et non plus
+# dans `.npmrc` ni dans le champ `pnpm` de package.json.
+
+# Quarantaine de 24 heures sur toute version fraîchement publiée. Les vers npm
+# — Shai-Hulud, ChainDrop — font leurs dégâts dans les premières heures, avant
+# que le paquet ne soit retiré du registre. Ce délai laisse le retrait arriver
+# avant nous. Une montée réellement urgente se débloque nommément :
+#
+#   minimumReleaseAgeExclude:
+#     - le-paquet@1.2.3
+minimumReleaseAge: 1440

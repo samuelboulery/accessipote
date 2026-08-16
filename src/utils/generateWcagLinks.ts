@@ -3,6 +3,7 @@
  */
 
 import wcagAnchors from '../data/wcag-anchors.json';
+import { logWarning } from './logger';
 
 interface WcagMapping {
   [key: string]: string;
@@ -51,7 +52,7 @@ export function getWcagCriteriaUrl(wcagRef: string | null | undefined): string {
   const criteriaNumber = extractCriteriaNumber(wcagRef);
 
   if (!criteriaNumber) {
-    console.warn(`Impossible d'extraire le numéro de critère depuis: ${wcagRef}`);
+    logWarning(`Impossible d'extraire le numéro de critère depuis: ${wcagRef}`);
     return '#';
   }
 
@@ -59,7 +60,7 @@ export function getWcagCriteriaUrl(wcagRef: string | null | undefined): string {
   const anchor = anchors[criteriaNumber];
 
   if (!anchor) {
-    console.warn(`Ancre non trouvée pour le critère: ${criteriaNumber}`);
+    logWarning(`Ancre non trouvée pour le critère: ${criteriaNumber}`);
     return '#';
   }
 
@@ -95,7 +96,7 @@ function getTechniqueCategory(techniqueCode: string): string {
   }
 
   // Par défaut, essayer avec "general"
-  console.warn(`Catégorie inconnue pour la technique: ${techniqueCode}, utilisation de 'general'`);
+  logWarning(`Catégorie inconnue pour la technique: ${techniqueCode}, utilisation de 'general'`);
   return 'general';
 }
 
@@ -113,7 +114,7 @@ export function getTechniqueUrl(techniqueCode: string | null | undefined): strin
   const cleanCode = techniqueCode.trim().toUpperCase();
 
   if (!cleanCode) {
-    console.warn(`Code de technique vide`);
+    logWarning(`Code de technique vide`);
     return '#';
   }
 

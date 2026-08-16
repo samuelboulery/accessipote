@@ -245,6 +245,37 @@ describe('CriteriaDetail', () => {
       expect(onPagesChange).not.toHaveBeenCalled();
     });
 
+    // L'URL saisie finit dans un `href`. React neutralise `javascript:`, mais la
+    // validation ne doit pas reposer sur le framework.
+    it.each([
+      ['javascript:alert(1)', 'javascript:'],
+      ['data:text/html,<script>alert(1)</script>', 'data:'],
+      ['mailto:contact@exemple.fr', 'mailto:'],
+      ['exemple.fr/page1', 'sans protocole'],
+    ])('refuse une adresse en %s', async input => {
+      const user = userEvent.setup();
+      const { onPagesChange } = setup({ pages: [] });
+
+      await user.type(screen.getByLabelText('Adresse de la page à ajouter'), input);
+      await user.click(screen.getByRole('button', { name: 'Ajouter' }));
+
+      expect(onPagesChange).not.toHaveBeenCalled();
+      expect(screen.getByRole('alert')).toHaveTextContent(/http/);
+    });
+
+    it('efface le message d\'erreur dès que la saisie reprend', async () => {
+      const user = userEvent.setup();
+      setup({ pages: [] });
+
+      const input = screen.getByLabelText('Adresse de la page à ajouter');
+      await user.type(input, 'javascript:alert(1)');
+      await user.click(screen.getByRole('button', { name: 'Ajouter' }));
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+
+      await user.type(input, 'x');
+      expect(screen.queryByRole('alert')).toBeNull();
+    });
+
     it('vide le champ de saisie après ajout', async () => {
       const user = userEvent.setup();
       setup({ pages: [] });

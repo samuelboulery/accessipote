@@ -27,16 +27,6 @@ describe('logger', () => {
     expect(warnSpy).toHaveBeenCalledWith('test warning');
   });
 
-  it('logInfo appelle console.log en mode DEV', async () => {
-    vi.stubEnv('DEV', true);
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-    const { logInfo } = await import('./logger?t=' + Date.now() + '2');
-    logInfo('test info');
-
-    expect(logSpy).toHaveBeenCalledWith('test info');
-  });
-
   it('logError avec plusieurs arguments', async () => {
     vi.stubEnv('DEV', true);
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

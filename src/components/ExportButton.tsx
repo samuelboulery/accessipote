@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type React from 'react';
-import type { Mode, Progress, CriteriaRGAA } from '../types';
+import type { AuditProgress, CriteriaRGAA, Mode } from '../types';
 import { exportClassicMarkdown, exportDesignSystemMarkdown } from '../utils/exportMarkdown';
 import { PDF_Y_POS_LIMIT, PDF_START_Y_POS, PDF_HEADER_Y_POS, PDF_FILENAME } from '../constants';
 import { cleanCriteriaTitle } from '../utils/stripMarkdown';
@@ -17,7 +17,7 @@ interface JSPDFWithAutoTable extends jsPDF {
 
 interface ExportButtonProps {
   mode: Mode;
-  progress: Progress;
+  progress: AuditProgress;
   criteriaList: CriteriaRGAA[];
   onShowToast: (message: string, type: 'success' | 'error') => void;
   exportMarkdownButtonRef?: React.RefObject<HTMLButtonElement | null>;
@@ -28,14 +28,11 @@ export default function ExportButton({ mode, progress, criteriaList, onShowToast
 
   const handleExportMarkdown = () => {
     // Filtrer uniquement les critères qui ont un statut
-    let content = '';
-    if (mode === 'classic') {
-      const classicCriteria = criteriaList.filter(c => progress.classic[c.id]);
-      content = exportClassicMarkdown(progress.classic, classicCriteria);
-    } else {
-      const designSystemCriteria = criteriaList.filter(c => progress.designSystem[c.id]);
-      content = exportDesignSystemMarkdown(progress.designSystem, designSystemCriteria);
-    }
+    const evaluated = criteriaList.filter(c => progress[c.id]);
+    const content =
+      mode === 'classic'
+        ? exportClassicMarkdown(progress, evaluated)
+        : exportDesignSystemMarkdown(progress, evaluated);
 
     // Copier le contenu dans le presse-papiers
     navigator.clipboard.writeText(content).then(() => {
@@ -66,7 +63,7 @@ export default function ExportButton({ mode, progress, criteriaList, onShowToast
 
         const jsPDF = jsPDFModule.default;
         const autoTable = autoTableModule.default;
-        const classicCriteria = criteriaList.filter(c => progress.classic[c.id]);
+        const classicCriteria = criteriaList.filter(c => progress[c.id]);
         
         const doc = new jsPDF() as JSPDFWithAutoTable;
         
@@ -83,7 +80,7 @@ export default function ExportButton({ mode, progress, criteriaList, onShowToast
         };
 
         classicCriteria.forEach(criteria => {
-          const status = progress.classic[criteria.id]?.status;
+          const status = progress[criteria.id]?.status;
           if (status && groupedCriteria[status as keyof typeof groupedCriteria]) {
             groupedCriteria[status as keyof typeof groupedCriteria].push(criteria);
           }
