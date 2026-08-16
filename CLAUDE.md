@@ -14,7 +14,7 @@ URL dev : http://localhost:5173
 
 ## Stack technique
 - React 19 + TypeScript strict + Vite 7
-- Tailwind CSS 3, échelle restreinte aux jetons du design (voir `src/tokens.css`)
+- Tailwind CSS 4, échelle restreinte aux jetons du design (voir `src/tokens.css` et le bloc `@theme` de `src/index.css`)
 - Lucide React pour les icônes
 - jsPDF pour les exports PDF
 - Vitest + Testing Library pour les tests
@@ -56,7 +56,9 @@ Gestionnaire de paquets : **pnpm** exclusivement.
   runners CI sont plus lents qu'en local.
 - L'échelle Tailwind par défaut est **remplacée** par celle du design : `text-sm`,
   `rounded-lg`, `p-5`, `text-gray-600` n'existent plus. Une classe hors système ne
-  produit aucun style — c'est volontaire, ça rend les dérives visibles.
+  produit aucun style — c'est volontaire, ça rend les dérives visibles. Depuis
+  Tailwind 4 le thème vit dans le bloc `@theme` de `src/index.css` ; il n'y a
+  plus de `tailwind.config.js`.
 - Les tailles de police sont en `rem` et non en `px` : le zoom texte du navigateur
   doit agir dessus (RGAA 10.4).
 - Un contrôle de 40px de haut porte la classe `target-44` (pseudo-élément qui étend

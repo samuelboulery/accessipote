@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 // En développement, Vite injecte le CSS Tailwind via des <style> (HMR).
 // Les meta tags CSP et les HTTP headers s'appliquent en mode AND — il faut
@@ -23,7 +24,7 @@ function devCspPlugin(): Plugin {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), devCspPlugin()],
+  plugins: [react(), tailwindcss(), devCspPlugin()],
   build: {
     rollupOptions: {
       output: {

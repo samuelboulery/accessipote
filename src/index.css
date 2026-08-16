@@ -1,4 +1,5 @@
 @import './tokens.css';
+@import 'tailwindcss';
 
 /* Instrument Sans et JetBrains Mono — auto-hébergées pour éviter les dépendances externes.
    Ce sont des polices variables : un seul fichier par sous-ensemble couvre toute la plage
@@ -39,9 +40,170 @@
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+
+/* L'application bascule le thème par une classe sur <html> ; en v4 cela se
+   déclare ici plutôt que par `darkMode: 'class'`. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Remplace l'échelle Tailwind par défaut sur les axes que le design pilote,
+   afin qu'une classe hors système ne compile pas. `text-sm`, `rounded-lg`,
+   `p-5`, `text-gray-600` n'existent plus : c'est volontaire, ça rend les
+   dérives visibles à la compilation.
+
+   Le `--*: initial` de chaque espace de noms est ce qui remplace vraiment
+   l'échelle : sans lui, la v4 se contenterait d'ajouter nos jetons aux siens. */
+@theme {
+  /* ---- Points de bascule ------------------------------------------------
+     Un breakpoint mesure la fenêtre ; la zone de contenu, elle, vaut
+     `fenêtre − 244px (sidebar) − 48px (padding du panneau)`. À 1024px — le
+     `lg` de Tailwind — il ne reste que 732px, trop peu pour deux colonnes.
+     `lg` est retiré, pas redéfini : une classe `lg:` oubliée ne produit alors
+     aucun style, ce qui la rend visible. */
+  --breakpoint-*: initial;
+  --breakpoint-sm: 640px;    /* bascule mobile — aligné sur useIsMobile (max-width: 639px) */
+  --breakpoint-roomy: 1024px; /* contenu ≈ 732px */
+  --breakpoint-wide: 1100px;  /* contenu ≈ 808px : mises en page deux colonnes */
+  --breakpoint-xl: 1280px;    /* contenu ≈ 988px : deux cartes d'audit côte à côte */
+
+  /* ---- Couleurs --------------------------------------------------------- */
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  --color-bg: var(--a-bg);
+  --color-surface: var(--a-surface);
+  --color-sunk: var(--a-surface-sunk);
+  --color-border: var(--a-border);
+  --color-separator: var(--a-separator);
+  --color-track: var(--a-track);
+  --color-dashed: var(--a-dashed);
+
+  --color-ink: var(--a-ink);
+  --color-ink-muted: var(--a-ink-muted);
+
+  --color-ok: var(--a-ok);
+  --color-ok-bg: var(--a-ok-bg);
+  --color-ok-fg: var(--a-ok-fg);
+  --color-ok-card: var(--a-ok-card-bg);
+  --color-ok-line: var(--a-ok-card-bd);
+
+  --color-ko: var(--a-ko);
+  --color-ko-bg: var(--a-ko-bg);
+  --color-ko-fg: var(--a-ko-fg);
+  --color-ko-card: var(--a-ko-card-bg);
+  --color-ko-line: var(--a-ko-card-bd);
+
+  --color-na-bg: var(--a-na-bg);
+  --color-na-fg: var(--a-na-fg);
+  --color-na-bar: var(--a-na-bar);
+
+  --color-todo-bg: var(--a-todo-bg);
+  --color-todo-fg: var(--a-todo-fg);
+
+  /* La bannière est un bloc inversé : son encre ne suit pas celle de l'app. */
+  --color-banner-ink: var(--a-banner-ink);
+  --color-banner-muted: var(--a-banner-muted);
+
+  /* ---- Typographie ------------------------------------------------------
+     L'approche et l'interligne sont attachés au pas : impossible d'utiliser
+     une taille sans eux. En rem et non en px — à racine 16px les valeurs
+     rendues sont celles du handoff, mais le zoom texte du navigateur agit
+     dessus, sans quoi RGAA 10.4 n'est pas tenu. */
+  --text-*: initial;
+  --text-meta: 0.75rem;
+  --text-meta--line-height: 1.5;
+  --text-meta--letter-spacing: 0;
+  --text-dense: 0.8125rem;
+  --text-dense--line-height: 1.5;
+  --text-dense--letter-spacing: 0;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.5;
+  --text-body--letter-spacing: 0;
+  --text-lead: 1rem;
+  --text-lead--line-height: 1.5;
+  --text-lead--letter-spacing: -0.01em;
+  --text-criteria: 1.25rem;
+  --text-criteria--line-height: 1.4;
+  --text-criteria--letter-spacing: -0.02em;
+  --text-section: 1.5rem;
+  --text-section--line-height: 1.2;
+  --text-section--letter-spacing: -0.02em;
+  --text-screen: 2rem;
+  --text-screen--line-height: 1.2;
+  --text-screen--letter-spacing: -0.02em;
+  --text-display: 2.625rem;
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -0.03em;
+  /* 9e pas, au-delà des 8 du handoff : le titre d'accueil est le seul endroit
+     où la page a besoin de crier. */
+  --text-hero: 3.5rem;
+  --text-hero--line-height: 1.05;
+  --text-hero--letter-spacing: -0.035em;
+
+  --font-*: initial;
+  --font-sans: 'Instrument Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --font-weight-*: initial;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  /* La variable Instrument Sans monte à 700 ; le gras sert au seul titre
+     d'accueil, pour le contraste que 600 ne donnait pas. */
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ---- Espacement -------------------------------------------------------
+     `--spacing: initial` coupe l'échelle dynamique de la v4, qui accepterait
+     sinon n'importe quel `p-7` ou `gap-13`. */
+  --spacing: initial;
+  --spacing-0: 0px;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-14: 56px;
+  /* dimensions de contrôle */
+  --spacing-chip: 32px;
+  --spacing-ctrl: 40px;
+  --spacing-touch: 44px;
+  --spacing-prim: 48px;
+  --spacing-two: 64px;
+  /* icônes */
+  --spacing-icon-sm: 12px;
+  --spacing-icon-md: 16px;
+  --spacing-icon-lg: 20px;
+
+  /* ---- Rayons -----------------------------------------------------------
+     Trois valeurs, pas six. L'inventaire montrait que 12, 24 et pill portaient
+     53 usages sur 59 : les trois autres n'ajoutaient que du bruit. */
+  --radius-*: initial;
+  --radius-none: 0;
+  --radius-ctrl: var(--a-radius-ctrl); /* case, bouton, champ */
+  --radius-card: var(--a-radius-card); /* carte, panneau, modale */
+  --radius-pill: var(--a-radius-pill); /* pastille, jauge */
+
+  /* ---- Ombres ------------------------------------------------------------ */
+  --shadow-*: initial;
+  --shadow-none: none;
+  --shadow-panel: 0 1px 2px rgb(0 0 0 / 0.08), 0 12px 30px -18px rgb(0 0 0 / 0.3);
+  --shadow-focus: var(--a-focus-ring);
+
+  --default-transition-duration: 200ms;
+}
+
+/* La v4 n'a plus d'espace de noms pour les épaisseurs de bordure : les trois
+   valeurs du design se déclarent en utilitaires. `border-1.5` en particulier
+   n'existe dans aucune échelle générée. */
+@utility border-1 {
+  border-width: 1px;
+}
+@utility border-1\.5 {
+  border-width: 1.5px;
+}
 
 @layer components {
   /* Un contrôle de 40px de haut ne tient pas la cible minimale de 44px. Le

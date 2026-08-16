@@ -98,8 +98,9 @@ Vérifie ton changement au clavier seul avant de proposer la PR.
 L'échelle Tailwind par défaut est **remplacée** par celle du design :
 `text-sm`, `rounded-lg`, `p-5` ou `text-gray-600` n'existent plus. Une classe
 hors système ne produit aucun style. C'est volontaire : ça rend les dérives
-visibles immédiatement. Les jetons sont dans `src/tokens.css` et
-`tailwind.config.js`.
+visibles immédiatement. Les jetons sont dans `src/tokens.css` et dans le bloc
+`@theme` de `src/index.css` — depuis Tailwind 4, le thème se déclare en CSS et
+il n'y a plus de `tailwind.config.js`.
 
 ## Commits et pull requests
 
