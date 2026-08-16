@@ -88,6 +88,26 @@ describe('useLocalStorage', () => {
     expect(result.current[0]).toEqual({ count: 1 });
   });
 
+  it('devrait cumuler plusieurs mises à jour fonctionnelles dans le même tick', () => {
+    const { result } = renderHook(() =>
+      useLocalStorage<Record<string, boolean>>('test-key', {})
+    );
+
+    // Le cas des actions groupées : une boucle appelle le setter N fois avant
+    // que React n'ait re-rendu. Chaque appel doit partir du résultat du
+    // précédent, pas de la valeur figée au rendu.
+    act(() => {
+      result.current[1]((prev) => ({ ...prev, a: true }));
+      result.current[1]((prev) => ({ ...prev, b: true }));
+      result.current[1]((prev) => ({ ...prev, c: true }));
+    });
+
+    expect(result.current[0]).toEqual({ a: true, b: true, c: true });
+    expect(localStorage.getItem('test-key')).toBe(
+      JSON.stringify({ a: true, b: true, c: true })
+    );
+  });
+
   it('devrait rejeter les données invalides et retourner la valeur par défaut', () => {
     // Simuler des données corrompues
     localStorage.setItem('test-key', 'invalid-json{');

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useAudits } from './useAudits';
+import type { AuditProgress } from '../types';
 import { AUDITS_STORAGE_KEY, LOCAL_STORAGE_KEY } from '../constants';
 
 function readStore() {
@@ -75,6 +76,34 @@ describe('useAudits', () => {
 
     expect(before.name).toBe('A');
     expect(result.current.activeAudit?.name).toBe('B');
+  });
+
+  it('enchaîne plusieurs mises à jour fonctionnelles dans le même tick', () => {
+    const { result } = renderHook(() => useAudits());
+
+    act(() => {
+      result.current.createAudit({ name: 'A', mode: 'classic', themes: [] });
+    });
+    const { id } = result.current.activeAudit!;
+
+    // Ce que fait une action groupée : un appel par critère, tous avant le
+    // prochain rendu. Chaque patch doit voir l'audit issu du précédent.
+    act(() => {
+      for (const criteriaId of ['1.1', '1.2', '1.3']) {
+        result.current.updateAudit(id, audit => ({
+          progress: {
+            ...audit.progress,
+            [criteriaId]: { status: 'conforme' },
+          } as AuditProgress,
+        }));
+      }
+    });
+
+    expect(result.current.activeAudit?.progress).toEqual({
+      '1.1': { status: 'conforme' },
+      '1.2': { status: 'conforme' },
+      '1.3': { status: 'conforme' },
+    });
   });
 
   it('ignore la mise à jour d\'un audit inconnu', () => {

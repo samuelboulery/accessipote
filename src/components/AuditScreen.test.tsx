@@ -329,4 +329,34 @@ describe('AuditScreen', () => {
 
     expect(screen.queryByText(/critère sélectionné/)).not.toBeInTheDocument();
   });
+
+  it('oublie la sélection d\'un thème quand on change de thème', async () => {
+    const user = userEvent.setup();
+    const props = {
+      audit: AUDIT,
+      criteriaList: CRITERIA,
+      themes: ['Images', 'Cadres'],
+      filters: FILTERS,
+      expandedCriteriaId: null,
+      onThemeChange: vi.fn(),
+      onFiltersChange: vi.fn(),
+      onExpand: vi.fn(),
+      onStatusChange: vi.fn(),
+      onCheckedTestsChange: vi.fn(),
+      onNoteChange: vi.fn(),
+      onPagesChange: vi.fn(),
+      onGlossaryClick: vi.fn(),
+    };
+
+    const { rerender } = render(<AuditScreen {...props} activeTheme="Images" />);
+
+    await user.click(screen.getByRole('checkbox', { name: /Sélectionner le critère 1\.1/ }));
+    expect(screen.getByText('1 critère sélectionné')).toBeInTheDocument();
+
+    rerender(<AuditScreen {...props} activeTheme="Cadres" />);
+
+    // Le critère 1.1 n'est plus affiché : la barre ne doit ni le compter ni
+    // pouvoir le modifier.
+    expect(screen.queryByText(/critère sélectionné/)).not.toBeInTheDocument();
+  });
 });

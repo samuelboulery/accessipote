@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { logError } from '../utils/logger';
 
 /**
@@ -55,12 +55,22 @@ function useLocalStorage<T>(key: string, initialValue: T) {
     }
   });
 
-  // Return a wrapped version of useState's setter function that
-  // persists the new value to localStorage.
-  const setValue = (value: T | ((val: T) => T)) => {
+  /**
+   * Miroir de la dernière valeur écrite. `storedValue` est figé dans la closure
+   * du rendu : une boucle qui appelle le setter N fois avant le prochain rendu —
+   * ce que fait une action groupée — verrait N fois le même état de départ, et
+   * seul le dernier appel survivrait. Le ref, lui, avance à chaque appel.
+   */
+  const valueRef = useRef(storedValue);
+
+  // Version enveloppée du setter de useState, qui persiste dans localStorage.
+  // L'écriture reste hors de l'updater de React : celui-ci doit rester pur, il
+  // est invoqué deux fois en StrictMode.
+  const setValue = useCallback((value: T | ((val: T) => T)) => {
     try {
       // Allow value to be a function so we have same API as useState
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      const valueToStore = value instanceof Function ? value(valueRef.current) : value;
+      valueRef.current = valueToStore;
       setStoredValue(valueToStore);
       if (typeof window !== 'undefined') {
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
@@ -68,7 +78,7 @@ function useLocalStorage<T>(key: string, initialValue: T) {
     } catch (error) {
       logError('Erreur lors de la sauvegarde dans localStorage:', error);
     }
-  };
+  }, [key]);
 
   return [storedValue, setValue] as const;
 }

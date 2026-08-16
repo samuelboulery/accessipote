@@ -99,18 +99,26 @@ export default function AuditScreen({
     });
   }, []);
 
-  const applyToSelection = (status: CriteriaStatus | '') => {
-    for (const criteriaId of selection) onStatusChange(criteriaId, status);
-    setSelection(new Set());
-  };
-
   // La case maîtresse n'agit que sur les critères affichés, filtres compris :
   // agir sur des critères hors écran, c'est ce qui rendait l'ancien « tout
   // sélectionner » malhonnête.
   const visibleIds = useMemo(() => filteredCriteria.map(c => c.id), [filteredCriteria]);
-  const selectedVisibleCount = visibleIds.filter(id => selection.has(id)).length;
+
+  // La barre d'actions suit la même règle. Sans ça, une sélection faite dans un
+  // thème survivait au changement de thème — l'écran annonçait des critères
+  // qu'on ne voyait plus, et les modifiait.
+  const selectedVisible = useMemo(
+    () => visibleIds.filter(id => selection.has(id)),
+    [visibleIds, selection],
+  );
+  const selectedVisibleCount = selectedVisible.length;
   const allVisibleSelected = visibleIds.length > 0 && selectedVisibleCount === visibleIds.length;
   const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
+
+  const applyToSelection = (status: CriteriaStatus | '') => {
+    for (const criteriaId of selectedVisible) onStatusChange(criteriaId, status);
+    setSelection(new Set());
+  };
 
   // `indeterminate` est une propriété du DOM, pas un attribut : React ne sait
   // pas la poser en JSX.
@@ -267,7 +275,7 @@ export default function AuditScreen({
 
       {!expanded && (
         <BulkActions
-          selectedCount={selection.size}
+          selectedCount={selectedVisibleCount}
           mode={audit.mode}
           onApply={status => applyToSelection(status)}
           onClearStatus={() => applyToSelection('')}
