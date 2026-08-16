@@ -42,15 +42,21 @@ function AuditRing({ size, segments, label, gap = 0, children }: AuditRingProps)
   const center = size / 2;
   const circumference = 2 * Math.PI * r;
 
-  let consumed = 0;
+  // Chaque segment démarre là où les précédents s'arrêtent. Le décalage est
+  // donc cumulatif, et se calcule avant le rendu : muter un compteur pendant
+  // le `map` produirait un résultat dépendant de l'ordre d'évaluation.
+  const offsets: number[] = [];
+  segments.reduce((consumed, segment) => {
+    offsets.push(-consumed * circumference);
+    return consumed + segment.share;
+  }, 0);
 
   return (
     <span className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={label}>
         <circle cx={center} cy={center} r={r} fill="none" stroke="var(--a-track)" strokeWidth={stroke} />
-        {segments.map(segment => {
-          const offset = -consumed * circumference;
-          consumed += segment.share;
+        {segments.map((segment, index) => {
+          const offset = offsets[index];
           if (segment.share <= 0) return null;
           return (
             <circle

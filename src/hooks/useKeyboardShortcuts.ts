@@ -61,8 +61,13 @@ export function useKeyboardShortcuts({
   onGlossaryToggle,
 }: UseKeyboardShortcutsOptions): UseKeyboardShortcutsReturn {
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  // Le gestionnaire de clavier est posé une seule fois : il lit l'état par une
+  // ref plutôt que par sa fermeture, qui serait figée. La ref se met à jour
+  // après le rendu — l'écrire pendant casserait le rendu concurrent.
   const isHelpModalOpenRef = useRef(false);
-  isHelpModalOpenRef.current = isHelpModalOpen;
+  useEffect(() => {
+    isHelpModalOpenRef.current = isHelpModalOpen;
+  }, [isHelpModalOpen]);
 
   const closeHelpModal = useCallback(() => {
     setIsHelpModalOpen(false);

@@ -39,7 +39,7 @@ function initialStore(): AuditStore {
 }
 
 export function useAudits() {
-  const bootstrap = useMemo(initialStore, []);
+  const bootstrap = useMemo(() => initialStore(), []);
   const [store, setStore] = useLocalStorage<AuditStore>(AUDITS_STORAGE_KEY, bootstrap);
 
   const createAudit = useCallback((input: NewAuditInput): string => {

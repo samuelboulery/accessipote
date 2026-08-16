@@ -47,9 +47,15 @@ export default function CriteriaDetail({
   const [newPage, setNewPage] = useState('');
   const criteriaId = criterion.id;
 
-  useEffect(() => {
+  // Changer de critère, ou recevoir une note modifiée ailleurs, doit réinitialiser
+  // le brouillon. C'est un ajustement d'état pendant le rendu, pas un effet : React
+  // relance le rendu immédiatement, sans passer par un affichage intermédiaire qui
+  // montrerait la note de l'ancien critère.
+  const [noteSource, setNoteSource] = useState({ note, criteriaId });
+  if (noteSource.note !== note || noteSource.criteriaId !== criteriaId) {
+    setNoteSource({ note, criteriaId });
     setDraftNote(note);
-  }, [note, criteriaId]);
+  }
 
   const flushNote = useCallback(() => {
     if (draftNote !== note) onNoteChange(criteriaId, draftNote);
@@ -57,7 +63,9 @@ export default function CriteriaDetail({
 
   // La note doit survivre à une fermeture d'onglet en pleine frappe.
   const flushRef = useRef(flushNote);
-  flushRef.current = flushNote;
+  useEffect(() => {
+    flushRef.current = flushNote;
+  }, [flushNote]);
   useEffect(() => {
     const handler = () => flushRef.current();
     window.addEventListener('beforeunload', handler);
