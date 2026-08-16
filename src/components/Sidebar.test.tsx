@@ -20,6 +20,8 @@ const AUDIT: Audit = {
 
 const COUNTS = { conforme: 29, ecarts: 12, nonApplicable: 7, aEvaluer: 58 };
 
+const AUDIT_DS: Audit = { ...AUDIT, id: 'a2', mode: 'design-system' };
+
 const AUDITS: SwitchableAudit[] = [
   {
     audit: AUDIT,
@@ -133,5 +135,25 @@ describe('Sidebar', () => {
     // Sur deux lignes, la coche se retrouvait centrée entre les deux au lieu
     // de s'aligner sur la première.
     expect(screen.getByText(/Enregistré/)).toHaveClass('truncate');
+  });
+
+  // La barre latérale et la synthèse décrivent le même audit. Y lire
+  // « Non conforme » pendant que la synthèse dit « À mettre en place » fait
+  // douter du chiffre autant que du libellé.
+  describe('libellés selon le mode', () => {
+    it('emploie le vocabulaire classique sur un audit classique', () => {
+      setup();
+
+      expect(screen.getByText('Conforme')).toBeInTheDocument();
+      expect(screen.getByText('Non conforme')).toBeInTheDocument();
+    });
+
+    it('emploie le vocabulaire design system sur un audit design system', () => {
+      setup({ activeAudit: AUDIT_DS });
+
+      expect(screen.getByText('Conforme par défaut')).toBeInTheDocument();
+      expect(screen.getByText('À mettre en place')).toBeInTheDocument();
+      expect(screen.queryByText('Non conforme')).not.toBeInTheDocument();
+    });
   });
 });
