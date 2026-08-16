@@ -1,6 +1,6 @@
 import type { Mode } from '../types';
 import type { SummaryStats, ThemeStats } from './calculateSummaryStats';
-import { getStatusPresentation, UNSET_STATUS } from './statusPresentation';
+import { getStatusPresentation } from './statusPresentation';
 
 export interface SummaryBucket {
   key: 'conforme' | 'ecarts' | 'nonApplicable' | 'aEvaluer';
@@ -77,5 +77,3 @@ export function themeCounts(theme: ThemeStats) {
     total: theme.total,
   };
 }
-
-export { UNSET_STATUS };

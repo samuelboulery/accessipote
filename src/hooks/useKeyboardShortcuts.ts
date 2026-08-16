@@ -47,12 +47,7 @@ const SHORTCUTS: KeyboardShortcut[] = [
 ];
 
 function isInputFocused(): boolean {
-  const el = document.activeElement;
-  if (!el) return false;
-  const tag = el.tagName.toUpperCase();
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
-  if ((el as HTMLElement).contentEditable === 'true') return true;
-  return false;
+  return !!document.activeElement?.matches('input, textarea, select, [contenteditable="true"]');
 }
 
 export function useKeyboardShortcuts({

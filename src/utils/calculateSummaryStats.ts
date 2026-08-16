@@ -104,29 +104,20 @@ export function calculateSummaryStats(
     globalRate = dsDenominator === 0 ? null : ((defaultCompliant + projectImplementation) / dsDenominator) * 100;
   }
 
-  // Calculate per-theme rates and build theme array maintaining order
-  const byTheme: ThemeStats[] = [];
-  const seenThemes = new Set<string>();
-
-  for (const criteria of criteriaList) {
-    if (!seenThemes.has(criteria.theme)) {
-      seenThemes.add(criteria.theme);
-      const themeData = themeStats.get(criteria.theme)!;
-      let themeRate: number | null;
-      if (mode === 'classic') {
-        const themeDenominator = themeData.conforme + themeData.nonConforme;
-        themeRate = themeDenominator === 0 ? null : (themeData.conforme / themeDenominator) * 100;
-      } else {
-        const themeEvaluated = themeData.defaultCompliant + themeData.projectImplementation + themeData.nonApplicable;
-        const themeDsDenominator = themeEvaluated - themeData.nonApplicable;
-        themeRate = themeDsDenominator === 0 ? null : ((themeData.defaultCompliant + themeData.projectImplementation) / themeDsDenominator) * 100;
-      }
-      byTheme.push({
-        ...themeData,
-        rate: themeRate,
-      });
+  // Une Map conserve l'ordre d'insertion : les thèmes ressortent déjà dans
+  // l'ordre où les critères les ont introduits, sans second parcours de la liste.
+  const byTheme: ThemeStats[] = [...themeStats.values()].map(themeData => {
+    let themeRate: number | null;
+    if (mode === 'classic') {
+      const themeDenominator = themeData.conforme + themeData.nonConforme;
+      themeRate = themeDenominator === 0 ? null : (themeData.conforme / themeDenominator) * 100;
+    } else {
+      const themeEvaluated = themeData.defaultCompliant + themeData.projectImplementation + themeData.nonApplicable;
+      const themeDsDenominator = themeEvaluated - themeData.nonApplicable;
+      themeRate = themeDsDenominator === 0 ? null : ((themeData.defaultCompliant + themeData.projectImplementation) / themeDsDenominator) * 100;
     }
-  }
+    return { ...themeData, rate: themeRate };
+  });
 
   return {
     globalRate,
