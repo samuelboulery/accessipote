@@ -4,6 +4,7 @@ import type { Mode, Progress, CriteriaRGAA } from '../types';
 import { exportClassicMarkdown, exportDesignSystemMarkdown } from '../utils/exportMarkdown';
 import { PDF_Y_POS_LIMIT, PDF_START_Y_POS, PDF_HEADER_Y_POS, PDF_FILENAME } from '../constants';
 import { cleanCriteriaTitle } from '../utils/stripMarkdown';
+import { logError } from '../utils/logger';
 import { Download, Copy } from 'lucide-react';
 import type jsPDF from 'jspdf';
 
@@ -125,7 +126,10 @@ export default function ExportButton({ mode, progress, criteriaList, onShowToast
         addSection('Critères Non Applicables', groupedCriteria['non-applicable']);
 
         doc.save(PDF_FILENAME);
-      } catch {
+      } catch (error) {
+        // Le message utilisateur reste générique, mais l'erreur d'origine doit
+        // rester lisible : sans elle, un export qui échoue ne laisse aucune trace.
+        logError('Export PDF impossible:', error);
         onShowToast('Erreur lors de l\'export PDF. Veuillez réessayer.', 'error');
       } finally {
         setIsExportingPDF(false);
