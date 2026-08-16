@@ -9,38 +9,27 @@ function isValidObject(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * Valide les données du localStorage pour éviter les injections
+ * Valide les données relues du localStorage.
+ *
+ * La valeur arrive de `JSON.parse` : elle ne peut contenir ni fonction, ni date,
+ * ni cycle — inutile de la re-sérialiser pour s'en assurer. Ce qui reste à
+ * vérifier, c'est sa forme : un tableau ou un nombre sous la clé d'un objet ne
+ * vient pas de l'application, et doit retomber sur la valeur initiale plutôt que
+ * de traverser l'écran.
  */
 function validateStoredData<T>(value: unknown, initialValue: T): T {
-  // Si la valeur est null/undefined, retourner la valeur initiale
   if (value === null || value === undefined) {
     return initialValue;
   }
 
-  // Si c'est l'objet initial lui-même (référence), retourner tel quel
-  if (value === initialValue) {
-    return initialValue;
-  }
-
-  // Valider la structure pour les types d'objet
   if (typeof initialValue === 'object') {
     if (!isValidObject(value)) {
       logError('Données localStorage invalides (pas un objet)');
       return initialValue;
     }
-
-    // Valider que c'est un objet "à plat" (pas de fonctions, dates, etc.)
-    try {
-      // JSON.stringify puis parse pour s'assurer qu'il n'y a pas de fonctions
-      const cleaned = JSON.parse(JSON.stringify(value));
-      return cleaned as T;
-    } catch {
-      logError('Données localStorage invalides (erreur de sérialisation)');
-      return initialValue;
-    }
+    return value as T;
   }
 
-  // Pour les types primitifs, vérifier le type
   if (typeof value !== typeof initialValue) {
     logError('Données localStorage invalides (type incorrect)');
     return initialValue;
@@ -49,7 +38,7 @@ function validateStoredData<T>(value: unknown, initialValue: T): T {
   return value as T;
 }
 
-function useLocalStorage<T>(key: string, initialValue: T, migrationFn?: (oldValue: unknown) => T) {
+function useLocalStorage<T>(key: string, initialValue: T) {
   // State to store our value
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === 'undefined') {
@@ -57,24 +46,9 @@ function useLocalStorage<T>(key: string, initialValue: T, migrationFn?: (oldValu
     }
     try {
       const item = window.localStorage.getItem(key);
-      if (item) {
-        const parsed = JSON.parse(item);
-        
-        // Si une fonction de migration est fournie, l'utiliser
-        let migratedValue = parsed;
-        if (migrationFn) {
-          try {
-            migratedValue = migrationFn(parsed);
-          } catch (migrationError) {
-            logError('Erreur lors de la migration:', migrationError);
-            return initialValue;
-          }
-        }
-        
-        // Valider les données avant de les utiliser
-        return validateStoredData(migratedValue, initialValue);
-      }
-      return initialValue;
+      if (!item) return initialValue;
+
+      return validateStoredData(JSON.parse(item), initialValue);
     } catch (error) {
       logError('Erreur lors de la récupération de localStorage:', error);
       return initialValue;

@@ -88,23 +88,6 @@ describe('useLocalStorage', () => {
     expect(result.current[0]).toEqual({ count: 1 });
   });
 
-  it('devrait utiliser la fonction de migration', () => {
-    localStorage.setItem('test-key', JSON.stringify({ old: true }));
-
-    const migrationFn = (oldValue: unknown) => {
-      if (typeof oldValue === 'object' && oldValue !== null) {
-        return { ...(oldValue as Record<string, unknown>), migrated: true };
-      }
-      return { default: true };
-    };
-
-    const { result } = renderHook(() =>
-      useLocalStorage('test-key', { default: true }, migrationFn)
-    );
-
-    expect(result.current[0]).toEqual({ old: true, migrated: true });
-  });
-
   it('devrait rejeter les données invalides et retourner la valeur par défaut', () => {
     // Simuler des données corrompues
     localStorage.setItem('test-key', 'invalid-json{');
@@ -116,8 +99,7 @@ describe('useLocalStorage', () => {
     expect(result.current[0]).toBe('default-value');
   });
 
-  it('devrait rejeter les données avec des fonctions et retourner une valeur propre', () => {
-    // Essayer de mettre des données malveillantes
+  it('devrait relire un objet valide tel quel', () => {
     localStorage.setItem('test-key', JSON.stringify({ normal: 'value' }));
 
     const { result } = renderHook(() =>
@@ -135,20 +117,6 @@ describe('useLocalStorage', () => {
     );
 
     expect(result.current[0]).toBe('default-value');
-  });
-
-  it('devrait retourner la valeur par défaut si la migration échoue', () => {
-    localStorage.setItem('test-key', JSON.stringify({ old: true }));
-
-    const migrationFn = () => {
-      throw new Error('Erreur de migration');
-    };
-
-    const { result } = renderHook(() =>
-      useLocalStorage('test-key', { default: true }, migrationFn)
-    );
-
-    expect(result.current[0]).toEqual({ default: true });
   });
 
   it('devrait retourner la valeur initiale si la valeur stockée n\'est pas un objet valide', () => {
