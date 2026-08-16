@@ -139,7 +139,7 @@ du rechargement à chaud, et uniquement là.
 |---|---|
 | Interface | React 19, TypeScript 5.9 en mode strict |
 | Build | Vite 7 |
-| Styles | Tailwind CSS 3, échelle restreinte aux jetons du design |
+| Styles | Tailwind CSS 4, échelle restreinte aux jetons du design |
 | Icônes | Lucide React |
 | Export PDF | jsPDF + jspdf-autotable, chargés à la demande |
 | Assainissement | DOMPurify |
