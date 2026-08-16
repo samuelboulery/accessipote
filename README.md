@@ -150,8 +150,9 @@ L'échelle Tailwind par défaut est **remplacée** par celle du design : une cla
 hors système ne produit aucun style. C'est volontaire — les dérives se voient
 tout de suite.
 
-Le chargement initial pèse environ **162 kB compressés**. Les 230 kB de la
-chaîne PDF ne sont téléchargés qu'au moment où l'on exporte.
+Le chargement initial pèse environ **158 ko compressés**. Les 225 ko de la
+chaîne PDF ne sont téléchargés qu'au moment où l'on exporte — vérifié sur le
+build : ses chunks n'apparaissent pas dans les `modulepreload` de la page.
 
 ## Architecture
 
