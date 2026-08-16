@@ -14,10 +14,18 @@ function devCspPlugin(): Plugin {
       order: 'pre',
       handler(html, ctx) {
         if (!ctx.server) return html;
+        // Les chaînes ciblées doivent rester alignées sur la CSP d'index.html :
+        // un `replace` qui ne trouve rien échoue en silence et le dev casse.
         return html
           .replace("style-src 'self';", "style-src 'self' 'unsafe-inline';")
-          .replace("script-src 'self';", "script-src 'self' 'unsafe-inline';")
-          .replace("connect-src 'self';", "connect-src 'self' ws://localhost:*;");
+          .replace(
+            "script-src 'self' https://static.cloudflareinsights.com;",
+            "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com;",
+          )
+          .replace(
+            "connect-src 'self' https://cloudflareinsights.com;",
+            "connect-src 'self' ws://localhost:* https://cloudflareinsights.com;",
+          );
       },
     },
   };

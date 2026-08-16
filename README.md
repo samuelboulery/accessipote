@@ -93,10 +93,18 @@ variable d'environnement, pas de base de données, pas d'API.
 ### Vos données ne bougent pas
 
 Il n'y a pas de serveur. Les audits vivent dans le `localStorage` de votre
-navigateur, et la politique de sécurité de contenu déclare `connect-src 'self'`
-— l'application est structurellement incapable d'envoyer quoi que ce soit
-ailleurs. Pas de compte à créer, pas de traceur, pas de conditions d'utilisation
-à accepter.
+navigateur, et la politique de sécurité de contenu n'autorise aucune destination
+réseau qui puisse les recevoir — l'application est structurellement incapable
+d'envoyer votre travail ailleurs. Pas de compte à créer, pas de conditions
+d'utilisation à accepter.
+
+La seule exception est la mesure d'audience du site publié sur
+[accessipote.fr](https://accessipote.fr) : Cloudflare Web Analytics compte les
+pages vues, sans cookie, sans stockage sur votre poste et sans empreinte de
+navigateur. Elle relève à ce titre de l'exemption de consentement de la CNIL, ce
+qui explique l'absence de bandeau. Elle ne voit rien de vos audits. Une instance
+que vous hébergez vous-même n'a qu'à retirer la balise `beacon.min.js` en bas
+d'`index.html` — et les deux domaines Cloudflare de la CSP.
 
 C'est aussi la limite à connaître : vider les données du navigateur efface les
 audits. L'export sert autant de sauvegarde que de livrable.
