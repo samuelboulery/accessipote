@@ -1,7 +1,7 @@
-import type { CriteriaRGAA, ClassicStatus, Progress } from '../types';
+import type { AuditProgress, CriteriaRGAA, ClassicStatus } from '../types';
 import { cleanCriteriaTitle } from './stripMarkdown';
 
-export function exportClassicMarkdown(progress: Progress['classic'], criteriaList: CriteriaRGAA[]): string {
+export function exportClassicMarkdown(progress: AuditProgress, criteriaList: CriteriaRGAA[]): string {
   const lines: string[] = [];
   lines.push('# Rapport de Conformité RGAA - Accessipote\n');
   lines.push(`Date : ${new Date().toLocaleDateString('fr-FR')}\n`);
@@ -52,7 +52,7 @@ export function exportClassicMarkdown(progress: Progress['classic'], criteriaLis
   return lines.join('\n');
 }
 
-export function exportDesignSystemMarkdown(progress: Progress['designSystem'], criteriaList: CriteriaRGAA[]): string {
+export function exportDesignSystemMarkdown(progress: AuditProgress, criteriaList: CriteriaRGAA[]): string {
   const lines: string[] = [];
   lines.push('# Checklist Design System - Conformité RGAA - Accessipote\n');
   lines.push(`Date : ${new Date().toLocaleDateString('fr-FR')}\n`);

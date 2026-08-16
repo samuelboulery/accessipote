@@ -4,7 +4,6 @@ import type {
   CriteriaStatus,
   CriteriaRawData,
   GlossaryTerm,
-  Progress,
 } from './types';
 import { useAudits, type NewAuditInput } from './hooks/useAudits';
 import { useDebounce } from './hooks/useDebounce';
@@ -227,14 +226,6 @@ function App() {
     [audits, criteriaList],
   );
 
-  /** `SummaryTab` et l'export attendent encore la forme v1, à deux modes. */
-  const progressForMode = useMemo((): Progress => {
-    if (!activeAudit) return { classic: {}, designSystem: {} };
-    return activeAudit.mode === 'classic'
-      ? { classic: activeAudit.progress as Progress['classic'], designSystem: {} }
-      : { classic: {}, designSystem: activeAudit.progress as Progress['designSystem'] };
-  }, [activeAudit]);
-
   const popoverTerm = useMemo(
     () =>
       selectedGlossaryTerm
@@ -249,7 +240,7 @@ function App() {
   const exportButton = activeAudit ? (
     <ExportButton
       mode={activeAudit.mode}
-      progress={progressForMode}
+      progress={activeAudit.progress}
       criteriaList={auditCriteria}
       onShowToast={showToast}
       exportMarkdownButtonRef={exportMarkdownButtonRef}
@@ -364,7 +355,7 @@ function App() {
           (activeAudit ? (
             <SummaryTab
               criteriaList={auditCriteria}
-              progress={progressForMode}
+              progress={activeAudit.progress}
               mode={activeAudit.mode}
               actions={exportButton}
             />

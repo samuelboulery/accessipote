@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import SummaryTab from './SummaryTab';
-import type { CriteriaRGAA, Progress } from '../types';
+import type { AuditProgress, CriteriaRGAA } from '../types';
 
 const createMockCriteria = (id: string, theme: string): CriteriaRGAA => ({
   id,
@@ -18,13 +18,10 @@ describe('SummaryTab', () => {
         createMockCriteria('1.1', 'Images'),
         createMockCriteria('2.1', 'Cadres'),
       ];
-      const progress: Progress = {
-        classic: {
+      const progress: AuditProgress = {
           '1.1': { status: 'conforme' },
           '2.1': { status: 'non-conforme' },
-        },
-        designSystem: {},
-      };
+        };
 
       const { container } = render(
         <SummaryTab criteriaList={criteria} progress={progress} mode="classic" />
@@ -35,10 +32,7 @@ describe('SummaryTab', () => {
 
     it('devrait afficher le titre Synthèse', () => {
       const criteria = [createMockCriteria('1.1', 'Images')];
-      const progress: Progress = {
-        classic: { '1.1': { status: 'conforme' } },
-        designSystem: {},
-      };
+      const progress: AuditProgress = { '1.1': { status: 'conforme' } };
 
       render(<SummaryTab criteriaList={criteria} progress={progress} mode="classic" />);
       expect(screen.getByText('Synthèse')).toBeTruthy();
@@ -49,13 +43,10 @@ describe('SummaryTab', () => {
         createMockCriteria('1.1', 'Images'),
         createMockCriteria('1.2', 'Images'),
       ];
-      const progress: Progress = {
-        classic: {
+      const progress: AuditProgress = {
           '1.1': { status: 'conforme' },
           '1.2': { status: 'non-conforme' },
-        },
-        designSystem: {},
-      };
+        };
 
       render(<SummaryTab criteriaList={criteria} progress={progress} mode="classic" />);
 
@@ -70,13 +61,10 @@ describe('SummaryTab', () => {
         createMockCriteria('1.1', 'Images'),
         createMockCriteria('2.1', 'Cadres'),
       ];
-      const progress: Progress = {
-        classic: {
+      const progress: AuditProgress = {
           '1.1': { status: 'conforme' },
           '2.1': { status: 'non-conforme' },
-        },
-        designSystem: {},
-      };
+        };
 
       const { container } = render(
         <SummaryTab criteriaList={criteria} progress={progress} mode="classic" />
@@ -93,13 +81,10 @@ describe('SummaryTab', () => {
         createMockCriteria('1.1', 'Images'),
         createMockCriteria('1.2', 'Images'),
       ];
-      const progress: Progress = {
-        classic: {
+      const progress: AuditProgress = {
           '1.1': { status: 'conforme' },
           '1.2': { status: 'non-conforme' },
-        },
-        designSystem: {},
-      };
+        };
 
       const { container } = render(
         <SummaryTab criteriaList={criteria} progress={progress} mode="classic" />
@@ -114,14 +99,11 @@ describe('SummaryTab', () => {
         createMockCriteria('1.2', 'Images'),
         createMockCriteria('1.3', 'Images'),
       ];
-      const progress: Progress = {
-        classic: {
+      const progress: AuditProgress = {
           '1.1': { status: 'conforme' },
           '1.2': { status: 'non-conforme' },
           '1.3': { status: 'non-applicable' },
-        },
-        designSystem: {},
-      };
+        };
 
       const { container } = render(
         <SummaryTab criteriaList={criteria} progress={progress} mode="classic" />
@@ -138,7 +120,7 @@ describe('SummaryTab', () => {
   // beaucoup de chiffres pour dire qu'il n'y en a aucun.
   describe('Audit sans critère évalué', () => {
     const criteria = [createMockCriteria('1.1', 'Images'), createMockCriteria('2.1', 'Cadres')];
-    const empty: Progress = { classic: {}, designSystem: {} };
+    const empty: AuditProgress = {};
 
     it('devrait remplacer les compteurs par un état vide', () => {
       render(<SummaryTab criteriaList={criteria} progress={empty} mode="classic" />);
@@ -162,10 +144,7 @@ describe('SummaryTab', () => {
     });
 
     it('devrait afficher la synthèse dès un seul critère évalué', () => {
-      const progress: Progress = {
-        classic: { '1.1': { status: 'conforme' } },
-        designSystem: {},
-      };
+      const progress: AuditProgress = { '1.1': { status: 'conforme' } };
 
       render(<SummaryTab criteriaList={criteria} progress={progress} mode="classic" />);
 
@@ -180,13 +159,10 @@ describe('SummaryTab', () => {
         createMockCriteria('1.1', 'Images'),
         createMockCriteria('1.2', 'Images'),
       ];
-      const progress: Progress = {
-        classic: {},
-        designSystem: {
+      const progress: AuditProgress = {
           '1.1': { status: 'default-compliant' },
           '1.2': { status: 'project-implementation' },
-        },
-      };
+        };
 
       const { container } = render(
         <SummaryTab criteriaList={criteria} progress={progress} mode="design-system" />
@@ -200,13 +176,10 @@ describe('SummaryTab', () => {
         createMockCriteria('1.1', 'Images'),
         createMockCriteria('1.2', 'Images'),
       ];
-      const progress: Progress = {
-        classic: {},
-        designSystem: {
+      const progress: AuditProgress = {
           '1.1': { status: 'default-compliant' },
           '1.2': { status: 'project-implementation' },
-        },
-      };
+        };
 
       const { container } = render(
         <SummaryTab criteriaList={criteria} progress={progress} mode="design-system" />
@@ -230,15 +203,12 @@ describe('SummaryTab', () => {
         createMockCriteria('1.3', 'Images'),
         createMockCriteria('1.4', 'Images'),
       ];
-      const progress: Progress = {
-        classic: {
+      const progress: AuditProgress = {
           '1.1': { status: 'conforme' },
           '1.2': { status: 'non-conforme' },
           '1.3': { status: 'non-applicable' },
           // 1.4 pas évalué
-        },
-        designSystem: {},
-      };
+        };
 
       const { container } = render(
         <SummaryTab criteriaList={criteria} progress={progress} mode="classic" />
@@ -257,13 +227,10 @@ describe('SummaryTab', () => {
         createMockCriteria('1.1', 'Images'),
         createMockCriteria('1.2', 'Images'),
       ];
-      const progress: Progress = {
-        classic: {
+      const progress: AuditProgress = {
           '1.1': { status: 'conforme' },
           '1.2': { status: 'non-applicable' },
-        },
-        designSystem: {},
-      };
+        };
 
       const { container } = render(
         <SummaryTab criteriaList={criteria} progress={progress} mode="classic" />
@@ -278,10 +245,7 @@ describe('SummaryTab', () => {
   describe('Affichage des actions optionnelles', () => {
     it('devrait accepter une prop actions optionnelle', () => {
       const criteria = [createMockCriteria('1.1', 'Images')];
-      const progress: Progress = {
-        classic: { '1.1': { status: 'conforme' } },
-        designSystem: {},
-      };
+      const progress: AuditProgress = { '1.1': { status: 'conforme' } };
 
       const { container } = render(
         <SummaryTab
@@ -298,10 +262,7 @@ describe('SummaryTab', () => {
 
     it('devrait fonctionner sans actions', () => {
       const criteria = [createMockCriteria('1.1', 'Images')];
-      const progress: Progress = {
-        classic: { '1.1': { status: 'conforme' } },
-        designSystem: {},
-      };
+      const progress: AuditProgress = { '1.1': { status: 'conforme' } };
 
       const { container } = render(
         <SummaryTab criteriaList={criteria} progress={progress} mode="classic" />
@@ -313,7 +274,7 @@ describe('SummaryTab', () => {
 
   describe('Cas limites', () => {
     it('devrait gérer une liste de critères vide', () => {
-      const progress: Progress = { classic: {}, designSystem: {} };
+      const progress: AuditProgress = {};
 
       const { container } = render(
         <SummaryTab criteriaList={[]} progress={progress} mode="classic" />
@@ -327,7 +288,7 @@ describe('SummaryTab', () => {
         createMockCriteria('1.1', 'Images'),
         createMockCriteria('1.2', 'Images'),
       ];
-      const progress: Progress = { classic: {}, designSystem: {} };
+      const progress: AuditProgress = {};
 
       const { container } = render(
         <SummaryTab criteriaList={criteria} progress={progress} mode="classic" />
@@ -344,13 +305,10 @@ describe('SummaryTab', () => {
         createMockCriteria('1.1', 'Images'),
         createMockCriteria('1.2', 'Images'),
       ];
-      const progress: Progress = {
-        classic: {
+      const progress: AuditProgress = {
           '1.1': { status: 'non-applicable' },
           '1.2': { status: 'non-applicable' },
-        },
-        designSystem: {},
-      };
+        };
 
       const { container } = render(
         <SummaryTab criteriaList={criteria} progress={progress} mode="classic" />

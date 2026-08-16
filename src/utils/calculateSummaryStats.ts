@@ -1,4 +1,4 @@
-import type { CriteriaRGAA, Progress, ClassicStatus, DesignSystemStatus } from '../types';
+import type { AuditProgress, CriteriaRGAA, ClassicStatus, DesignSystemStatus } from '../types';
 
 export interface ThemeStats {
   theme: string;
@@ -27,7 +27,7 @@ export interface SummaryStats {
 
 export function calculateSummaryStats(
   criteriaList: CriteriaRGAA[],
-  progress: Progress['classic'] | Progress['designSystem'],
+  progress: AuditProgress,
   mode: 'classic' | 'design-system'
 ): SummaryStats {
   let conforme = 0;

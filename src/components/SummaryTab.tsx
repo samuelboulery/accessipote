@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { BarChart3 } from 'lucide-react';
-import type { CriteriaRGAA, Mode, Progress } from '../types';
+import type { AuditProgress, CriteriaRGAA, Mode } from '../types';
 import { calculateSummaryStats } from '../utils/calculateSummaryStats';
 import { toSummaryView } from '../utils/summaryView';
 import AuditRing from './AuditRing';
@@ -10,7 +10,7 @@ import ThemeSummaryTable from './ThemeSummaryTable';
 
 interface SummaryTabProps {
   criteriaList: CriteriaRGAA[];
-  progress: Progress;
+  progress: AuditProgress;
   mode: Mode;
   actions?: React.ReactNode;
 }
@@ -22,11 +22,7 @@ function formatRate(rate: number | null): string {
 export default function SummaryTab({ criteriaList, progress, mode, actions }: SummaryTabProps) {
   const stats = useMemo(
     () =>
-      calculateSummaryStats(
-        criteriaList,
-        mode === 'classic' ? progress.classic : progress.designSystem,
-        mode,
-      ),
+      calculateSummaryStats(criteriaList, progress, mode),
     [criteriaList, progress, mode],
   );
 
