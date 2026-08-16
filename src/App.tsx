@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import type {
+  AuditProgress,
   CriteriaFilters,
   CriteriaStatus,
   CriteriaRawData,
@@ -122,39 +123,45 @@ function App() {
     [activeAudit, updateAudit],
   );
 
+  /**
+   * Ces quatre patchs se calculent à partir de l'audit reçu, jamais depuis
+   * `activeAudit` : celui-ci est figé dans la closure du rendu, et une action
+   * groupée appelle le handler une fois par critère avant le rendu suivant.
+   * Chaque appel repartirait alors du même état, et le dernier écraserait tout.
+   */
   const handleStatusChange = useCallback(
     (criteriaId: string, status: CriteriaStatus | '') => {
-      if (!activeAudit) return;
-      const next = { ...activeAudit.progress };
-      if (status === '') delete next[criteriaId];
-      else next[criteriaId] = { status } as (typeof next)[string];
-      patchAudit({ progress: next });
+      patchAudit(audit => {
+        const next: Record<string, { status: CriteriaStatus }> = { ...audit.progress };
+        if (status === '') delete next[criteriaId];
+        else next[criteriaId] = { status };
+        // `AuditProgress` est une union indexée par le mode de l'audit ; le
+        // typage ne peut pas corréler ce mode avec le statut reçu ici.
+        return { progress: next as AuditProgress };
+      });
     },
-    [activeAudit, patchAudit],
+    [patchAudit],
   );
 
   const handleCheckedTestsChange = useCallback(
     (criteriaId: string, testIds: string[]) => {
-      if (!activeAudit) return;
-      patchAudit({ checkedTests: { ...activeAudit.checkedTests, [criteriaId]: testIds } });
+      patchAudit(audit => ({ checkedTests: { ...audit.checkedTests, [criteriaId]: testIds } }));
     },
-    [activeAudit, patchAudit],
+    [patchAudit],
   );
 
   const handleNoteChange = useCallback(
     (criteriaId: string, note: string) => {
-      if (!activeAudit) return;
-      patchAudit({ notes: { ...activeAudit.notes, [criteriaId]: note } });
+      patchAudit(audit => ({ notes: { ...audit.notes, [criteriaId]: note } }));
     },
-    [activeAudit, patchAudit],
+    [patchAudit],
   );
 
   const handlePagesChange = useCallback(
     (criteriaId: string, pages: string[]) => {
-      if (!activeAudit) return;
-      patchAudit({ pages: { ...activeAudit.pages, [criteriaId]: pages } });
+      patchAudit(audit => ({ pages: { ...audit.pages, [criteriaId]: pages } }));
     },
-    [activeAudit, patchAudit],
+    [patchAudit],
   );
 
   const handleOpenAudit = useCallback(

@@ -5,6 +5,8 @@ import { AUDITS_STORAGE_KEY, LOCAL_STORAGE_KEY } from '../constants';
 import { migrateProgressToAudits, EMPTY_AUDIT_STORE } from '../utils/migrateProgress';
 import { logError } from '../utils/logger';
 
+export type AuditPatch = Partial<Omit<Audit, 'id' | 'createdAt'>>;
+
 export interface NewAuditInput {
   name: string;
   scope?: string;
@@ -67,11 +69,23 @@ export function useAudits() {
     return audit.id;
   }, [setStore]);
 
-  const updateAudit = useCallback((id: string, patch: Partial<Omit<Audit, 'id' | 'createdAt'>>) => {
+  /**
+   * Le patch peut être une fonction de l'audit courant. C'est la seule forme
+   * correcte quand plusieurs mises à jour s'enchaînent avant un rendu — une
+   * action groupée appelle une fois par critère : un patch calculé à partir de
+   * l'audit du rendu écraserait les précédents.
+   */
+  const updateAudit = useCallback((id: string, patch: AuditPatch | ((audit: Audit) => AuditPatch)) => {
     setStore(prev => ({
       ...prev,
       audits: prev.audits.map(audit =>
-        audit.id === id ? { ...audit, ...patch, updatedAt: new Date().toISOString() } : audit,
+        audit.id === id
+          ? {
+              ...audit,
+              ...(typeof patch === 'function' ? patch(audit) : patch),
+              updatedAt: new Date().toISOString(),
+            }
+          : audit,
       ),
     }));
   }, [setStore]);
