@@ -11,6 +11,12 @@ on:
     - cron: '0 6 * * 1'
   workflow_dispatch:
 
+# Le `GITHUB_TOKEN` hérite sinon des permissions par défaut du dépôt, souvent en
+# écriture. Aucun job ici n'écrit quoi que ce soit sur le dépôt : une action
+# compromise ne doit pas pouvoir y pousser un commit.
+permissions:
+  contents: read
+
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest

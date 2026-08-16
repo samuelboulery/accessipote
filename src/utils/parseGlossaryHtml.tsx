@@ -105,24 +105,28 @@ export function parseGlossaryHtml(
           }
         }
         // Lien externe
-        else {
-          // Valider que l'URL utilise un protocole sécurisé
-          if (href.startsWith('http://') || href.startsWith('https://')) {
-            return createElement(
-              'a',
-              {
-                key: key,
-                href: href,
-                target: '_blank',
-                rel: 'noopener noreferrer',
-                className: 'underline underline-offset-2',
-              },
-              ...children
-            );
-          }
+        else if (href.startsWith('http://') || href.startsWith('https://')) {
+          return createElement(
+            'a',
+            {
+              key: key,
+              href: href,
+              target: '_blank',
+              rel: 'noopener noreferrer',
+              className: 'underline underline-offset-2',
+            },
+            ...children
+          );
         }
+
+        // Tout le reste — `mailto:`, `tel:`, ancre vide, chemin relatif — rend
+        // son texte, jamais un lien. Sans ce retour, l'exécution retombait sur
+        // le code générique plus bas, qui recopie `href` depuis la whitelist
+        // d'attributs sans repasser par le contrôle de protocole : le seul
+        // garde-fou restant était DOMPurify.
+        return createElement('span', { key: key }, ...children);
       }
-      
+
       // Autres éléments HTML
       const props: Record<string, unknown> & { key?: string } = { key: key };
       

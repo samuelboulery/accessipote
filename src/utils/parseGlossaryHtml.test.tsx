@@ -70,6 +70,26 @@ describe('parseGlossaryHtml', () => {
     }
   });
 
+  it('ne fabrique pas de lien pour un protocole que DOMPurify laisse passer (mailto:)', () => {
+    const result = parseGlossaryHtml(
+      '<p><a href="mailto:contact@exemple.fr">écrire</a></p>',
+      { onGlossaryClick }
+    );
+    const { container } = render(React.createElement(React.Fragment, null, ...result));
+    // Seuls http(s) et les ancres donnent un élément cliquable. Le texte reste.
+    expect(container.querySelector('a')).toBeNull();
+    expect(container.querySelector('button')).toBeNull();
+    expect(container.textContent).toBe('écrire');
+  });
+
+  it('ne fabrique pas de lien pour une ancre vide (href="#")', () => {
+    const result = parseGlossaryHtml('<p><a href="#">retour</a></p>', { onGlossaryClick });
+    const { container } = render(React.createElement(React.Fragment, null, ...result));
+    expect(container.querySelector('a')).toBeNull();
+    expect(container.querySelector('button')).toBeNull();
+    expect(container.textContent).toBe('retour');
+  });
+
   it('devrait gérer les éléments HTML imbriqués', () => {
     const result = parseGlossaryHtml(
       '<p><strong>texte en gras</strong> et <em>italique</em></p>',
