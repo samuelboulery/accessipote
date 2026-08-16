@@ -52,4 +52,79 @@ describe('KeyboardShortcutsModal', () => {
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     expect(dialog).toHaveAttribute('aria-labelledby');
   });
+
+  // Une modale dont le focus s'échappe renvoie l'utilisateur au clavier dans la
+  // page derrière, sans moyen de revenir. Ces cas étaient les seuls du composant
+  // à n'être couverts par aucun test.
+  describe('piège de focus', () => {
+    const focusables = () =>
+      Array.from(
+        screen.getByRole('dialog').querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+
+    it('donne le focus au premier élément à l\'ouverture', async () => {
+      render(<KeyboardShortcutsModal isOpen={true} shortcuts={shortcuts} onClose={vi.fn()} />);
+
+      // Le focus initial est posé dans un requestAnimationFrame.
+      await new Promise(resolve => requestAnimationFrame(() => resolve(null)));
+
+      expect(document.activeElement).toBe(focusables()[0]);
+    });
+
+    it('renvoie du dernier élément au premier avec Tab', () => {
+      render(<KeyboardShortcutsModal isOpen={true} shortcuts={shortcuts} onClose={vi.fn()} />);
+      const elements = focusables();
+      const dernier = elements[elements.length - 1];
+      dernier.focus();
+
+      fireEvent.keyDown(document, { key: 'Tab' });
+
+      expect(document.activeElement).toBe(elements[0]);
+    });
+
+    it('renvoie du premier élément au dernier avec Shift+Tab', () => {
+      render(<KeyboardShortcutsModal isOpen={true} shortcuts={shortcuts} onClose={vi.fn()} />);
+      const elements = focusables();
+      elements[0].focus();
+
+      fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+
+      expect(document.activeElement).toBe(elements[elements.length - 1]);
+    });
+
+    it('ignore les touches autres que Tab', () => {
+      render(<KeyboardShortcutsModal isOpen={true} shortcuts={shortcuts} onClose={vi.fn()} />);
+      const elements = focusables();
+      const dernier = elements[elements.length - 1];
+      dernier.focus();
+
+      fireEvent.keyDown(document, { key: 'ArrowDown' });
+
+      expect(document.activeElement).toBe(dernier);
+    });
+
+    it('restitue le focus à l\'élément d\'origine à la fermeture', () => {
+      const declencheur = document.createElement('button');
+      document.body.appendChild(declencheur);
+      declencheur.focus();
+
+      const { rerender } = render(
+        <KeyboardShortcutsModal isOpen={true} shortcuts={shortcuts} onClose={vi.fn()} />,
+      );
+      rerender(<KeyboardShortcutsModal isOpen={false} shortcuts={shortcuts} onClose={vi.fn()} />);
+
+      expect(document.activeElement).toBe(declencheur);
+      declencheur.remove();
+    });
+
+    it('ne pose aucun écouteur tant que la modale est fermée', () => {
+      const ajout = vi.spyOn(document, 'addEventListener');
+      render(<KeyboardShortcutsModal isOpen={false} shortcuts={shortcuts} onClose={vi.fn()} />);
+
+      expect(ajout).not.toHaveBeenCalledWith('keydown', expect.any(Function));
+      ajout.mockRestore();
+    });
+  });
 });
