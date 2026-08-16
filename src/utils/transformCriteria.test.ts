@@ -7,7 +7,6 @@ import * as logger from './logger';
 vi.mock('./logger', () => ({
   logError: vi.fn(),
   logWarning: vi.fn(),
-  logInfo: vi.fn(),
 }));
 
 describe('transformCriteriaData', () => {
