@@ -1,5 +1,5 @@
 {
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "pnpm@10.34.5",
   "name": "accessipote",
   "version": "1.0.0",
   "description": "Outil d'audit RGAA 4.1 : checklist interactive des 106 critères d'accessibilité numérique, hors ligne et sans compte, avec exports Markdown et PDF.",
