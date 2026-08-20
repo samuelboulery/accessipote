@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from 'react';
-import { Home, List, BarChart3, BookOpen, Check } from 'lucide-react';
+import { Home, List, BarChart3, BookOpen, Check, Settings } from 'lucide-react';
 import type { Audit } from '../types';
 import type { ThemeMode } from '../hooks/useDarkMode';
 import AccessipoteLogo from './AccessipoteLogo';
@@ -30,6 +30,7 @@ interface SidebarProps {
   onCreateAudit: () => void;
   themeMode: ThemeMode;
   onCycleTheme: () => void;
+  onOpenExportSettings: () => void;
 }
 
 const NAV: Array<{ view: View; label: string; Icon: typeof Home }> = [
@@ -50,6 +51,7 @@ function Sidebar({
   onCreateAudit,
   themeMode,
   onCycleTheme,
+  onOpenExportSettings,
 }: SidebarProps) {
   // « il y a 2 minutes » se figerait sans ce battement : rien ne provoque de
   // rendu entre deux modifications.
@@ -172,6 +174,15 @@ function Sidebar({
             </span>
           </p>
         )}
+        <button
+          type="button"
+          onClick={onOpenExportSettings}
+          aria-label="Personnaliser l’export Markdown"
+          title="Personnaliser l’export Markdown"
+          className="target-44 flex h-ctrl w-ctrl flex-shrink-0 items-center justify-center rounded-ctrl border-1 border-border bg-surface"
+        >
+          <Settings size={16} aria-hidden="true" />
+        </button>
         <DarkModeToggle mode={themeMode} onCycle={onCycleTheme} />
       </div>
     </div>

@@ -35,6 +35,7 @@ function setup(overrides = {}) {
   const onSelectAudit = vi.fn();
   const onCreateAudit = vi.fn();
   const onCycleTheme = vi.fn();
+  const onOpenExportSettings = vi.fn();
   render(
     <Sidebar
       view="audit"
@@ -47,10 +48,11 @@ function setup(overrides = {}) {
       onCreateAudit={onCreateAudit}
       themeMode="light"
       onCycleTheme={onCycleTheme}
+      onOpenExportSettings={onOpenExportSettings}
       {...overrides}
     />,
   );
-  return { onNavigate, onSelectAudit, onCreateAudit, onCycleTheme };
+  return { onNavigate, onSelectAudit, onCreateAudit, onCycleTheme, onOpenExportSettings };
 }
 
 describe('Sidebar', () => {
@@ -128,6 +130,14 @@ describe('Sidebar', () => {
 
     await user.click(toggleButton);
     expect(onCycleTheme).toHaveBeenCalled();
+  });
+
+  it('ouvre les paramètres d’export depuis le pied de la barre', async () => {
+    const user = userEvent.setup();
+    const { onOpenExportSettings } = setup();
+
+    await user.click(screen.getByRole('button', { name: /Personnaliser l’export Markdown/ }));
+    expect(onOpenExportSettings).toHaveBeenCalled();
   });
 
   it('tient l\'indicateur de sauvegarde sur une seule ligne', () => {
