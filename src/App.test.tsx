@@ -340,3 +340,98 @@ describe('App — mobile', () => {
     expect(screen.getByText('Accessipote')).toBeInTheDocument();
   });
 });
+
+/**
+ * Le chemin réel de l'import : un fichier lu, des statuts écrits dans le
+ * magasin, une provenance qui ne survit pas à une reprise en main. Les tests du
+ * panneau espionnent des callbacks ; ceux-ci vérifient ce qui finit sur disque.
+ */
+describe('App — import d’un rapport de scan', () => {
+  const report = {
+    schema: 1,
+    scannedAt: '2026-08-20T10:00:00.000Z',
+    urls: ['https://exemple.fr'],
+    criteria: {
+      '2.1': {
+        verdict: 'fail',
+        testVerdicts: { '2.1.1': 'fail' },
+        evidence: [{ url: 'https://exemple.fr', selector: 'iframe', snippet: '<iframe src="x">' }],
+      },
+      '5.4': { verdict: 'na', testVerdicts: { '5.4.1': 'na' }, evidence: [] },
+      '8.3': { verdict: 'pass', testVerdicts: { '8.3.1': 'pass' }, evidence: [] },
+    },
+  };
+
+  function storedAudit(): Audit {
+    const store = JSON.parse(localStorage.getItem(AUDITS_STORAGE_KEY) ?? '{}') as AuditStore;
+    return store.audits.find(audit => audit.id === AUDIT_ID)!;
+  }
+
+  async function importReport(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole('button', { name: /importer un scan/i }));
+    await user.upload(
+      screen.getByLabelText('Rapport de scan (JSON)'),
+      new File([JSON.stringify(report)], 'scan.json', { type: 'application/json' }),
+    );
+  }
+
+  beforeEach(() => {
+    localStorage.clear();
+    setViewport(false);
+  });
+
+  it('écrit les échecs et les non applicables prouvés, jamais les conforme proposés', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    const audit = storedAudit();
+    expect(audit.progress['2.1']).toEqual({ status: 'non-conforme' });
+    expect(audit.progress['5.4']).toEqual({ status: 'non-applicable' });
+    expect(audit.progress['8.3']).toBeUndefined();
+    expect(audit.auto?.['2.1'].evidence[0].selector).toBe('iframe');
+    expect(audit.auto?.['2.1'].testIds).toEqual(['2.1.1']);
+  });
+
+  it('n’écrit rien quand le rapport est refusé', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+
+    await user.click(screen.getByRole('button', { name: /importer un scan/i }));
+    await user.upload(
+      screen.getByLabelText('Rapport de scan (JSON)'),
+      new File(['{ pas du json'], 'scan.json', { type: 'application/json' }),
+    );
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(storedAudit().progress).toEqual({});
+  });
+
+  it('oublie la provenance dès que l’auditeur reprend la main sur le statut', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    const row = screen.getByRole('listitem', { name: 'Critère 2.1' });
+    await user.click(within(row).getByRole('button', { name: /annuler/i }));
+
+    const audit = storedAudit();
+    expect(audit.progress['2.1']).toBeUndefined();
+    expect(audit.auto?.['2.1']).toBeUndefined();
+  });
+
+  it('ne propose pas l’import sur un audit en mode design system', async () => {
+    seedAudit({ mode: 'design-system' });
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+
+    expect(screen.queryByRole('button', { name: /importer un scan/i })).not.toBeInTheDocument();
+  });
+});

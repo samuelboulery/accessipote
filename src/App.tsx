@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
+import { FileUp } from 'lucide-react';
 import type {
+  AutoVerdict,
   AuditProgress,
   CriteriaFilters,
   CriteriaStatus,
@@ -24,6 +26,7 @@ import SummaryTab from './components/SummaryTab';
 import GlossaryScreen from './components/GlossaryScreen';
 import GlossaryPopover from './components/GlossaryPopover';
 import ExportButton from './components/ExportButton';
+import ScanImportPanel from './components/ScanImportPanel';
 import Toast from './components/Toast';
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 import ExportSettingsModal from './components/ExportSettingsModal';
@@ -31,6 +34,7 @@ import criteriaRawData from './data/criteria.json';
 import glossaryRawData from './data/glossary.json';
 import { transformCriteriaData } from './utils/transformCriteria';
 import { titleToSlug } from './utils/transformGlossary';
+import type { ScanPlanEntry } from './utils/scanReport';
 
 function App() {
   const criteriaList = useMemo(
@@ -63,6 +67,7 @@ function App() {
   const [view, setView] = useState<View>('home');
   const [isCreating, setIsCreating] = useState(false);
   const [isExportSettingsOpen, setIsExportSettingsOpen] = useState(false);
+  const [isScanImportOpen, setIsScanImportOpen] = useState(false);
   const [activeTheme, setActiveTheme] = useState(themes[0]);
   const [expandedCriteriaId, setExpandedCriteriaId] = useState<string | null>(null);
   const [filters, setFilters] = useState<CriteriaFilters>({ search: '', level: '', status: '' });
@@ -137,9 +142,16 @@ function App() {
         const next: Record<string, { status: CriteriaStatus }> = { ...audit.progress };
         if (status === '') delete next[criteriaId];
         else next[criteriaId] = { status };
+
+        // La provenance ne survit pas à une intervention humaine : le statut
+        // devient celui de l'auditeur. Sans cette règle, le marqueur finirait
+        // par attribuer au scan une décision prise à la main.
+        const auto = { ...audit.auto };
+        delete auto[criteriaId];
+
         // `AuditProgress` est une union indexée par le mode de l'audit ; le
         // typage ne peut pas corréler ce mode avec le statut reçu ici.
-        return { progress: next as AuditProgress };
+        return { progress: next as AuditProgress, auto };
       });
     },
     [patchAudit],
@@ -164,6 +176,40 @@ function App() {
       patchAudit(audit => ({ pages: { ...audit.pages, [criteriaId]: pages } }));
     },
     [patchAudit],
+  );
+
+  /**
+   * Écrit les verdicts d'un rapport de scan, avec leur provenance.
+   *
+   * Le patch se calcule depuis l'audit reçu : l'import écrit des dizaines de
+   * critères d'un coup, et repartir de `activeAudit` n'en garderait qu'un.
+   */
+  const handleScanApply = useCallback(
+    (entries: ScanPlanEntry[], scannedAt: string) => {
+      patchAudit(audit => {
+        const progress: Record<string, { status: CriteriaStatus }> = { ...audit.progress };
+        const auto: Record<string, AutoVerdict> = { ...audit.auto };
+
+        for (const entry of entries) {
+          progress[entry.criteriaId] = { status: entry.status };
+          auto[entry.criteriaId] = {
+            status: entry.status,
+            testIds: entry.testIds,
+            scannedAt,
+            evidence: entry.evidence,
+          };
+        }
+
+        return { progress: progress as AuditProgress, auto };
+      });
+    },
+    [patchAudit],
+  );
+
+  /** Annuler une ligne, c'est reprendre la main : le statut et sa provenance partent ensemble. */
+  const handleScanUndo = useCallback(
+    (criteriaId: string) => handleStatusChange(criteriaId, ''),
+    [handleStatusChange],
   );
 
   const handleOpenAudit = useCallback(
@@ -235,6 +281,12 @@ function App() {
     [audits, criteriaList],
   );
 
+  /** Le référentiel entier : un rapport qui cite un id absent d'ici est étranger. */
+  const knownCriteriaIds = useMemo(
+    () => new Set(criteriaList.map(criterion => criterion.id)),
+    [criteriaList],
+  );
+
   const popoverTerm = useMemo(
     () =>
       selectedGlossaryTerm
@@ -245,6 +297,19 @@ function App() {
 
   const isThemeInAudit = auditThemes.includes(activeTheme);
   const currentTheme = isThemeInAudit ? activeTheme : auditThemes[0];
+
+  // Scanner un site live n'évalue pas un socle de composants : l'import n'a pas
+  // de sens en mode design system, et n'y est donc pas proposé.
+  const scanImportButton = activeAudit?.mode === 'classic' ? (
+    <button
+      type="button"
+      onClick={() => setIsScanImportOpen(true)}
+      className="target-44 flex h-ctrl flex-shrink-0 items-center gap-2 rounded-ctrl border-1 border-border bg-surface px-3 text-body"
+    >
+      <FileUp size={16} aria-hidden="true" />
+      Importer un scan
+    </button>
+  ) : null;
 
   const exportButton = activeAudit ? (
     <ExportButton
@@ -349,7 +414,12 @@ function App() {
               onPagesChange={handlePagesChange}
               onGlossaryClick={handleGlossaryClick}
               searchInputRef={searchInputRef}
-              toolbarActions={exportButton}
+              toolbarActions={
+                <>
+                  {scanImportButton}
+                  {exportButton}
+                </>
+              }
             />
           ) : (
             <NoAuditState
@@ -411,6 +481,18 @@ function App() {
         shortcuts={shortcuts}
         onClose={closeHelpModal}
       />
+
+      {activeAudit && activeAudit.mode === 'classic' && (
+        <ScanImportPanel
+          isOpen={isScanImportOpen}
+          audit={activeAudit}
+          criteriaList={auditCriteria}
+          knownCriteriaIds={knownCriteriaIds}
+          onApply={handleScanApply}
+          onUndo={handleScanUndo}
+          onClose={() => setIsScanImportOpen(false)}
+        />
+      )}
 
       <ExportSettingsModal
         isOpen={isExportSettingsOpen}
