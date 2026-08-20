@@ -31,7 +31,7 @@ export default function HomeHero({ criteriaCount, themeCount, glossaryCount }: H
       <div className="hero-layout mx-auto flex w-full max-w-[1200px] flex-col gap-8">
         <div>
           <p className="font-mono text-meta uppercase tracking-[0.08em] text-banner-muted">
-            RGAA 4.1
+            RGAA 4.1.2
           </p>
           <h1 className="mt-3 max-w-[20ch] text-screen font-bold [text-wrap:balance] sm:text-display roomy:text-hero">
             Ton pote qui connaît le RGAA par cœur.

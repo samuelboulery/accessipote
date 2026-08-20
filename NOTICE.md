@@ -11,7 +11,7 @@ publié sous licence MIT, © 2025-2026 Samuel Boulery. Voir [LICENSE](./LICENSE)
 ## Les données RGAA — Licence Ouverte / Open Licence 2.0
 
 Les fichiers suivants reproduisent le contenu du **Référentiel général
-d'amélioration de l'accessibilité (RGAA) version 4.1**, publié par la Direction
+d'amélioration de l'accessibilité (RGAA) version 4.1.2**, publié par la Direction
 interministérielle du numérique (DINUM) :
 
 | Fichier | Contenu |
@@ -26,6 +26,11 @@ condition de mentionner la source et la date de dernière mise à jour.
 - Source : <https://accessibilite.numerique.gouv.fr/>
 - Dépôt d'origine : <https://github.com/DISIC/accessibilite.numerique.gouv.fr>
 - Texte de la licence : <https://www.etalab.gouv.fr/licence-ouverte-open-licence/>
+
+Les copies proviennent du dossier **`RGAA/`** du dépôt, à sa racine : c'est la
+version en vigueur. Le sous-dossier `RGAA/4.1/` est une **archive figée** de la
+4.1 initiale. Confondre les deux a laissé Accessipote trois ans en retard sur le
+référentiel — d'où `pnpm check:rgaa`, qui rejoue la comparaison à la demande.
 
 Ces fichiers sont repris **sans modification**. C'est une règle du projet, pas
 une précaution de circonstance : un outil d'audit qui altérerait le référentiel

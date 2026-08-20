@@ -38,6 +38,7 @@ pnpm dev                 # http://localhost:5173
 | `pnpm test:coverage` | Rapport de couverture |
 | `pnpm lint` | ESLint |
 | `pnpm scrape:wcag` | Régénère `src/data/wcag-anchors.json` depuis le W3C |
+| `pnpm check:rgaa` | Compare les données RGAA embarquées au dépôt de la DINUM |
 
 ## Écrire le code
 
@@ -85,7 +86,10 @@ Vérifie ton changement au clavier seul avant de proposer la PR.
 ## Ce qu'il ne faut jamais toucher
 
 - **`src/data/criteria.json` et `src/data/glossary.json`.** Ce sont les données
-  officielles du RGAA, reprises sans modification. Voir [NOTICE.md](./NOTICE.md).
+  officielles du RGAA, reprises sans modification. Elles ne s'éditent jamais à la
+  main : la seule intervention permise est de recopier intégralement
+  `RGAA/criteres.json` et `RGAA/glossaire.json` du dépôt DINUM quand
+  `pnpm check:rgaa` signale une dérive. Voir [NOTICE.md](./NOTICE.md).
 - **`localStorage['rgaa-progress']`.** C'est le stock de la version 1, en
   lecture seule : il sert à la migration et ne doit jamais être réécrit ni
   supprimé.

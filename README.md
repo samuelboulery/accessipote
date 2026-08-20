@@ -4,7 +4,7 @@
 
 # Accessipote
 
-**L'audit RGAA 4.1 sans tableur.** Les 106 critères d'accessibilité numérique,
+**L'audit RGAA 4.1.2 sans tableur.** Les 106 critères d'accessibilité numérique,
 thème par thème, avec vos notes, vos pages et votre taux de conformité — le tout
 dans votre navigateur, sans compte et sans serveur.
 
@@ -14,7 +14,7 @@ dans votre navigateur, sans compte et sans serveur.
 [![Couverture 97 %](https://img.shields.io/badge/couverture-97%25-0F5C37)](#tests-et-qualité)
 [![629 tests](https://img.shields.io/badge/tests-629-0F5C37)](#tests-et-qualité)
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-000000)](LICENSE)
-[![RGAA 4.1](https://img.shields.io/badge/RGAA-4.1-428AC2)](https://accessibilite.numerique.gouv.fr/)
+[![RGAA 4.1.2](https://img.shields.io/badge/RGAA-4.1.2-428AC2)](https://accessibilite.numerique.gouv.fr/)
 
 ![Créer un audit, noter des critères, lire la synthèse](docs/parcours.gif)
 
@@ -111,7 +111,7 @@ audits. L'export sert autant de sauvegarde que de livrable.
 
 ### Le référentiel officiel, non retouché
 
-Les 106 critères et les 119 entrées du glossaire proviennent du RGAA 4.1 publié
+Les 106 critères et les 119 entrées du glossaire proviennent du RGAA 4.1.2 publié
 par la DINUM, repris **sans modification**. C'est une règle du dépôt, pas une
 intention : un outil d'audit qui altérerait le référentiel qu'il mesure ne
 vaudrait rien. Voir [NOTICE.md](NOTICE.md).
@@ -207,7 +207,7 @@ Pour une faille de sécurité, ne passez pas par une issue publique :
 
 Le code est sous [licence MIT](LICENSE).
 
-Les données du RGAA 4.1 sont publiées par la DINUM sous
+Les données du RGAA 4.1.2 sont publiées par la DINUM sous
 [Licence Ouverte 2.0](https://www.etalab.gouv.fr/licence-ouverte-open-licence/).
 Le détail des licences — données, références WCAG, polices — est dans
 [NOTICE.md](NOTICE.md).
