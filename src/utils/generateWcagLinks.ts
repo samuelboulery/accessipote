@@ -24,7 +24,7 @@ const TECHNIQUES_BASE_URL = 'https://www.w3.org/WAI/WCAG21/Techniques/';
  * Valide une entrée string
  */
 function isValidString(value: unknown): value is string {
-  return value !== null && value !== undefined && typeof value === 'string';
+  return typeof value === 'string';
 }
 
 /**

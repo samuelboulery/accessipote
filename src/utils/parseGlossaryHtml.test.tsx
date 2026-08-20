@@ -70,6 +70,40 @@ describe('parseGlossaryHtml', () => {
     }
   });
 
+  it('ne rend rien d’exécutable pour un <script> injecté', () => {
+    const result = parseGlossaryHtml(
+      '<p>Terme</p><script>window.__pwned = true;</script>',
+      { onGlossaryClick }
+    );
+    const { container } = render(React.createElement(React.Fragment, null, ...result));
+
+    expect(container.querySelector('script')).toBeNull();
+    expect(container.textContent).toBe('Terme');
+  });
+
+  it('ne recopie ni onerror ni src depuis une image injectée', () => {
+    const result = parseGlossaryHtml(
+      '<p>Terme <img src="x" onerror="window.__pwned = true"></p>',
+      { onGlossaryClick }
+    );
+    const { container } = render(React.createElement(React.Fragment, null, ...result));
+
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.innerHTML).not.toContain('onerror');
+  });
+
+  it('ne recopie pas un gestionnaire d’événement porté par une balise autorisée', () => {
+    const result = parseGlossaryHtml(
+      '<p onclick="window.__pwned = true" onmouseover="window.__pwned = true">Terme</p>',
+      { onGlossaryClick }
+    );
+    const { container } = render(React.createElement(React.Fragment, null, ...result));
+
+    const paragraph = container.querySelector('p');
+    expect(paragraph?.getAttribute('onclick')).toBeNull();
+    expect(paragraph?.getAttribute('onmouseover')).toBeNull();
+  });
+
   it('ne fabrique pas de lien pour un protocole que DOMPurify laisse passer (mailto:)', () => {
     const result = parseGlossaryHtml(
       '<p><a href="mailto:contact@exemple.fr">écrire</a></p>',

@@ -9,6 +9,14 @@ interface ParseGlossaryHtmlOptions {
 }
 
 /**
+ * Les seuls attributs qui traversent l'assainissement. Une seule liste : elle
+ * arme DOMPurify, puis la recopie vers React plus bas. Les tenir séparément
+ * laissait la seconde déclarer dix attributs que la première effaçait déjà —
+ * une permissivité de façade, impossible à relire.
+ */
+const ALLOWED_ATTR = ['href', 'title', 'target', 'rel', 'class', 'lang'];
+
+/**
  * Configuration stricte de DOMPurify pour la sécurité
  */
 const DOMPurifyConfig: Config = {
@@ -16,20 +24,16 @@ const DOMPurifyConfig: Config = {
   // glossaire officiel (RGAA 8.7). Les deux sont inertes : `span` n'a aucun
   // comportement, `lang` aucune valeur exécutable.
   ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre', 'ul', 'ol', 'li', 'a', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'hr'],
-  ALLOWED_ATTR: ['href', 'title', 'target', 'rel', 'class', 'lang'],
+  ALLOWED_ATTR,
   ALLOW_DATA_ATTR: false,
   FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'link'],
   FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],
 };
 
 /**
- * Whitelist d'attributs HTML autorisés pour la sécurité
+ * Seconde passe, sur le DOM reconstruit : même liste, défense en profondeur.
  */
-const ALLOWED_HTML_ATTRIBUTES = new Set([
-  'class', 'id', 'title', 'lang', 'dir',
-  'href', 'target', 'rel', 'aria-label', 'aria-labelledby',
-  'role', 'tabindex', 'alt', 'src', 'width', 'height'
-]);
+const ALLOWED_HTML_ATTRIBUTES = new Set(ALLOWED_ATTR);
 
 /**
  * Parse le HTML du glossaire et transforme les liens en éléments React

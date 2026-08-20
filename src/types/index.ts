@@ -8,6 +8,9 @@ export interface References {
   techniques?: string[];
 }
 
+/** Bloc de texte du RGAA : un paragraphe, ou une liste à puces. */
+export type RichTextBlock = string | { ul: string[] };
+
 export interface CriteriaRGAA {
   id: string;           // ex: "1.1"
   title: string;
@@ -17,8 +20,8 @@ export interface CriteriaRGAA {
   level: string;        // A, AA, AAA
   tests?: Test[];
   references?: References;
-  technicalNote?: string[];
-  particularCases?: string[];
+  technicalNote?: RichTextBlock[];
+  particularCases?: RichTextBlock[];
 }
 
 export type Mode = 'classic' | 'design-system';
@@ -42,8 +45,8 @@ export interface CriteriaRawData {
           wcag?: string[];
           techniques?: string[];
         }>;
-        technicalNote?: string[];
-        particularCases?: (string | { ul: string[] })[];
+        technicalNote?: RichTextBlock[];
+        particularCases?: RichTextBlock[];
       };
     }>;
   }>;

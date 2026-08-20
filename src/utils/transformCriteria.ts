@@ -95,7 +95,7 @@ export function transformCriteriaData(data: CriteriaRawData): CriteriaRGAA[] {
           tests: transformTests(tests),
           references: transformReferences(references),
           technicalNote: technicalNote,
-          particularCases: particularCases as string[],
+          particularCases,
         };
         
         result.push(transformedCriterion);

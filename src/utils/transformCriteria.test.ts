@@ -687,6 +687,65 @@ describe('transformCriteriaData', () => {
       expect(result[0]?.particularCases).toEqual(['Case 1', 'Case 2']);
     });
 
+    it('should keep a { ul } block intact in particularCases', () => {
+      const mockData: CriteriaRawData = {
+        wcag: { version: 2.1 },
+        topics: [
+          {
+            topic: 'Consultation',
+            number: 10,
+            criteria: [
+              {
+                criterium: {
+                  number: 4,
+                  title: 'Test criterion',
+                  particularCases: [
+                    'Font exception à ce critère :',
+                    { ul: ['- Les textes en image ;', '- Le texte au sein d’une balise `<canvas>`.'] },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const result = transformCriteriaData(mockData);
+
+      expect(result[0]?.particularCases).toEqual([
+        'Font exception à ce critère :',
+        { ul: ['- Les textes en image ;', '- Le texte au sein d’une balise `<canvas>`.'] },
+      ]);
+    });
+
+    it('should keep a { ul } block intact in technicalNote', () => {
+      const mockData: CriteriaRawData = {
+        wcag: { version: 2.1 },
+        topics: [
+          {
+            topic: 'Consultation',
+            number: 10,
+            criteria: [
+              {
+                criterium: {
+                  number: 11,
+                  title: 'Test criterion',
+                  technicalNote: ['Le pixel CSS tel que défini par le W3C :', { ul: ['- Un exemple ;'] }],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const result = transformCriteriaData(mockData);
+
+      expect(result[0]?.technicalNote).toEqual([
+        'Le pixel CSS tel que défini par le W3C :',
+        { ul: ['- Un exemple ;'] },
+      ]);
+    });
+
     it('should handle missing particularCases', () => {
       const mockData: CriteriaRawData = {
         wcag: { version: 2.1 },
