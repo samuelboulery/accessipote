@@ -476,6 +476,53 @@ describe('CriteriaDetail', () => {
     });
   });
 
+  describe('Cas particuliers et note technique', () => {
+    // Façonné comme le critère 10.4 du RGAA 4.1.2 : un paragraphe, puis une
+    // liste dont les entrées portent déjà leur tiret.
+    const AVEC_CAS_PARTICULIERS: CriteriaRGAA = {
+      ...CRITERIA,
+      particularCases: [
+        "Font exception à ce critère, les contenus pour lesquels l'utilisateur n'a pas de possibilité de personnalisation :",
+        {
+          ul: [
+            '- Les sous-titres incrustés dans une vidéo ;',
+            '- Les textes en image ;',
+            '- Le texte au sein d’une balise `<canvas>`.',
+          ],
+        },
+      ],
+    };
+
+    it('affiche les cas particuliers du critère', () => {
+      setup({ criterion: AVEC_CAS_PARTICULIERS });
+
+      expect(screen.getByRole('heading', { name: /Cas particuliers/ })).toBeInTheDocument();
+      expect(screen.getByText(/Font exception à ce critère/)).toBeInTheDocument();
+      expect(screen.getByText('Les sous-titres incrustés dans une vidéo ;')).toBeInTheDocument();
+      expect(screen.getByText('Les textes en image ;')).toBeInTheDocument();
+      expect(screen.getByText(/Le texte au sein d’une balise/)).toBeInTheDocument();
+    });
+
+    it('affiche la note technique du critère', () => {
+      setup({
+        criterion: {
+          ...CRITERIA,
+          technicalNote: ["Lorsqu'il est ici question de pixel, il s'agit du pixel CSS."],
+        },
+      });
+
+      expect(screen.getByRole('heading', { name: /Note technique/ })).toBeInTheDocument();
+      expect(screen.getByText(/il s'agit du pixel CSS/)).toBeInTheDocument();
+    });
+
+    it("n'affiche aucun des deux blocs quand le critère n'en a pas", () => {
+      setup();
+
+      expect(screen.queryByRole('heading', { name: /Cas particuliers/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: /Note technique/ })).not.toBeInTheDocument();
+    });
+  });
+
   describe('Couverture des cas limites', () => {
     it('gère un critère sans tests', () => {
       setup({ criterion: { ...CRITERIA, tests: undefined } });

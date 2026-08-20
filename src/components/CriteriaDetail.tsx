@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, ChevronRight, ExternalLink, Info, Plus, Trash2 } from 'lucide-react';
 import { getWcagCriteriaUrl, getTechniqueUrl, parseWcagReference } from '../utils/generateWcagLinks';
 import type { CriteriaRGAA, Mode, CriteriaStatus } from '../types';
 import { parseMarkdownLinks } from '../utils/parseMarkdown';
 import { parseInlineCode } from '../utils/parseInlineCode';
 import { cleanCriteriaTitle } from '../utils/stripMarkdown';
 import StatusButtons from './StatusButtons';
+import CriteriaNotice from './CriteriaNotice';
 import { getSelectableStatuses } from '../utils/statusPresentation';
 
 interface CriteriaDetailProps {
@@ -192,6 +193,20 @@ export default function CriteriaDetail({
               );
             })}
           </ul>
+
+          <CriteriaNotice
+            title="Cas particuliers"
+            icon={AlertTriangle}
+            blocks={criterion.particularCases ?? []}
+            onGlossaryClick={onGlossaryClick}
+          />
+
+          <CriteriaNotice
+            title="Note technique"
+            icon={Info}
+            blocks={criterion.technicalNote ?? []}
+            onGlossaryClick={onGlossaryClick}
+          />
 
           <StatusButtons
             criteriaId={criteriaId}
