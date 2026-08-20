@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type React from 'react';
-import type { AuditProgress, CriteriaRGAA, Mode } from '../types';
-import { exportClassicMarkdown, exportDesignSystemMarkdown } from '../utils/exportMarkdown';
+import type { Audit, CriteriaRGAA } from '../types';
+import { renderTemplate } from '../utils/markdownTemplate';
+import { useMarkdownTemplate } from '../hooks/useMarkdownTemplate';
 import { PDF_Y_POS_LIMIT, PDF_START_Y_POS, PDF_HEADER_Y_POS, PDF_FILENAME } from '../constants';
 import { cleanCriteriaTitle } from '../utils/stripMarkdown';
 import { logError } from '../utils/logger';
@@ -16,23 +17,20 @@ interface JSPDFWithAutoTable extends jsPDF {
 }
 
 interface ExportButtonProps {
-  mode: Mode;
-  progress: AuditProgress;
+  audit: Audit;
   criteriaList: CriteriaRGAA[];
   onShowToast: (message: string, type: 'success' | 'error') => void;
   exportMarkdownButtonRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
-export default function ExportButton({ mode, progress, criteriaList, onShowToast, exportMarkdownButtonRef }: ExportButtonProps) {
+export default function ExportButton({ audit, criteriaList, onShowToast, exportMarkdownButtonRef }: ExportButtonProps) {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const { template } = useMarkdownTemplate(audit.mode);
 
   const handleExportMarkdown = () => {
-    // Filtrer uniquement les critères qui ont un statut
-    const evaluated = criteriaList.filter(c => progress[c.id]);
-    const content =
-      mode === 'classic'
-        ? exportClassicMarkdown(progress, evaluated)
-        : exportDesignSystemMarkdown(progress, evaluated);
+    // Le gabarit sort du hook déjà validé : une valeur douteuse dans
+    // localStorage y est retombée sur le défaut.
+    const content = renderTemplate(template, { audit, criteria: criteriaList });
 
     // Copier le contenu dans le presse-papiers
     navigator.clipboard.writeText(content).then(() => {
@@ -43,7 +41,7 @@ export default function ExportButton({ mode, progress, criteriaList, onShowToast
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = mode === 'classic' ? 'rapport-rgaa.md' : 'checklist-design-system.md';
+      a.download = audit.mode === 'classic' ? 'rapport-rgaa.md' : 'checklist-design-system.md';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -52,7 +50,7 @@ export default function ExportButton({ mode, progress, criteriaList, onShowToast
   };
 
   const handleExportPDF = async () => {
-    if (mode === 'classic') {
+    if (audit.mode === 'classic') {
       setIsExportingPDF(true);
       try {
         // Dynamic import pour charger jsPDF uniquement quand nécessaire
@@ -63,13 +61,13 @@ export default function ExportButton({ mode, progress, criteriaList, onShowToast
 
         const jsPDF = jsPDFModule.default;
         const autoTable = autoTableModule.default;
-        const classicCriteria = criteriaList.filter(c => progress[c.id]);
-        
+        const classicCriteria = criteriaList.filter(c => audit.progress[c.id]);
+
         const doc = new jsPDF() as JSPDFWithAutoTable;
-        
+
         doc.setFontSize(16);
         doc.text('Rapport de Conformité RGAA - Accessipote', 14, 20);
-        
+
         doc.setFontSize(11);
         doc.text(`Date : ${new Date().toLocaleDateString('fr-FR')}`, 14, 30);
 
@@ -80,7 +78,7 @@ export default function ExportButton({ mode, progress, criteriaList, onShowToast
         };
 
         classicCriteria.forEach(criteria => {
-          const status = progress[criteria.id]?.status;
+          const status = audit.progress[criteria.id]?.status;
           if (status && groupedCriteria[status as keyof typeof groupedCriteria]) {
             groupedCriteria[status as keyof typeof groupedCriteria].push(criteria);
           }
@@ -90,7 +88,7 @@ export default function ExportButton({ mode, progress, criteriaList, onShowToast
 
         const addSection = (title: string, criteriaArray: CriteriaRGAA[]) => {
           if (criteriaArray.length === 0) return;
-          
+
           if (yPos > PDF_Y_POS_LIMIT) {
             doc.addPage();
             yPos = PDF_HEADER_Y_POS;
@@ -145,7 +143,7 @@ export default function ExportButton({ mode, progress, criteriaList, onShowToast
         <Copy size={16} aria-hidden="true" />
         Exporter
       </button>
-      {mode === 'classic' && (
+      {audit.mode === 'classic' && (
         <button
           onClick={handleExportPDF}
           disabled={isExportingPDF}

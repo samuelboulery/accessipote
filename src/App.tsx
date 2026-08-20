@@ -246,8 +246,7 @@ function App() {
 
   const exportButton = activeAudit ? (
     <ExportButton
-      mode={activeAudit.mode}
-      progress={activeAudit.progress}
+      audit={activeAudit}
       criteriaList={auditCriteria}
       onShowToast={showToast}
       exportMarkdownButtonRef={exportMarkdownButtonRef}

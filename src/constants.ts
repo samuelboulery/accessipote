@@ -27,3 +27,6 @@ export const MARKDOWN_LINK_PATTERN = /\[([^\]]+)\]\(([^)]+)\)/g;
 
 // Toast notifications
 export const TOAST_AUTO_DISMISS_MS = 3000;
+
+/** Gabarits d'export Markdown, un par mode. Préférence utilisateur, pas donnée d'audit. */
+export const EXPORT_TEMPLATES_STORAGE_KEY = 'rgaa-export-templates';

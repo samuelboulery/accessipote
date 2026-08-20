@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import ExportButton from './ExportButton';
-import type { AuditProgress, CriteriaRGAA } from '../types';
+import type { Audit, AuditProgress, CriteriaRGAA } from '../types';
 
 // Mock pour jsPDF et jspdf-autotable (chargés dynamiquement dans handleExportPDF)
 const mockSave = vi.fn();
@@ -48,9 +48,29 @@ const mockProgressDesignSystem: AuditProgress = {
   '1.1': { status: 'default-compliant' },
 };
 
+function makeAudit(overrides: Partial<Audit> = {}): Audit {
+  return {
+    id: 'audit-1',
+    name: 'Audit de test',
+    mode: 'classic',
+    themes: [],
+    createdAt: '2026-08-01T10:00:00.000Z',
+    updatedAt: '2026-08-01T10:00:00.000Z',
+    progress: mockProgress,
+    notes: {},
+    pages: {},
+    checkedTests: {},
+    ...overrides,
+  };
+}
+
+const designSystemAudit = makeAudit({
+  mode: 'design-system',
+  progress: mockProgressDesignSystem,
+});
+
 const defaultProps = {
-  mode: 'classic' as const,
-  progress: mockProgress,
+  audit: makeAudit(),
   criteriaList: mockCriteria,
   onShowToast: vi.fn(),
 };
@@ -78,7 +98,7 @@ describe('ExportButton', () => {
   });
 
   it('ne devrait pas afficher le bouton PDF en mode design-system', () => {
-    render(<ExportButton {...defaultProps} mode="design-system" progress={mockProgressDesignSystem} />);
+    render(<ExportButton {...defaultProps} audit={designSystemAudit} />);
     expect(screen.queryByRole('button', { name: /PDF/ })).toBeNull();
     expect(screen.queryByText('PDF')).toBeNull();
   });
@@ -110,7 +130,7 @@ describe('ExportButton', () => {
     });
 
     const onShowToast = vi.fn();
-    render(<ExportButton {...defaultProps} mode="design-system" progress={mockProgressDesignSystem} onShowToast={onShowToast} />);
+    render(<ExportButton {...defaultProps} audit={designSystemAudit} onShowToast={onShowToast} />);
 
     const markdownButtons = screen.getAllByRole('button', { name: 'Exporter' });
     fireEvent.click(markdownButtons[0]);
@@ -211,7 +231,7 @@ describe('ExportButton', () => {
   });
 
   it('ne devrait pas déclencher l\'export PDF en mode design-system', () => {
-    render(<ExportButton {...defaultProps} mode="design-system" progress={mockProgressDesignSystem} />);
+    render(<ExportButton {...defaultProps} audit={designSystemAudit} />);
     // Le bouton PDF n'est pas rendu en mode design-system
     expect(screen.queryByRole('button', { name: /PDF/ })).toBeNull();
     expect(screen.queryByText('PDF')).toBeNull();
