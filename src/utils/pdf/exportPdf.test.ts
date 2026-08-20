@@ -211,6 +211,49 @@ describe('exportAuditPdf', () => {
     expect(cell).toContain('Œuvre — « déjà vu… »');
   });
 
+  it('teinte la cellule de statut selon le statut, sans lui retirer son libellé', async () => {
+    const audit = makeAudit({
+      progress: {
+        '1.1': { status: 'conforme' },
+        '1.2': { status: 'non-conforme' },
+        '3.1': { status: 'non-applicable' },
+      },
+    });
+    await exportAuditPdf(audit, criteria);
+
+    // Le mock n'exécute pas les hooks d'autoTable : on les rejoue nous-mêmes.
+    const colorOf = (criteriaId: string, rowIndex: number) => {
+      const call = mockAutoTable.mock.calls.find(([, options]) =>
+        (options.body as string[][]).some(row => row[0] === criteriaId),
+      );
+      const cell = { styles: {} as { textColor?: number[] } };
+      call![1].didParseCell({
+        section: 'body',
+        column: { index: 2 },
+        row: { index: rowIndex },
+        cell,
+      });
+      return cell.styles.textColor;
+    };
+
+    expect(colorOf('1.1', 0)).toEqual([15, 92, 55]);
+    expect(colorOf('1.2', 1)).toEqual([143, 29, 22]);
+    expect(colorOf('3.1', 0)).toEqual([154, 154, 154]);
+    expect(colorOf('4.1', 0)).toEqual([64, 64, 64]);
+  });
+
+  it('laisse les autres cellules à leur style par défaut', async () => {
+    await exportAuditPdf(makeAudit(), criteria);
+    const cell = { styles: {} as { textColor?: number[] } };
+    mockAutoTable.mock.calls[0][1].didParseCell({
+      section: 'head',
+      column: { index: 2 },
+      row: { index: 0 },
+      cell,
+    });
+    expect(cell.styles.textColor).toBeUndefined();
+  });
+
   it('produit un document sur un audit sans aucun critère évalué', async () => {
     const audit = makeAudit({ progress: {}, notes: {}, pages: {}, checkedTests: {} });
     await expect(exportAuditPdf(audit, criteria)).resolves.toBeUndefined();

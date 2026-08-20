@@ -175,6 +175,30 @@ describe('ExportButton', () => {
     removeChildSpy.mockRestore();
   });
 
+  it('nomme le fichier de repli selon le mode de l’audit', async () => {
+    mockClipboard(vi.fn().mockRejectedValue(new Error('Clipboard error')));
+    Object.defineProperty(URL, 'createObjectURL', { value: vi.fn(() => 'blob:url'), writable: true });
+    Object.defineProperty(URL, 'revokeObjectURL', { value: vi.fn(), writable: true });
+
+    render(<ExportButton {...defaultProps} audit={designSystemAudit} />);
+
+    let downloaded = '';
+    const appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(node => {
+      if (node instanceof HTMLAnchorElement) {
+        downloaded = node.download;
+        node.click = vi.fn();
+      }
+      return node;
+    });
+    const removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation(node => node);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copier en Markdown' }));
+    await waitFor(() => expect(downloaded).toBe('checklist-design-system.md'));
+
+    appendChildSpy.mockRestore();
+    removeChildSpy.mockRestore();
+  });
+
   it('exporte le PDF avec l’audit entier', async () => {
     render(<ExportButton {...defaultProps} />);
     fireEvent.click(screen.getByRole('button', { name: /PDF/ }));

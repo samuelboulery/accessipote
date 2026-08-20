@@ -26,6 +26,7 @@ import GlossaryPopover from './components/GlossaryPopover';
 import ExportButton from './components/ExportButton';
 import Toast from './components/Toast';
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
+import ExportSettingsModal from './components/ExportSettingsModal';
 import criteriaRawData from './data/criteria.json';
 import glossaryRawData from './data/glossary.json';
 import { transformCriteriaData } from './utils/transformCriteria';
@@ -61,6 +62,7 @@ function App() {
 
   const [view, setView] = useState<View>('home');
   const [isCreating, setIsCreating] = useState(false);
+  const [isExportSettingsOpen, setIsExportSettingsOpen] = useState(false);
   const [activeTheme, setActiveTheme] = useState(themes[0]);
   const [expandedCriteriaId, setExpandedCriteriaId] = useState<string | null>(null);
   const [filters, setFilters] = useState<CriteriaFilters>({ search: '', level: '', status: '' });
@@ -274,6 +276,7 @@ function App() {
           onCreateAudit={startNewAudit}
           themeMode={themeMode}
           onCycleTheme={cycleTheme}
+          onOpenExportSettings={() => setIsExportSettingsOpen(true)}
         />
       )}
 
@@ -407,6 +410,13 @@ function App() {
         isOpen={isHelpModalOpen}
         shortcuts={shortcuts}
         onClose={closeHelpModal}
+      />
+
+      <ExportSettingsModal
+        isOpen={isExportSettingsOpen}
+        mode={activeAudit?.mode ?? 'classic'}
+        previewData={activeAudit ? { audit: activeAudit, criteria: auditCriteria } : null}
+        onClose={() => setIsExportSettingsOpen(false)}
       />
     </div>
   );
