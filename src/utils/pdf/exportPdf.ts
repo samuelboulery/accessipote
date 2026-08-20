@@ -8,7 +8,7 @@ import type { SummaryView } from '../summaryView';
 import { getStatusPresentation } from '../statusPresentation';
 import { cleanCriteriaTitle } from '../stripMarkdown';
 import { PDF_FILENAME } from '../../constants';
-import { PDF_RGB, BUCKET_RGB, BUCKET_BG_RGB, PDF_LAYOUT } from './theme';
+import { PDF_RGB, BUCKET_RGB, BUCKET_BG_RGB, BUCKET_FG_RGB, PDF_LAYOUT } from './theme';
 import type { Rgb } from './theme';
 
 /**
@@ -140,7 +140,7 @@ function drawSummary(doc: jsPDF, cursor: Cursor, view: SummaryView) {
     fill(doc, BUCKET_BG_RGB[bucket.key]);
     doc.roundedRect(x, cursor.y, pillWidth, 18, radiusCtrl, radiusCtrl, 'F');
 
-    ink(doc, BUCKET_RGB[bucket.key]);
+    ink(doc, BUCKET_FG_RGB[bucket.key]);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(15);
     doc.text(String(bucket.count), x + 4, cursor.y + 9);

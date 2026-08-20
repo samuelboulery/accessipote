@@ -167,6 +167,15 @@ describe('exportAuditPdf', () => {
     expect(text).toContain('Multimédia');
   });
 
+  it('écrit les compteurs de pastille en couleur de texte, pas en couleur de jauge', async () => {
+    await exportAuditPdf(makeAudit(), criteria);
+    const colors = mockDoc.setTextColor.mock.calls.map(c => c.join(','));
+    // #404040 pour « non applicable » et « à évaluer » : #9A9A9A et #D6D6D6
+    // sont des teintes de jauge, illisibles en texte sur leurs fonds clairs.
+    expect(colors).toContain('64,64,64');
+    expect(colors).not.toContain('214,214,214');
+  });
+
   it('détaille chaque thème dans son propre tableau', async () => {
     await exportAuditPdf(makeAudit(), criteria);
     expect(mockAutoTable).toHaveBeenCalledTimes(3);

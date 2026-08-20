@@ -22,12 +22,16 @@ export const PDF_RGB = {
   bannerMuted: [196, 196, 196],
   ok: [15, 92, 55],
   okBg: [223, 240, 231],
+  okFg: [11, 65, 39],
   ko: [143, 29, 22],
   koBg: [247, 225, 223],
+  koFg: [107, 22, 16],
   na: [154, 154, 154],
   naBg: [232, 232, 232],
+  naFg: [64, 64, 64],
   todo: [64, 64, 64],
   todoBg: [237, 237, 237],
+  todoFg: [64, 64, 64],
 } as const satisfies Record<string, readonly [number, number, number]>;
 
 export type Rgb = readonly [number, number, number];
@@ -38,6 +42,19 @@ export const BUCKET_RGB: Record<SummaryBucket['key'], Rgb> = {
   ecarts: PDF_RGB.ko,
   nonApplicable: PDF_RGB.na,
   aEvaluer: PDF_RGB.track,
+};
+
+/**
+ * Texte de pastille, par seau. Distinct de `BUCKET_RGB` : la couleur d'une
+ * jauge n'est pas lisible en texte. `--a-na-bar` et `--a-track` sur leurs fonds
+ * clairs tombent sous 2:1 — dans l'application, ces compteurs sont écrits en
+ * `--a-na-fg` et `--a-todo-fg`.
+ */
+export const BUCKET_FG_RGB: Record<SummaryBucket['key'], Rgb> = {
+  conforme: PDF_RGB.okFg,
+  ecarts: PDF_RGB.koFg,
+  nonApplicable: PDF_RGB.naFg,
+  aEvaluer: PDF_RGB.todoFg,
 };
 
 /** Fond de pastille, par seau. */
