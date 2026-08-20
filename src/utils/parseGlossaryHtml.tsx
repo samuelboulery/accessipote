@@ -12,8 +12,11 @@ interface ParseGlossaryHtmlOptions {
  * Configuration stricte de DOMPurify pour la sécurité
  */
 const DOMPurifyConfig: Config = {
-  ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'hr'],
-  ALLOWED_ATTR: ['href', 'title', 'target', 'rel', 'class'],
+  // `span` et `lang` portent le balisage de langue des termes anglais du
+  // glossaire officiel (RGAA 8.7). Les deux sont inertes : `span` n'a aucun
+  // comportement, `lang` aucune valeur exécutable.
+  ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre', 'ul', 'ol', 'li', 'a', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'hr'],
+  ALLOWED_ATTR: ['href', 'title', 'target', 'rel', 'class', 'lang'],
   ALLOW_DATA_ATTR: false,
   FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'link'],
   FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],

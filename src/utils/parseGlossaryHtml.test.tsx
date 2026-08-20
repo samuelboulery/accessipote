@@ -100,6 +100,17 @@ describe('parseGlossaryHtml', () => {
     expect(container.querySelector('em')).toBeInTheDocument();
   });
 
+  it('conserve le balisage de langue des termes anglais du glossaire', () => {
+    const result = parseGlossaryHtml(
+      '<p>Voir <span lang="en"><a href="https://www.w3.org/TR/wai-aria-1.1/#banner"><code>Banner (role)</code></a></span>.</p>',
+      { onGlossaryClick, onCriteriaClick }
+    );
+    const { container } = render(React.createElement(React.Fragment, null, ...result));
+    const span = container.querySelector('span[lang="en"]');
+    expect(span).toBeInTheDocument();
+    expect(span?.textContent).toBe('Banner (role)');
+  });
+
   it('devrait retourner un tableau vide pour du HTML vide', () => {
     const result = parseGlossaryHtml('', { onGlossaryClick });
     expect(result).toHaveLength(0);

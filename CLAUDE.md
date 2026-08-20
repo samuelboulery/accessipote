@@ -6,7 +6,7 @@ voir [CONTRIBUTING.md](./CONTRIBUTING.md), qui dit la même chose en plus
 détaillé.
 
 ## Présentation du projet
-Outil d'audit RGAA 4.1 (accessibilité web française) en React.
+Outil d'audit RGAA 4.1.2 (accessibilité web française) en React.
 Le travail est un **audit nommé** (créé, daté, reprenable), avec un mode figé à
 la création : Classic (audit standard) ou Design System.
 Cible : auditeurs accessibilité, équipes design, développeurs.
@@ -24,7 +24,7 @@ URL dev : http://localhost:5173
 1. TypeScript strict — pas de `any` sans justification documentée
 2. Jamais de console.log en production
 3. Jamais de alert() ou confirm() — utiliser des composants UI dédiés
-4. Ne pas modifier criteria.json ni glossary.json (données RGAA officielles)
+4. Ne jamais éditer criteria.json ni glossary.json à la main — seule la recopie intégrale depuis `RGAA/` du dépôt DINUM est permise (`pnpm check:rgaa`)
 5. Ne jamais écrire ni supprimer `localStorage['rgaa-progress']` (données v1, lecture seule)
 6. Ne pas introduire de nouvelle librairie sans demande explicite
 7. Immutabilité — ne jamais muter les objets ou tableaux directement
@@ -47,6 +47,7 @@ Gestionnaire de paquets : **pnpm** exclusivement.
 - pnpm test:coverage → rapport de couverture
 - pnpm lint → ESLint
 - pnpm scrape:wcag → mise à jour des ancres WCAG
+- pnpm check:rgaa → détecte une dérive des données RGAA face au dépôt DINUM
 
 ## Pièges connus
 - CSP : `index.html` a une CSP stricte sans `'unsafe-inline'`. En dev, le plugin `devCspPlugin`
@@ -88,5 +89,7 @@ la fois** via `ThemeRail` — le thème est la navigation, pas un filtre.
 ## Contexte métier
 - RGAA = Référentiel Général d'Amélioration de l'Accessibilité (France)
 - 106 critères WCAG adaptés, organisés en 13 thèmes
+- Données reprises de `RGAA/` (version en vigueur, 4.1.2) du dépôt DISIC, jamais
+  de `RGAA/4.1/` qui est l'archive figée de la 4.1 initiale
 - Conformité = critères conformes / (conformes + non-conformes) × 100
 - Techniques WCAG : préfixes G (général), H (HTML), ARIA, F (échec), SCR (script)

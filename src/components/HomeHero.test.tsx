@@ -8,7 +8,7 @@ function setup(overrides = {}) {
 describe('HomeHero', () => {
   it('affiche le sur-titre du référentiel', () => {
     setup();
-    expect(screen.getByText('RGAA 4.1')).toBeInTheDocument();
+    expect(screen.getByText('RGAA 4.1.2')).toBeInTheDocument();
   });
 
   it('affiche le titre principal', () => {
