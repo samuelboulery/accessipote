@@ -2,34 +2,14 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import ExportButton from './ExportButton';
 import type { Audit, AuditProgress, CriteriaRGAA } from '../types';
+import { DEFAULT_TEMPLATES } from '../utils/markdownTemplate';
+import { EXPORT_TEMPLATES_STORAGE_KEY } from '../constants';
 
-// Mock pour jsPDF et jspdf-autotable (chargés dynamiquement dans handleExportPDF)
-const mockSave = vi.fn();
-const mockText = vi.fn();
-const mockSetFontSize = vi.fn();
-const mockSetFont = vi.fn();
-const mockAddPage = vi.fn();
-const mockJsPDFInstance = {
-  setFontSize: mockSetFontSize,
-  text: mockText,
-  setFont: mockSetFont,
-  addPage: mockAddPage,
-  save: mockSave,
-  lastAutoTable: { finalY: 100 },
-};
-
-// Le composant fait `new jsPDF()`. L'implémentation du mock doit donc être une
-// fonction classique : depuis Vitest 4, `vi.fn` n'enveloppe plus l'implémentation
-// fournie, et une fonction fléchée ne peut pas être appelée avec `new`.
-vi.mock('jspdf', () => ({
-  default: vi.fn(function () {
-    return mockJsPDFInstance;
-  }),
-}));
-
-const mockAutoTable = vi.fn();
-vi.mock('jspdf-autotable', () => ({
-  default: mockAutoTable,
+// La génération du document est testée dans utils/pdf/exportPdf.test.ts ; ici
+// on vérifie seulement que le bouton la déclenche et sait échouer.
+const mockExportAuditPdf = vi.fn().mockResolvedValue(undefined);
+vi.mock('../utils/pdf/exportPdf', () => ({
+  exportAuditPdf: (...args: unknown[]) => mockExportAuditPdf(...args),
 }));
 
 const mockCriteria: CriteriaRGAA[] = [
@@ -75,165 +55,167 @@ const defaultProps = {
   onShowToast: vi.fn(),
 };
 
+function mockClipboard(writeText: ReturnType<typeof vi.fn>) {
+  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, writable: true });
+}
+
 describe('ExportButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockExportAuditPdf.mockResolvedValue(undefined);
+    window.localStorage.clear();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('devrait afficher le bouton d\'export Markdown', () => {
+  it('nomme le format sur le bouton de copie', () => {
     render(<ExportButton {...defaultProps} />);
-    // Bouton desktop visible dans le DOM
-    const buttons = screen.getAllByRole('button', { name: 'Exporter' });
-    expect(buttons.length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Copier en Markdown' })).toBeInTheDocument();
   });
 
-  it('devrait afficher le bouton PDF en mode classic', () => {
+  it('affiche le bouton PDF en mode classic', () => {
     render(<ExportButton {...defaultProps} />);
-    const pdfButtons = screen.getAllByRole('button', { name: /PDF/ });
-    expect(pdfButtons.length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: /PDF/ })).toBeInTheDocument();
   });
 
-  it('ne devrait pas afficher le bouton PDF en mode design-system', () => {
+  it('affiche aussi le bouton PDF en mode design-system', () => {
     render(<ExportButton {...defaultProps} audit={designSystemAudit} />);
-    expect(screen.queryByRole('button', { name: /PDF/ })).toBeNull();
-    expect(screen.queryByText('PDF')).toBeNull();
+    expect(screen.getByRole('button', { name: /PDF/ })).toBeInTheDocument();
   });
 
-  it('devrait copier le markdown dans le presse-papiers en mode classic', async () => {
-    const clipboardMock = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText: clipboardMock },
-      writable: true,
-    });
-
+  it('copie le markdown dans le presse-papiers en mode classic', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    mockClipboard(writeText);
     const onShowToast = vi.fn();
     render(<ExportButton {...defaultProps} onShowToast={onShowToast} />);
 
-    const markdownButtons = screen.getAllByRole('button', { name: 'Exporter' });
-    fireEvent.click(markdownButtons[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Copier en Markdown' }));
 
     await waitFor(() => {
-      expect(clipboardMock).toHaveBeenCalled();
+      expect(writeText).toHaveBeenCalledWith(expect.stringContaining('# Rapport de Conformité RGAA'));
       expect(onShowToast).toHaveBeenCalledWith('Contenu copié dans le presse-papiers !', 'success');
     });
   });
 
-  it('devrait copier le markdown en mode design-system', async () => {
-    const clipboardMock = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText: clipboardMock },
-      writable: true,
-    });
+  it('copie le markdown du mode design-system', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    mockClipboard(writeText);
+    render(<ExportButton {...defaultProps} audit={designSystemAudit} />);
 
-    const onShowToast = vi.fn();
-    render(<ExportButton {...defaultProps} audit={designSystemAudit} onShowToast={onShowToast} />);
-
-    const markdownButtons = screen.getAllByRole('button', { name: 'Exporter' });
-    fireEvent.click(markdownButtons[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Copier en Markdown' }));
 
     await waitFor(() => {
-      expect(clipboardMock).toHaveBeenCalled();
+      expect(writeText).toHaveBeenCalledWith(expect.stringContaining('# Checklist Design System'));
     });
   });
 
-  it('devrait télécharger le fichier si la copie dans le presse-papiers échoue', async () => {
-    const clipboardMock = vi.fn().mockRejectedValue(new Error('Clipboard error'));
-    Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText: clipboardMock },
-      writable: true,
+  it('emploie le gabarit personnalisé de l’utilisateur', async () => {
+    window.localStorage.setItem(
+      EXPORT_TEMPLATES_STORAGE_KEY,
+      JSON.stringify({ classic: 'MON RAPPORT {{nomAudit}}' }),
+    );
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    mockClipboard(writeText);
+    render(<ExportButton {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copier en Markdown' }));
+
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith('MON RAPPORT Audit de test');
     });
+  });
 
-    // Mock URL.createObjectURL et revokeObjectURL
-    const createObjectURL = vi.fn().mockReturnValue('blob:url');
-    const revokeObjectURL = vi.fn();
-    Object.defineProperty(URL, 'createObjectURL', { value: createObjectURL, writable: true });
-    Object.defineProperty(URL, 'revokeObjectURL', { value: revokeObjectURL, writable: true });
+  it('retombe sur le gabarit par défaut si celui qui est stocké est invalide', async () => {
+    window.localStorage.setItem(
+      EXPORT_TEMPLATES_STORAGE_KEY,
+      JSON.stringify({ classic: '{{#critères}}jamais fermé' }),
+    );
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    mockClipboard(writeText);
+    render(<ExportButton {...defaultProps} />);
 
-    const { container } = render(<ExportButton {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Copier en Markdown' }));
 
-    // Mock click sur les éléments <a> créés dynamiquement après le rendu
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(expect.stringContaining('# Rapport de Conformité RGAA'));
+      expect(DEFAULT_TEMPLATES.classic).toContain('# Rapport de Conformité RGAA');
+    });
+  });
+
+  it('télécharge le fichier si la copie dans le presse-papiers échoue', async () => {
+    mockClipboard(vi.fn().mockRejectedValue(new Error('Clipboard error')));
+    Object.defineProperty(URL, 'createObjectURL', { value: vi.fn(() => 'blob:url'), writable: true });
+    Object.defineProperty(URL, 'revokeObjectURL', { value: vi.fn(), writable: true });
+
+    render(<ExportButton {...defaultProps} />);
+
+    // Les espions se posent après le rendu : Testing Library monte son conteneur
+    // avec appendChild, et le remplacer trop tôt vide l'écran.
     const clickMock = vi.fn();
-    const appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((node) => {
+    let downloaded = '';
+    const appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(node => {
       if (node instanceof HTMLAnchorElement) {
+        downloaded = node.download;
         node.click = clickMock;
       }
       return node;
     });
-    const removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((node) => node);
+    const removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation(node => node);
 
-    const markdownButtons = container.querySelectorAll('[aria-keyshortcuts]');
-    if (markdownButtons.length > 0) {
-      fireEvent.click(markdownButtons[0]);
-    }
+    fireEvent.click(screen.getByRole('button', { name: 'Copier en Markdown' }));
 
     await waitFor(() => {
-      expect(clipboardMock).toHaveBeenCalled();
+      expect(clickMock).toHaveBeenCalled();
+      expect(downloaded).toBe('rapport-rgaa.md');
     });
 
     appendChildSpy.mockRestore();
     removeChildSpy.mockRestore();
   });
 
-  it('devrait exporter le PDF en mode classic', async () => {
-    const onShowToast = vi.fn();
-    render(<ExportButton {...defaultProps} onShowToast={onShowToast} />);
-
-    const pdfButtons = screen.getAllByRole('button', { name: /PDF|Export…/ });
-    fireEvent.click(pdfButtons[0]);
+  it('exporte le PDF avec l’audit entier', async () => {
+    render(<ExportButton {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: /PDF/ }));
 
     await waitFor(() => {
-      expect(mockSave).toHaveBeenCalled();
+      expect(mockExportAuditPdf).toHaveBeenCalledWith(defaultProps.audit, mockCriteria);
     });
   });
 
-  it('devrait signaler l\'export PDF en cours', async () => {
-    // Retarder la résolution pour capturer l'état intermédiaire
-    // Même contrainte que le mock du module : appelée avec `new`, donc pas de
-    // fonction fléchée.
-    vi.mocked(await import('jspdf')).default = vi.fn(function () {
-      return new Promise<void>(() => {
-        // Promise volontairement non résolue pour tester l'état de chargement
-      }) as unknown as typeof mockJsPDFInstance;
-    }) as never;
+  it('exporte le PDF depuis un audit design-system', async () => {
+    render(<ExportButton {...defaultProps} audit={designSystemAudit} />);
+    fireEvent.click(screen.getByRole('button', { name: /PDF/ }));
+
+    await waitFor(() => {
+      expect(mockExportAuditPdf).toHaveBeenCalledWith(designSystemAudit, mockCriteria);
+    });
+  });
+
+  it('signale l’export PDF en cours et rend la main ensuite', async () => {
+    let release!: () => void;
+    mockExportAuditPdf.mockReturnValue(new Promise<void>(resolve => { release = resolve; }));
 
     render(<ExportButton {...defaultProps} />);
-    const pdfButtons = screen.getAllByRole('button', { name: /PDF|Export…/ });
-    fireEvent.click(pdfButtons[0]);
+    fireEvent.click(screen.getByRole('button', { name: /PDF/ }));
 
-    // Vérifier l'état d'export en cours
-    await waitFor(() => {
-      const exportingButton = screen.queryByText(/Export…/);
-      expect(exportingButton !== null || mockSave.mock.calls.length > 0).toBe(true);
-    });
+    const button = await screen.findByRole('button', { name: /Export…/ });
+    expect(button).toBeDisabled();
+
+    release();
+    await waitFor(() => expect(screen.getByRole('button', { name: /PDF/ })).toBeEnabled());
   });
 
-  it('devrait afficher une erreur toast si l\'export PDF échoue', async () => {
+  it('affiche un toast d’erreur si l’export PDF échoue', async () => {
+    mockExportAuditPdf.mockRejectedValue(new Error('PDF error'));
     const onShowToast = vi.fn();
-    const { default: jsPDFMock } = await import('jspdf');
-    vi.mocked(jsPDFMock).mockImplementationOnce(() => {
-      throw new Error('PDF error');
-    });
 
     render(<ExportButton {...defaultProps} onShowToast={onShowToast} />);
-    const pdfButtons = screen.getAllByRole('button', { name: /PDF|Export…/ });
-    fireEvent.click(pdfButtons[0]);
+    fireEvent.click(screen.getByRole('button', { name: /PDF/ }));
 
     await waitFor(() => {
-      expect(onShowToast).toHaveBeenCalledWith(
-        expect.stringContaining('Erreur'),
-        'error'
-      );
+      expect(onShowToast).toHaveBeenCalledWith(expect.stringContaining('Erreur'), 'error');
     });
-  });
-
-  it('ne devrait pas déclencher l\'export PDF en mode design-system', () => {
-    render(<ExportButton {...defaultProps} audit={designSystemAudit} />);
-    // Le bouton PDF n'est pas rendu en mode design-system
-    expect(screen.queryByRole('button', { name: /PDF/ })).toBeNull();
-    expect(screen.queryByText('PDF')).toBeNull();
   });
 });
