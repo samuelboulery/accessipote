@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Accessipote — scan RGAA",
+  "version": "0.1.0",
+  "description": "Scanne la page ouverte et pré-remplit un audit RGAA dans Accessipote. Aucune donnée ne quitte votre poste.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://localhost:5173/*",
+    "https://accessipote.fr/*"
+  ],
+  "action": {
+    "default_title": "Scanner cette page (RGAA)",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
