@@ -97,7 +97,7 @@ describe('ScanImportPanel', () => {
     const applied = onApply.mock.calls[0][0];
     expect(applied.some(entry => entry.criteriaId === '8.3')).toBe(false);
 
-    const toConfirm = screen.getByRole('group', { name: /à confirmer/i });
+    const toConfirm = screen.getByRole('group', { name: /^conformes —/i });
     expect(within(toConfirm).getByRole('listitem', { name: /8\.3/ })).toBeInTheDocument();
 
     await user.click(within(toConfirm).getByRole('button', { name: /tout accepter/i }));
@@ -110,7 +110,7 @@ describe('ScanImportPanel', () => {
     const { user } = setup();
     await user.upload(input(), file(report));
 
-    const section = screen.getByRole('group', { name: /appliqué/i });
+    const section = screen.getByRole('group', { name: /non conformes/i });
     expect(within(section).getByText('https://exemple.fr')).toBeInTheDocument();
     expect(within(section).getByText('img#logo')).toBeInTheDocument();
     expect(within(section).getByText(/<img src="logo.png">/)).toBeInTheDocument();
@@ -128,7 +128,7 @@ describe('ScanImportPanel', () => {
     const { onUndo, user } = setup({ audit: applied });
     await user.upload(input(), file(report));
 
-    const section = screen.getByRole('group', { name: /appliqué/i });
+    const section = screen.getByRole('group', { name: /non conformes/i });
     const row = within(section).getByRole('listitem', { name: /1\.1/ });
     await user.click(within(row).getByRole('button', { name: /annuler/i }));
 
@@ -197,7 +197,7 @@ describe('ScanImportPanel — soupçons', () => {
     const toCheck = screen.getByRole('group', { name: /à vérifier/i });
     expect(within(toCheck).getByRole('listitem', { name: /9\.1/ })).toBeInTheDocument();
 
-    const applied = screen.getByRole('group', { name: /appliqué/i });
+    const applied = screen.getByRole('group', { name: /non conformes — /i });
     expect(within(applied).queryByRole('listitem', { name: /9\.1/ })).not.toBeInTheDocument();
   });
 
@@ -233,21 +233,45 @@ describe('ScanImportPanel — soupçons', () => {
     const { user } = setup();
     await user.upload(input(), file(withSuspect));
 
-    expect(screen.getByRole('group', { name: /appliqué automatiquement — 2 critères/i })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: /non conformes — 1 critère/i })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: /à vérifier — 1 critère/i })).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: /à confirmer — 1 conforme/i })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: /^conformes — 1 critère/i })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: /non applicables — 1 critère/i })).toBeInTheDocument();
   });
 
-  it('range les sections dans l’ordre de la certitude', async () => {
+  it('range les sections dans l’ordre du travail', async () => {
+    // Un non conforme est un défaut à corriger, un non applicable un critère à
+    // écarter : les mêler dans un même tas « appliqué » brouille les deux.
     const { user } = setup();
     await user.upload(input(), file(withSuspect));
 
     const titles = screen.getAllByRole('heading', { level: 3 }).map(heading => heading.textContent);
     expect(titles).toEqual([
-      expect.stringMatching(/appliqué/i),
+      expect.stringMatching(/non conforme/i),
       expect.stringMatching(/à vérifier/i),
-      expect.stringMatching(/à confirmer/i),
+      expect.stringMatching(/conforme/i),
+      expect.stringMatching(/non applicable/i),
       expect.stringMatching(/non évalué/i),
     ]);
+  });
+
+  it('sépare les non conformes prouvés des non applicables prouvés', async () => {
+    const { user } = setup();
+    await user.upload(input(), file(withSuspect));
+
+    const failures = screen.getByRole('group', { name: /non conformes — 1 critère/i });
+    expect(within(failures).getByRole('listitem', { name: /1\.1/ })).toBeInTheDocument();
+    expect(within(failures).queryByRole('listitem', { name: /2\.1/ })).not.toBeInTheDocument();
+
+    const notApplicable = screen.getByRole('group', { name: /non applicables — 1 critère/i });
+    expect(within(notApplicable).getByRole('listitem', { name: /2\.1/ })).toBeInTheDocument();
+  });
+
+  it('écrit les deux tas à l’import, comme avant', async () => {
+    const { onApply, user } = setup();
+    await user.upload(input(), file(withSuspect));
+
+    const [entries] = onApply.mock.calls[0];
+    expect(entries.map(entry => entry.criteriaId).sort()).toEqual(['1.1', '2.1']);
   });
 });

@@ -105,6 +105,11 @@ export default function ScanImportPanel({
 
   const isApplied = (criteriaId: string): boolean => audit.auto?.[criteriaId] !== undefined;
 
+  // Écrits tous les deux, mais ce ne sont pas les mêmes enjeux : un écart se
+  // corrige, un critère sans objet s'écarte. L'auditeur veut d'abord les écarts.
+  const failed = plan?.direct.filter(entry => entry.status === 'non-conforme') ?? [];
+  const notApplicable = plan?.direct.filter(entry => entry.status === 'non-applicable') ?? [];
+
   const row = (entry: ScanPlanEntry) => {
     const applied = isApplied(entry.criteriaId);
     return (
@@ -197,15 +202,16 @@ export default function ScanImportPanel({
 
         {plan && (
           <>
-            <div role="group" aria-labelledby="scan-direct-title">
-              <h3 id="scan-direct-title" className="text-body font-semibold">
-                Appliqué automatiquement — {plan.direct.length} critère
-                {plan.direct.length > 1 ? 's' : ''}
+            <div role="group" aria-labelledby="scan-failed-title">
+              <h3 id="scan-failed-title" className="text-body font-semibold">
+                Non conformes — {failed.length} critère{failed.length > 1 ? 's' : ''} prouvé
+                {failed.length > 1 ? 's' : ''}
               </h3>
               <p className="text-dense text-ink-muted">
-                Échecs et non applicables prouvés, écrits dans l’audit avec leur preuve.
+                Un contre-exemple est une preuve : ces écarts sont écrits dans l’audit, avec ce
+                qui les fonde.
               </p>
-              <ul>{plan.direct.map(row)}</ul>
+              <ul>{failed.map(row)}</ul>
             </div>
 
             <div role="group" aria-labelledby="scan-probable-title">
@@ -240,7 +246,7 @@ export default function ScanImportPanel({
             <div role="group" aria-labelledby="scan-proposed-title">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 id="scan-proposed-title" className="text-body font-semibold">
-                  À confirmer — {plan.proposed.length} conforme
+                  Conformes — {plan.proposed.length} critère
                   {plan.proposed.length > 1 ? 's' : ''} proposé
                   {plan.proposed.length > 1 ? 's' : ''}
                 </h3>
@@ -264,6 +270,17 @@ export default function ScanImportPanel({
                 écrit sans votre accord.
               </p>
               <ul>{plan.proposed.map(row)}</ul>
+            </div>
+
+            <div role="group" aria-labelledby="scan-na-title">
+              <h3 id="scan-na-title" className="text-body font-semibold">
+                Non applicables — {notApplicable.length} critère
+                {notApplicable.length > 1 ? 's' : ''} écarté{notApplicable.length > 1 ? 's' : ''}
+              </h3>
+              <p className="text-dense text-ink-muted">
+                Le support est absent de toutes les pages scannées : le critère est sans objet.
+              </p>
+              <ul>{notApplicable.map(row)}</ul>
             </div>
 
             <div role="group" aria-labelledby="scan-unscanned-title">

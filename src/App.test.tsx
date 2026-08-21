@@ -534,7 +534,7 @@ describe('App — rapport reçu de l’extension', () => {
 
     await act(async () => post(fromExtension(scanReport)));
 
-    expect(await screen.findByRole('group', { name: /appliqué/i })).toBeInTheDocument();
+    expect(await screen.findByRole('group', { name: /non conformes/i })).toBeInTheDocument();
     expect(storedAudit().progress['2.1']).toEqual({ status: 'non-conforme' });
     expect(storedAudit().auto?.['2.1'].evidence[0].selector).toBe('iframe');
   });
@@ -547,7 +547,7 @@ describe('App — rapport reçu de l’extension', () => {
 
     await act(async () => post(fromExtension(scanReport), 'https://malveillant.example'));
 
-    expect(screen.queryByRole('group', { name: /appliqué/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /non conformes/i })).not.toBeInTheDocument();
     expect(storedAudit().progress).toEqual({});
   });
 
