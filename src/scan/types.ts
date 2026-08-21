@@ -107,6 +107,20 @@ export interface AxeRuleResult {
   nodes: Array<{ selector: string; snippet: string }>;
 }
 
+/**
+ * Ce qu'un cadre rapporte : le passage d'axe et celui de la sonde, réunis.
+ *
+ * Un cadre n'est pas une page. Ce qu'il porte est agrégé au niveau de la page
+ * qui l'embarque, par `mergePageScan`.
+ */
+export interface FrameScan {
+  violations: AxeRuleResult[];
+  incomplete: AxeRuleResult[];
+  passes: string[];
+  present: Record<string, number>;
+  found: Record<string, Array<{ selector: string; snippet: string }>>;
+}
+
 /** Ce qu'une page rapporte après le passage d'axe et des sélecteurs `naWhen`. */
 export interface PageScan {
   url: string;

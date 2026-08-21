@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
 import { AUDITS_STORAGE_KEY } from './constants';
@@ -482,5 +482,95 @@ describe('App — import d’un rapport de scan', () => {
     await user.click(within(row).getByRole('button', { name: /annuler/i }));
 
     expect(storedAudit().auto?.['9.1']).toBeUndefined();
+  });
+});
+
+/**
+ * L'extension ne parle pas au magasin : elle poste un message, l'app le valide
+ * comme elle validerait un fichier. Un message n'est jamais plus digne de
+ * confiance qu'un fichier déposé — c'est tout l'enjeu de ces tests.
+ */
+describe('App — rapport reçu de l’extension', () => {
+  function storedAudit(): Audit {
+    const store = JSON.parse(localStorage.getItem(AUDITS_STORAGE_KEY) ?? '{}') as AuditStore;
+    return store.audits.find(audit => audit.id === AUDIT_ID)!;
+  }
+
+  const scanReport = {
+    schema: 2,
+    scannedAt: '2026-08-21T10:00:00.000Z',
+    urls: ['https://exemple.fr'],
+    criteria: {
+      '2.1': {
+        verdict: 'fail',
+        testVerdicts: { '2.1.1': 'fail' },
+        evidence: [{ url: 'https://exemple.fr', selector: 'iframe', snippet: '<iframe>' }],
+      },
+      '5.4': { verdict: 'na', testVerdicts: { '5.4.1': 'na' }, evidence: [] },
+    },
+  };
+
+  function post(payload: unknown, origin = window.location.origin): void {
+    window.dispatchEvent(
+      new MessageEvent('message', { data: payload, origin, source: window }),
+    );
+  }
+
+  const fromExtension = (report: unknown) => ({
+    source: 'accessipote-scan',
+    report: typeof report === 'string' ? report : JSON.stringify(report),
+  });
+
+  beforeEach(() => {
+    localStorage.clear();
+    setViewport(false);
+  });
+
+  it('ouvre l’écran de revue et écrit ce qui est prouvé', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+
+    await act(async () => post(fromExtension(scanReport)));
+
+    expect(await screen.findByRole('group', { name: /appliqué/i })).toBeInTheDocument();
+    expect(storedAudit().progress['2.1']).toEqual({ status: 'non-conforme' });
+    expect(storedAudit().auto?.['2.1'].evidence[0].selector).toBe('iframe');
+  });
+
+  it('refuse un message venu d’une autre origine, sans rien écrire', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+
+    await act(async () => post(fromExtension(scanReport), 'https://malveillant.example'));
+
+    expect(screen.queryByRole('group', { name: /appliqué/i })).not.toBeInTheDocument();
+    expect(storedAudit().progress).toEqual({});
+  });
+
+  it('ignore un message qui ne vient pas du scan', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+
+    await act(async () => post({ source: 'autre-chose', report: JSON.stringify(scanReport) }));
+
+    expect(storedAudit().progress).toEqual({});
+  });
+
+  it('dit qu’un rapport illisible est refusé, et n’écrit rien', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+
+    await act(async () => post(fromExtension('{ pas du json')));
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(storedAudit().progress).toEqual({});
   });
 });

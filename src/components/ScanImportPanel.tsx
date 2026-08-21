@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import type { Audit, CriteriaRGAA } from '../types';
 import { parseScanReport, planScanApplication } from '../utils/scanReport';
@@ -13,6 +13,13 @@ interface ScanImportPanelProps {
   criteriaList: CriteriaRGAA[];
   /** Le référentiel entier : un critère absent de là signale un rapport étranger. */
   knownCriteriaIds: ReadonlySet<string>;
+  /**
+   * Rapport arrivé autrement que par un fichier — aujourd'hui l'extension.
+   *
+   * C'est du texte, pas un objet : il passe par la même validation que le
+   * contenu d'un fichier, sans chemin de confiance dérobé.
+   */
+  incoming?: string | null;
   onApply: (entries: ScanPlanEntry[], scannedAt: string) => void;
   onUndo: (criteriaId: string) => void;
   onClose: () => void;
@@ -37,6 +44,7 @@ export default function ScanImportPanel({
   audit,
   criteriaList,
   knownCriteriaIds,
+  incoming,
   onApply,
   onUndo,
   onClose,
@@ -60,25 +68,39 @@ export default function ScanImportPanel({
     return criterion ? cleanCriteriaTitle(criterion.title) : '';
   };
 
+  const applyReport = useCallback(
+    (text: string) => {
+      try {
+        const report = parseScanReport(text, knownCriteriaIds);
+        const next = planScanApplication(report, criteriaList);
+        setError(null);
+        setPlan(next);
+        setScannedAt(report.scannedAt);
+        onApply(next.direct, report.scannedAt);
+      } catch (caught) {
+        // L'audit reste intact : rien n'a été écrit avant que tout soit validé.
+        setError(messageOf(caught));
+        setPlan(null);
+        setScannedAt(null);
+      }
+    },
+    [criteriaList, knownCriteriaIds, onApply],
+  );
+
+  // Un rapport reçu de l'extension emprunte exactement le chemin d'un fichier.
+  const handledRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!incoming || handledRef.current === incoming) return;
+    handledRef.current = incoming;
+    applyReport(incoming);
+  }, [incoming, applyReport]);
+
   const handleFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selected = event.target.files?.[0];
     // Réimporter le même fichier ne déclenche pas de `change` si la valeur reste.
     event.target.value = '';
     if (!selected) return;
-
-    try {
-      const report = parseScanReport(await selected.text(), knownCriteriaIds);
-      const next = planScanApplication(report, criteriaList);
-      setError(null);
-      setPlan(next);
-      setScannedAt(report.scannedAt);
-      onApply(next.direct, report.scannedAt);
-    } catch (caught) {
-      // L'audit reste intact : rien n'a été écrit avant que tout soit validé.
-      setError(messageOf(caught));
-      setPlan(null);
-      setScannedAt(null);
-    }
+    applyReport(await selected.text());
   };
 
   const isApplied = (criteriaId: string): boolean => audit.auto?.[criteriaId] !== undefined;

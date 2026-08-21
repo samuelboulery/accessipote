@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Accessipote — pic T-0063",
-  "version": "0.0.1",
-  "description": "Pic jetable : mesurer ce qu'une extension atteint qu'une CLI Playwright n'atteint pas.",
+  "name": "Accessipote — scan RGAA",
+  "version": "0.1.0",
+  "description": "Scanne la page ouverte et pré-remplit un audit RGAA dans Accessipote. Aucune donnée ne quitte votre poste.",
   "permissions": ["activeTab", "scripting"],
-  "host_permissions": ["http://localhost:5173/*"],
+  "host_permissions": ["http://localhost:5173/*", "https://accessipote.fr/*"],
   "action": {
-    "default_title": "Accessipote — pic",
+    "default_title": "Scanner cette page (RGAA)",
     "default_popup": "popup.html"
   }
 }

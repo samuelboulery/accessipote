@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { FileUp } from 'lucide-react';
 import type {
   AutoVerdict,
@@ -68,6 +68,7 @@ function App() {
   const [isCreating, setIsCreating] = useState(false);
   const [isExportSettingsOpen, setIsExportSettingsOpen] = useState(false);
   const [isScanImportOpen, setIsScanImportOpen] = useState(false);
+  const [incomingScan, setIncomingScan] = useState<string | null>(null);
   const [activeTheme, setActiveTheme] = useState(themes[0]);
   const [expandedCriteriaId, setExpandedCriteriaId] = useState<string | null>(null);
   const [filters, setFilters] = useState<CriteriaFilters>({ search: '', level: '', status: '' });
@@ -206,6 +207,28 @@ function App() {
     },
     [patchAudit],
   );
+
+  /**
+   * Rapport posté par l'extension dans cet onglet.
+   *
+   * Le message n'est pas une porte dérobée : il n'apporte que du texte, qui
+   * passe par la validation d'import comme le contenu d'un fichier. Deux
+   * vérifications avant même de le regarder — l'origine et la fenêtre — parce
+   * qu'un message peut venir de n'importe où, un fichier non.
+   */
+  useEffect(() => {
+    const receive = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin || event.source !== window) return;
+      const data = event.data as { source?: unknown; report?: unknown } | null;
+      if (!data || data.source !== 'accessipote-scan' || typeof data.report !== 'string') return;
+
+      setIncomingScan(data.report);
+      setIsScanImportOpen(true);
+    };
+
+    window.addEventListener('message', receive);
+    return () => window.removeEventListener('message', receive);
+  }, []);
 
   /** Annuler une ligne, c'est reprendre la main : le statut et sa provenance partent ensemble. */
   const handleScanUndo = useCallback(
@@ -489,9 +512,13 @@ function App() {
           audit={activeAudit}
           criteriaList={auditCriteria}
           knownCriteriaIds={knownCriteriaIds}
+          incoming={incomingScan}
           onApply={handleScanApply}
           onUndo={handleScanUndo}
-          onClose={() => setIsScanImportOpen(false)}
+          onClose={() => {
+            setIsScanImportOpen(false);
+            setIncomingScan(null);
+          }}
         />
       )}
 

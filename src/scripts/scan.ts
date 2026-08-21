@@ -15,6 +15,7 @@ import type { Frame, Page } from 'playwright';
 import type { AxeResults } from 'axe-core';
 import { aggregate } from '../scan/aggregate.ts';
 import { probeDocument } from '../scan/collect.ts';
+import { mergePageScan } from '../scan/mergeFrames.ts';
 import {
   AXE_RULES,
   FOUND_SELECTORS,
@@ -22,7 +23,7 @@ import {
   NA_SELECTORS,
   RGAA_MAPPING,
 } from '../scan/rgaaMapping.ts';
-import type { PageScan, ProbeResult, TestVerdict } from '../scan/types.ts';
+import type { FrameScan, PageScan, ProbeResult, TestVerdict } from '../scan/types.ts';
 
 const SCHEMA = 2;
 const SNIPPET_MAX = 200;
@@ -171,36 +172,23 @@ async function scanPage(
       { rules: AXE_RULES, timeout: AXE_TIMEOUT_MS },
     );
 
-    const present: Record<string, number> = {};
-    const found: Record<string, Array<{ selector: string; snippet: string }>> = {};
+    // axe traverse déjà les cadres par le protocole de débogage : ses résultats
+    // valent pour la page entière et n'arrivent donc qu'une fois, sur le
+    // premier cadre. La sonde, elle, s'exécute cadre par cadre.
+    const collected: FrameScan[] = [
+      { violations: axe.violations, incomplete: axe.incomplete, passes: axe.passes, present: {}, found: {} },
+    ];
 
     for (const frame of frames) {
       const counted = await collect(frame, NA_SELECTORS, FOUND_SELECTORS);
       if (counted === null) continue;
-
-      for (const [selector, count] of Object.entries(counted.present)) {
-        present[selector] = (present[selector] ?? 0) + count;
-      }
-      for (const [selector, nodes] of Object.entries(counted.found)) {
-        found[selector] = [...(found[selector] ?? []), ...nodes];
-      }
+      collected.push({ violations: [], incomplete: [], passes: [], ...counted });
     }
 
-    // Les critères « dans chaque page web » — 8.3, 8.5 — ne regardent que le
-    // document principal : le `<head>` d'un `about:blank` embarqué n'est pas le
-    // titre de la page auditée.
     const mainFrame = await collect(page.mainFrame(), [], MAIN_FRAME_FAIL_SELECTORS);
-    Object.assign(found, mainFrame?.found ?? {});
 
     return {
-      page: {
-        url,
-        violations: axe.violations,
-        incomplete: axe.incomplete,
-        passes: axe.passes,
-        present,
-        found,
-      },
+      page: mergePageScan(url, collected, mainFrame ?? undefined),
       axeVersion: axe.version,
       frames: frames.length,
     };

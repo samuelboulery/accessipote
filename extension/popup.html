@@ -2,19 +2,19 @@
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
-    <title>Pic T-0063</title>
-    <style>
-      body { width: 22rem; margin: 0; padding: 0.75rem; font: 13px/1.4 system-ui, sans-serif; }
-      h1 { font-size: 13px; margin: 0 0 0.5rem; }
-      button { width: 100%; padding: 0.5rem; margin-bottom: 0.4rem; font: inherit; cursor: pointer; }
-      pre { max-height: 20rem; overflow: auto; background: #f4f4f5; padding: 0.5rem; white-space: pre-wrap; }
-    </style>
+    <title>Accessipote — scan RGAA</title>
+    <link rel="stylesheet" href="./src/popup.css" />
   </head>
   <body>
-    <h1>Pic T-0063 — ce que l'extension atteint</h1>
-    <button id="scan" type="button">Scanner cette page</button>
-    <button id="send" type="button">Envoyer vers Accessipote (localhost:5173)</button>
-    <pre id="out">Aucun scan.</pre>
-    <script src="popup.js"></script>
+    <h1>Scan RGAA</h1>
+    <p id="page" class="page">—</p>
+
+    <button id="scan" type="button" class="primary">Scanner cette page</button>
+    <button id="send" type="button" hidden>Envoyer vers Accessipote</button>
+
+    <p id="status" role="status" class="status"></p>
+    <ul id="tally" class="tally" hidden></ul>
+
+    <script type="module" src="./src/popup.ts"></script>
   </body>
 </html>
