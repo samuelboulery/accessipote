@@ -359,3 +359,32 @@ describe('ScanImportPanel — rapport de zone', () => {
     expect(screen.queryByText(/scan de zone/i)).not.toBeInTheDocument();
   });
 });
+
+describe('ScanImportPanel — rapport de crawl', () => {
+  const crawlReport = {
+    ...report,
+    schema: 3,
+    crawled: true,
+    urls: ['https://exemple.fr', 'https://exemple.fr/contact'],
+    criteria: {
+      '2.1': { verdict: 'na', certainty: 'proven', testVerdicts: { '2.1.1': 'na' }, evidence: [] },
+    },
+  };
+
+  it('dit que l’échantillon vient d’un crawl', async () => {
+    const { user } = setup();
+    await user.upload(input(), file(crawlReport));
+
+    expect(await screen.findByText(/crawl/i)).toBeInTheDocument();
+  });
+
+  it('n’écrit aucun non applicable venu d’un crawl', async () => {
+    const { user, onApply } = setup();
+    await user.upload(input(), file(crawlReport));
+
+    expect(onApply.mock.calls[0][0]).toEqual([]);
+    expect(
+      within(await screen.findByRole('group', { name: /à vérifier/i })).getByText('2.1'),
+    ).toBeInTheDocument();
+  });
+});

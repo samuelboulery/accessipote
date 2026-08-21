@@ -46,6 +46,22 @@ Ce geste vit dans le service worker (`background.ts`) et non dans le popup :
 cliquer dans la page ferme le popup de Chrome. Le badge de l'icône rend compte
 du panier tant qu'aucune fenêtre n'est ouverte pour le faire.
 
+## Le crawl
+
+Saisir une adresse, un nombre de pages et une profondeur : l'extension constitue
+l'échantillon seule, dans un onglet d'arrière-plan qu'elle réutilise et referme.
+Trois garde-fous, non négociables — **même origine**, **`robots.txt` respecté**,
+**limites explicites**. Le parcours s'affiche pendant qu'il tourne et s'arrête
+d'un clic ; une page en échec est comptée et nommée, jamais tue.
+
+Le crawl scanne à `load` : personne n'a cliqué, déplié ni connecté quoi que ce
+soit. Ses non applicables sont donc dégradés comme ceux d'une zone, et
+l'échantillon d'un crawl n'écrit rien tout seul.
+
+L'accès au site parcouru est une permission **facultative**, demandée au
+lancement et pour cette origine seulement : l'extension n'est pas installée avec
+un droit de lecture sur tout le web.
+
 ## Ce que fait l'extension
 
 Elle récolte, et rien d'autre. Le mapping RGAA, l'agrégation et les verdicts
@@ -54,4 +70,6 @@ seule source de vérité. La validation, le tri par certitude et l'écriture
 restent dans l'application, qui revalide le rapport reçu comme elle validerait
 un fichier déposé.
 
-Aucune donnée ne quitte le poste : l'extension ne fait aucune requête réseau.
+Aucune donnée ne quitte le poste : aucun compte, aucun serveur, rien n'est
+envoyé nulle part. Les seules requêtes réseau sont celles du crawl, adressées au
+site que l'auditeur lui a demandé de parcourir.

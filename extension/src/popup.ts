@@ -7,6 +7,7 @@
  * complet que se rend un verdict.
  */
 import {
+  BASKET_KEY,
   emptyBasket,
   putInBasket,
   readBasket,
@@ -14,6 +15,8 @@ import {
   reportOf,
 } from './basket.ts';
 import type { BasketEntry } from './basket.ts';
+import { CRAWL_KEY, readCrawlState } from './crawl.ts';
+import type { CrawlState } from './crawl.ts';
 import { activeTab, scanTab, sendToApp } from './scanTab.ts';
 
 const byId = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
@@ -26,6 +29,12 @@ const emptyButton = byId<HTMLButtonElement>('empty');
 const status = byId<HTMLParagraphElement>('status');
 const tally = byId<HTMLUListElement>('tally');
 const basketList = byId<HTMLUListElement>('basket');
+const crawlUrl = byId<HTMLInputElement>('crawl-url');
+const crawlPages = byId<HTMLInputElement>('crawl-pages');
+const crawlDepth = byId<HTMLInputElement>('crawl-depth');
+const crawlButton = byId<HTMLButtonElement>('crawl');
+const crawlStop = byId<HTMLButtonElement>('crawl-stop');
+const crawlStatus = byId<HTMLParagraphElement>('crawl-status');
 
 const messageOf = (error: unknown): string =>
   error instanceof Error ? error.message : 'Scan impossible sur cette page.';
@@ -35,6 +44,7 @@ const pageCount = (count: number) => `${count} page${count > 1 ? 's' : ''}`;
 void activeTab()
   .then(tab => {
     pageLabel.textContent = tab.url ?? '';
+    if (crawlUrl.value === '') crawlUrl.value = tab.url ?? '';
   })
   .catch(error => {
     pageLabel.textContent = messageOf(error);
@@ -144,4 +154,64 @@ sendButton.addEventListener('click', async () => {
   } finally {
     sendButton.disabled = false;
   }
+});
+
+/** L'avancement du crawl, qui continue de tourner popup fermé. */
+function showCrawl(state: CrawlState | null): void {
+  crawlButton.hidden = state?.running === true;
+  crawlStop.hidden = state?.running !== true;
+  if (!state) {
+    crawlStatus.textContent = '';
+    return;
+  }
+
+  const failures =
+    state.failed.length > 0
+      ? ` — ${state.failed.length} page${state.failed.length > 1 ? 's' : ''} en échec, échantillon incomplet`
+      : '';
+
+  crawlStatus.textContent = state.running
+    ? `Crawl : ${state.scanned}/${state.maxPages} page(s)${state.current ? ` — ${state.current}` : ''}${failures}`
+    : `Crawl ${state.stopped ? 'arrêté' : 'terminé'} : ${state.scanned} page(s) au panier${failures}`;
+}
+
+void readCrawlState().then(showCrawl);
+
+// Le crawl écrit son avancement dans le stockage : le popup n'a qu'à l'écouter,
+// et se remet à jour même s'il a été rouvert au milieu du parcours.
+chrome.storage.onChanged.addListener(changes => {
+  if (changes[CRAWL_KEY]) showCrawl(changes[CRAWL_KEY].newValue as CrawlState | null);
+  if (changes[BASKET_KEY]) render((changes[BASKET_KEY].newValue as BasketEntry[]) ?? []);
+});
+
+crawlButton.addEventListener('click', async () => {
+  let origin: string;
+  try {
+    origin = new URL(crawlUrl.value).origin;
+  } catch {
+    crawlStatus.textContent = 'Adresse de départ invalide.';
+    return;
+  }
+
+  // Le crawl sort du site de l'auditeur : la permission se demande ici, sur son
+  // geste, et pour cette origine seulement.
+  const granted = await chrome.permissions.request({ origins: [`${origin}/*`] });
+  if (!granted) {
+    crawlStatus.textContent = 'Sans accès à ce site, le crawl ne peut pas commencer.';
+    return;
+  }
+
+  await chrome.runtime.sendMessage({
+    type: 'start-crawl',
+    limits: {
+      start: crawlUrl.value,
+      maxPages: Number(crawlPages.value),
+      maxDepth: Number(crawlDepth.value),
+    },
+  });
+});
+
+crawlStop.addEventListener('click', async () => {
+  await chrome.runtime.sendMessage({ type: 'stop-crawl' });
+  crawlStatus.textContent = 'Arrêt demandé — la page en cours se termine.';
 });

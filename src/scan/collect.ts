@@ -60,3 +60,31 @@ export function probeDocument(options: ProbeOptions): ProbeResult {
 
   return { present, found };
 }
+
+/**
+ * Récolte les liens internes de la page courante.
+ *
+ * **Injectée dans la page comme `probeDocument`** : même contrainte, son corps
+ * se suffit à lui-même.
+ *
+ * Une ancre n'est pas une page : `#bas` est retiré, ce qui évite de scanner
+ * quinze fois le même document. Les autres origines et les protocoles qui ne
+ * sont pas du web sont écartés ici, pas plus loin.
+ */
+export function collectLinks(): string[] {
+  const links = new Set<string>();
+
+  for (const anchor of document.querySelectorAll('a[href]')) {
+    try {
+      const url = new URL((anchor as HTMLAnchorElement).href, location.href);
+      if (url.origin !== location.origin) continue;
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') continue;
+      url.hash = '';
+      links.add(url.href);
+    } catch {
+      // Un href que le navigateur ne sait pas résoudre n'est pas une page.
+    }
+  }
+
+  return [...links];
+}

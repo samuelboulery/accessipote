@@ -183,6 +183,13 @@ export interface ScanReport {
    * une zone ne dit rien du site, et tout non applicable en devient probable.
    */
   zones?: string[];
+  /**
+   * Échantillon constitué par un crawl, donc scanné à `load`.
+   *
+   * Personne n'a cliqué, déplié, ni connecté quoi que ce soit : l'absence d'un
+   * support n'y prouve rien de plus que dans une zone.
+   */
+  crawled?: boolean;
   criteria: Record<string, ScanOutcome>;
 }
 

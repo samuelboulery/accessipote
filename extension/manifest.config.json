@@ -16,6 +16,10 @@
     "http://localhost:5173/*",
     "https://accessipote.fr/*"
   ],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
   "action": {
     "default_title": "Scanner cette page (RGAA)",
     "default_popup": "popup.html",

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { probeDocument } from './collect.ts';
+import { collectLinks, probeDocument } from './collect.ts';
 
 function mount(html: string): void {
   document.body.innerHTML = html;
@@ -130,5 +130,19 @@ describe('probeDocument — sonde restreinte à une zone', () => {
 
     expect(result.present).toEqual({});
     expect(result.found).toEqual({});
+  });
+});
+
+describe('collectLinks', () => {
+  it('ne retient que les liens de la même origine, sans ancre ni doublon', () => {
+    mount(`
+      <a href="/contact">Contact</a>
+      <a href="/contact#bas">Le même</a>
+      <a href="https://ailleurs.example/page">Ailleurs</a>
+      <a href="mailto:on@exemple.fr">Courriel</a>
+      <a>Sans href</a>
+    `);
+
+    expect(collectLinks()).toEqual([`${location.origin}/contact`]);
   });
 });

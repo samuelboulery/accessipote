@@ -380,3 +380,36 @@ describe('parseScanReport — rapport de zone', () => {
     expect(parsed.criteria['5.4'].certainty).toBe('proven');
   });
 });
+
+describe('parseScanReport — rapport de crawl', () => {
+  function crawlReport(crawled: unknown): string {
+    return JSON.stringify({
+      schema: 3,
+      scannedAt: '2026-08-21T10:00:00.000Z',
+      urls: ['https://exemple.fr'],
+      crawled,
+      criteria: {
+        '5.4': { verdict: 'na', certainty: 'proven', testVerdicts: { '5.4.1': 'na' }, evidence: [] },
+      },
+    });
+  }
+
+  it('dégrade le non applicable d’un crawl : personne n’a manipulé ces pages', () => {
+    const parsed = parseScanReport(crawlReport(true), KNOWN);
+
+    expect(parsed.crawled).toBe(true);
+    expect(parsed.criteria['5.4'].certainty).toBe('probable');
+  });
+
+  it('n’écrit donc rien d’un non applicable de crawl', () => {
+    const parsed = parseScanReport(crawlReport(true), KNOWN);
+    const plan = planScanApplication(parsed, [{ id: '5.4' } as CriteriaRGAA]);
+
+    expect(plan.direct).toEqual([]);
+    expect(plan.probable.map(entry => entry.criteriaId)).toEqual(['5.4']);
+  });
+
+  it('rejette un champ « crawled » qui n’est pas un booléen', () => {
+    expect(() => parseScanReport(crawlReport('oui'), KNOWN)).toThrow(/crawled/);
+  });
+});

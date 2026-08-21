@@ -53,6 +53,7 @@ export default function ScanImportPanel({
   const [plan, setPlan] = useState<ScanPlan | null>(null);
   const [scannedAt, setScannedAt] = useState<string | null>(null);
   const [zones, setZones] = useState<string[] | null>(null);
+  const [crawled, setCrawled] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // `showModal` apporte le piège à focus, l'échappement et l'inertie du fond :
@@ -78,6 +79,7 @@ export default function ScanImportPanel({
         setPlan(next);
         setScannedAt(report.scannedAt);
         setZones(report.zones ?? null);
+        setCrawled(report.crawled === true);
         onApply(next.direct, report.scannedAt);
       } catch (caught) {
         // L'audit reste intact : rien n'a été écrit avant que tout soit validé.
@@ -85,6 +87,7 @@ export default function ScanImportPanel({
         setPlan(null);
         setScannedAt(null);
         setZones(null);
+        setCrawled(false);
       }
     },
     [criteriaList, knownCriteriaIds, onApply],
@@ -202,6 +205,14 @@ export default function ScanImportPanel({
             Scan de zone — <code className="font-mono">{zones.join(', ')}</code>. Le reste de la
             page n’a pas été regardé : les non applicables issus d’une zone sont à vérifier, jamais
             écrits.
+          </p>
+        )}
+
+        {crawled && (
+          <p className="rounded-ctrl bg-todo-bg p-3 text-dense text-todo-fg">
+            Échantillon constitué par un crawl. Les pages ont été scannées telles qu’elles se
+            chargent, sans qu’aucun geste ne les ouvre : les non applicables sont à vérifier,
+            jamais écrits.
           </p>
         )}
 

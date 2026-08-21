@@ -100,19 +100,20 @@ function parseOutcome(raw: unknown, criteriaId: string): ScanOutcome {
 }
 
 /**
- * Ce qu'une zone permet de conclure, et ce qu'elle ne permet pas.
+ * Ce qu'un échantillon partiel permet de conclure, et ce qu'il ne permet pas.
  *
- * Un contre-exemple trouvé dans un en-tête reste un contre-exemple du site.
- * L'absence d'un support, elle, ne prouve plus rien : « aucun tableau dans cet
- * en-tête » ne fait pas un site sans tableau. Le non applicable de zone rejoint
- * donc les critères à vérifier — sans quoi le scan de zone serait le moyen le
- * plus simple de fabriquer des non applicables faux.
+ * Un contre-exemple trouvé dans un en-tête, ou sur une page qu'un crawl a
+ * visitée, reste un contre-exemple du site. L'absence d'un support, elle, ne
+ * prouve plus rien : « aucun tableau dans cet en-tête » ne fait pas un site sans
+ * tableau, et ce qu'un crawl ne voit pas à `load` peut n'attendre qu'un clic. Le
+ * non applicable rejoint donc les critères à vérifier — sans quoi le scan de
+ * zone serait le moyen le plus simple de fabriquer des non applicables faux.
  *
  * La règle est appliquée ici, à la frontière : l'outil qui a produit le rapport
  * n'a pas à être cru sur parole.
  */
-function zonedOutcome(outcome: ScanOutcome, zones: string[] | undefined): ScanOutcome {
-  if (!zones || zones.length === 0 || outcome.verdict !== 'na') return outcome;
+function partialOutcome(outcome: ScanOutcome, partial: boolean): ScanOutcome {
+  if (!partial || outcome.verdict !== 'na') return outcome;
   return { ...outcome, certainty: 'probable' };
 }
 
@@ -160,12 +161,18 @@ export function parseScanReport(text: string, knownCriteriaIds: ReadonlySet<stri
   }
   const zones = raw.zones as string[] | undefined;
 
+  if (raw.crawled !== undefined && typeof raw.crawled !== 'boolean') {
+    fail('Rapport illisible : le champ « crawled » doit être un booléen.');
+  }
+  const crawled = raw.crawled === true;
+  const partial = crawled || (zones !== undefined && zones.length > 0);
+
   const criteria: Record<string, ScanOutcome> = {};
   for (const [criteriaId, outcome] of Object.entries(raw.criteria)) {
     if (!knownCriteriaIds.has(criteriaId)) {
       fail(`Critère inconnu dans le rapport : « ${criteriaId} ».`);
     }
-    criteria[criteriaId] = zonedOutcome(parseOutcome(outcome, criteriaId), zones);
+    criteria[criteriaId] = partialOutcome(parseOutcome(outcome, criteriaId), partial);
   }
 
   return {
@@ -173,6 +180,7 @@ export function parseScanReport(text: string, knownCriteriaIds: ReadonlySet<stri
     scannedAt: raw.scannedAt,
     urls: raw.urls as string[],
     ...(zones ? { zones } : {}),
+    ...(crawled ? { crawled } : {}),
     criteria,
   };
 }

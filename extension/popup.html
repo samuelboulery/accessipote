@@ -18,6 +18,20 @@
     <ul id="basket" class="basket" hidden></ul>
     <ul id="tally" class="tally" hidden></ul>
 
+    <h2>Crawl</h2>
+    <p class="hint">Le crawl scanne les pages telles qu’elles se chargent : il ne conclut jamais à un non applicable.</p>
+    <label for="crawl-url">Adresse de départ</label>
+    <input id="crawl-url" type="url" placeholder="https://exemple.fr" />
+    <div class="limits">
+      <label for="crawl-pages">Pages</label>
+      <input id="crawl-pages" type="number" min="1" max="50" value="10" />
+      <label for="crawl-depth">Profondeur</label>
+      <input id="crawl-depth" type="number" min="0" max="5" value="2" />
+    </div>
+    <button id="crawl" type="button">Lancer le crawl</button>
+    <button id="crawl-stop" type="button" class="quiet" hidden>Arrêter le crawl</button>
+    <p id="crawl-status" role="status" class="status"></p>
+
     <button id="send" type="button" hidden>Envoyer vers Accessipote</button>
     <button id="empty" type="button" class="quiet" hidden>Vider le panier</button>
 

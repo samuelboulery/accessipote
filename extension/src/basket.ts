@@ -31,6 +31,13 @@ export interface BasketEntry {
    * et c'est ce champ qui l'en informe.
    */
   zone?: string;
+  /**
+   * Page visitée par le crawl, à `load`, sans qu'aucun geste ne l'ait ouverte.
+   *
+   * Même conséquence qu'une zone : ce qui manque à cet état ne manque pas au
+   * site.
+   */
+  crawled?: true;
 }
 
 /** Le rapport, tel que l'application sait le lire. */
@@ -39,6 +46,7 @@ export interface ExtensionReport {
   scannedAt: string;
   urls: string[];
   zones?: string[];
+  crawled?: boolean;
   axeVersion: string | null;
   crawl: { networkIdle: boolean; scrolled: boolean; frames: number };
   criteria: ReturnType<typeof aggregate>;
@@ -81,12 +89,14 @@ export function reportOf(basket: BasketEntry[]): ExtensionReport {
   // Une seule zone dans le lot suffit à teinter le rapport : le rapport ne dit
   // pas quel non applicable vient de quelle entrée, et prudence vaut mieux.
   const zones = basket.map(entry => entry.zone).filter((zone): zone is string => zone !== undefined);
+  const crawled = basket.some(entry => entry.crawled === true);
 
   return {
     schema: SCHEMA,
     scannedAt: new Date().toISOString(),
     urls: basket.map(entry => entry.page.url),
     ...(zones.length > 0 ? { zones } : {}),
+    ...(crawled ? { crawled } : {}),
     axeVersion: basket.map(entry => entry.axeVersion).find(Boolean) ?? null,
     // Le parcours fait partie du rapport : ici, c'est l'état où l'auditeur a
     // lui-même amené chaque page — ce qu'aucun scan automatique ne sait atteindre.
@@ -100,25 +110,28 @@ export function reportOf(basket: BasketEntry[]): ExtensionReport {
         basket.map(entry => entry.page),
         RGAA_MAPPING,
       ),
-      zones.length > 0,
+      zones.length > 0 || crawled,
     ),
   };
 }
 
 /**
- * Ce qu'une zone permet de conclure, et ce qu'elle ne permet pas.
+ * Ce qu'un échantillon partiel permet de conclure, et ce qu'il ne permet pas.
  *
- * Un contre-exemple trouvé dans un en-tête reste un contre-exemple du site.
- * L'absence d'un support, non : « aucun tableau dans cet en-tête » ne fait pas
- * un site sans tableau. L'application applique la même règle à la réception —
- * elle ne croit personne sur parole — mais le décompte du popup doit dire la
- * même chose qu'elle, sans quoi il ment à l'auditeur.
+ * Un contre-exemple trouvé dans un en-tête, ou sur une page visitée par le
+ * crawl, reste un contre-exemple du site. L'absence d'un support, non :
+ * « aucun tableau dans cet en-tête » ne fait pas un site sans tableau, et ce
+ * qu'un crawl ne voit pas à `load` peut n'attendre qu'un clic.
+ *
+ * L'application applique la même règle à la réception — elle ne croit personne
+ * sur parole — mais le décompte du popup doit dire la même chose qu'elle, sans
+ * quoi il ment à l'auditeur.
  */
 function zoned(
   criteria: ReturnType<typeof aggregate>,
-  fromZone: boolean,
+  partial: boolean,
 ): ReturnType<typeof aggregate> {
-  if (!fromZone) return criteria;
+  if (!partial) return criteria;
 
   return Object.fromEntries(
     Object.entries(criteria).map(([id, outcome]) => [

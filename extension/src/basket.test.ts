@@ -128,6 +128,15 @@ describe('rapport du panier', () => {
     expect(report.criteria['5.7'].certainty).toBe('probable');
   });
 
+  it('marque un lot venu du crawl, et n’en tire aucun non applicable prouvé', () => {
+    // Le crawl scanne à `load`, sans qu'aucun clic n'ait ouvert quoi que ce
+    // soit : ce qu'il trouve absent ne l'est que d'un état de page mort.
+    const report = reportOf([{ ...entry('https://exemple.fr/a'), crawled: true }]);
+
+    expect(report.crawled).toBe(true);
+    expect(report.criteria['5.7'].certainty).toBe('probable');
+  });
+
   it('ne conclut au non applicable que si le support manque à toutes les pages', () => {
     const sansTable = reportOf([entry('https://exemple.fr/a'), entry('https://exemple.fr/b')]);
     expect(sansTable.criteria['5.7'].verdict).toBe('na');

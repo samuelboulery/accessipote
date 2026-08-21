@@ -7,6 +7,8 @@
  * fenêtre n'est là pour le dire.
  */
 import { putInBasket, readBasket } from './basket.ts';
+import { crawl, stopCrawl } from './crawl.ts';
+import type { CrawlLimits } from './crawl.ts';
 import { pickZone } from './pickZone.ts';
 import { scanTab } from './scanTab.ts';
 
@@ -29,12 +31,31 @@ async function scanZone(tabId: number): Promise<void> {
 }
 
 chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
-  const request = message as { type?: string; tabId?: number };
-  if (request.type !== 'pick-zone' || typeof request.tabId !== 'number') return false;
+  const request = message as { type?: string; tabId?: number; limits?: CrawlLimits };
 
-  // Un échec ne doit pas rester muet : le badge le dit, le popup rouvert aussi.
-  void scanZone(request.tabId)
-    .catch(() => chrome.action.setBadgeText({ text: '!' }))
-    .finally(() => sendResponse({ ok: true }));
-  return true;
+  if (request.type === 'pick-zone' && typeof request.tabId === 'number') {
+    // Un échec ne doit pas rester muet : le badge le dit, le popup rouvert aussi.
+    void scanZone(request.tabId)
+      .catch(() => chrome.action.setBadgeText({ text: '!' }))
+      .finally(() => sendResponse({ ok: true }));
+    return true;
+  }
+
+  if (request.type === 'start-crawl' && request.limits) {
+    // Le crawl dure plus longtemps que le popup : il rend la main tout de suite,
+    // et rend compte par `chrome.storage`, que le popup rouvert relit.
+    void crawl(request.limits)
+      .catch(() => chrome.action.setBadgeText({ text: '!' }))
+      .finally(showCount);
+    sendResponse({ ok: true });
+    return false;
+  }
+
+  if (request.type === 'stop-crawl') {
+    stopCrawl();
+    sendResponse({ ok: true });
+    return false;
+  }
+
+  return false;
 });
