@@ -261,3 +261,70 @@ describe('rgaaMapping — lot éléments obligatoires', () => {
     expect(bavards).toEqual([]);
   });
 });
+
+/**
+ * Le thème 7 est le cas où la retenue coûte le plus cher : axe y consacre une
+ * vingtaine de règles, et le référentiel ouvre presque partout une porte de
+ * sortie — « une alternative accessible permet d'accéder aux mêmes
+ * fonctionnalités ». Une règle qui ignore cette porte ne peut pas prouver.
+ */
+describe('rgaaMapping — lot ARIA et scripts', () => {
+  const ruleOf = (testId: string) =>
+    RGAA_MAPPING.find(mapping => mapping.testId === testId)?.axeRules ?? [];
+  const hintOf = (testId: string) =>
+    RGAA_MAPPING.find(mapping => mapping.testId === testId)?.probableRules ?? [];
+
+  it('couvre les deux critères du thème 7 qui se constatent', () => {
+    expect(MAPPED_CRITERIA).toEqual(expect.arrayContaining(['7.1', '7.3']));
+  });
+
+  it('ne mappe pas ce qui suppose de comprendre l’intention du script', () => {
+    // 7.2 alternative pertinente, 7.4 changement de contexte, 7.5 message de
+    // statut : trois fois, il faudrait savoir ce que le script veut dire.
+    expect(MAPPED_CRITERIA).not.toContain('7.2');
+    expect(MAPPED_CRITERIA).not.toContain('7.4');
+    expect(MAPPED_CRITERIA).not.toContain('7.5');
+  });
+
+  it('tient les défauts ARIA pour des indices, jamais pour des preuves', () => {
+    expect(hintOf('7.1.1')).toEqual(
+      expect.arrayContaining([
+        'aria-valid-attr',
+        'aria-valid-attr-value',
+        'aria-required-attr',
+        'aria-required-children',
+        'aria-required-parent',
+        'aria-roles',
+        'aria-allowed-attr',
+        'aria-hidden-focus',
+        'nested-interactive',
+      ]),
+    );
+    expect(ruleOf('7.1.1')).toEqual([]);
+  });
+
+  it('prouve l’échec là où le test ne laisse aucune porte de sortie', () => {
+    // 7.1.3 exige un nom et un rôle pertinents, sans alternative de repli : un
+    // composant sans nom accessible échoue, et un nom accessible qui ne
+    // contient pas l'intitulé visible est le libellé même du test.
+    expect(ruleOf('7.1.3')).toEqual(
+      expect.arrayContaining([
+        'aria-command-name',
+        'aria-input-field-name',
+        'aria-toggle-field-name',
+        'label-content-name-mismatch',
+      ]),
+    );
+  });
+
+  it('signale une zone défilante inatteignable au clavier sans la condamner', () => {
+    expect(hintOf('7.3.1')).toEqual(['scrollable-region-focusable']);
+  });
+
+  it('aucun test du thème 7 ne prouve la conformité', () => {
+    const bavards = RGAA_MAPPING.filter(
+      mapping => mapping.criterionId.startsWith('7.') && mapping.provesPass,
+    );
+    expect(bavards.map(mapping => mapping.testId)).toEqual([]);
+  });
+});

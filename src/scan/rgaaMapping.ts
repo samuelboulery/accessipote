@@ -409,6 +409,69 @@ export const RGAA_MAPPING: RgaaMapping[] = [
     provesPass: false,
   },
 
+  // — Thème 7 Scripts et ARIA ————————————————————————————————————————————
+  // Le thème où la retenue coûte le plus cher. axe y consacre une vingtaine de
+  // règles, et le référentiel ouvre presque partout une porte de sortie : « une
+  // alternative accessible permet d'accéder aux mêmes fonctionnalités ». Une
+  // règle qui ignore cette porte ne peut pas prouver — elle alerte.
+  //
+  // 7.1.1 — nom, rôle, valeur et états exposés aux technologies d'assistance.
+  // Un attribut ARIA inventé, un rôle inconnu, un enfant requis manquant : tout
+  // cela casse la restitution, mais un composant de repli ailleurs dans la page
+  // sauverait le test. D'où l'indice.
+  {
+    testId: '7.1.1',
+    criterionId: '7.1',
+    probableRules: [
+      'aria-valid-attr',
+      'aria-valid-attr-value',
+      'aria-required-attr',
+      'aria-required-children',
+      'aria-required-parent',
+      'aria-roles',
+      'aria-allowed-attr',
+      'aria-allowed-role',
+      'aria-deprecated-role',
+      'aria-prohibited-attr',
+      'aria-conditional-attr',
+      'aria-hidden-focus',
+      'nested-interactive',
+    ],
+    provesPass: false,
+  },
+  // 7.1.3 — le seul test du thème sans alternative de repli : le composant doit
+  // avoir un nom et un rôle pertinents, et son nom accessible doit contenir son
+  // intitulé visible. Un composant sans nom accessible échoue quoi qu'il arrive,
+  // et `label-content-name-mismatch` est le libellé même de la deuxième
+  // condition.
+  {
+    testId: '7.1.3',
+    criterionId: '7.1',
+    axeRules: [
+      'aria-command-name',
+      'aria-dialog-name',
+      'aria-input-field-name',
+      'aria-meter-name',
+      'aria-progressbar-name',
+      'aria-toggle-field-name',
+      'aria-tooltip-name',
+      'aria-treeitem-name',
+      'label-content-name-mismatch',
+    ],
+    provesPass: false,
+  },
+  // 7.3.1 — une zone défilante que le clavier n'atteint pas. Là encore, un
+  // équivalent atteignable ailleurs dans la page suffirait au référentiel.
+  {
+    testId: '7.3.1',
+    criterionId: '7.3',
+    probableRules: ['scrollable-region-focusable'],
+    provesPass: false,
+  },
+  // 7.2, 7.4 et 7.5 ne sont pas mappés : pertinence d'une alternative,
+  // changement de contexte, message de statut. Trois fois, il faudrait savoir
+  // ce que le script veut dire.
+
   // — 8.2 Validité du code source ——————————————————————————————————————————
   // Le test énumère cinq conditions, dont « les valeurs d'attribut id sont
   // uniques dans la page ». `duplicate-id-aria` ne couvre que les identifiants
