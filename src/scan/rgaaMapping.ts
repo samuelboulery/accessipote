@@ -44,6 +44,20 @@ const FIELD = [
 ].join(', ');
 
 /**
+ * Boutons de formulaire, au sens du glossaire RGAA : trois formes HTML et le
+ * rôle WAI-ARIA. Le bouton n'est pas un champ de saisie — le thème 11 les
+ * traite séparément, et leur absence n'écarte pas les mêmes critères.
+ */
+const BUTTON = [
+  'button',
+  'input[type="submit"]',
+  'input[type="reset"]',
+  'input[type="button"]',
+  'input[type="image"]',
+  '[role="button"]',
+].join(', ');
+
+/**
  * Balises dont la seule fonction est présentationnelle.
  *
  * `<b>`, `<i>`, `<u>` et `<s>` en sont absents à dessein : HTML5 leur a rendu
@@ -97,6 +111,24 @@ function naOnly(criterionId: string, count: number, naWhen: string): RgaaMapping
     naWhen,
     provesPass: false,
   }));
+}
+
+/**
+ * Comme `naOnly`, pour un support qui peut n'apparaître qu'après une
+ * interaction — un champ derrière un onglet déplié, une connexion, un clic.
+ *
+ * `except` laisse de côté les tests écrits à la main juste à côté : ils portent
+ * une règle axe en plus du support, et se déclarent en toutes lettres.
+ */
+function volatileNaOnly(
+  criterionId: string,
+  count: number,
+  naWhen: string,
+  except: string[] = [],
+): RgaaMapping[] {
+  return naOnly(criterionId, count, naWhen)
+    .filter(mapping => !except.includes(mapping.testId))
+    .map(mapping => ({ ...mapping, volatileSupport: true as const }));
 }
 
 export const RGAA_MAPPING: RgaaMapping[] = [
@@ -292,23 +324,90 @@ export const RGAA_MAPPING: RgaaMapping[] = [
   { testId: '10.1.1', criterionId: '10.1', failWhen: PRESENTATION_TAGS, provesPass: false },
   { testId: '10.1.2', criterionId: '10.1', failWhen: PRESENTATION_ATTRS, provesPass: false },
 
-  // — 11.1 Étiquette de champ ——————————————————————————————————————————————
-  // La règle `label` d'axe couvre les mêmes conditions que le test 11.1.1. Elle
-  // sert à détecter l'échec ; la pertinence de l'étiquette est le critère 11.2.
+  // — Thème 11 Formulaires ————————————————————————————————————————————————
+  // Le plus gros gisement du référentiel : treize critères qu'une page sans
+  // champ écarte d'un coup. Mais le champ est un support volatil — mesuré sur
+  // Accessipote : zéro au chargement, quatorze après trois clics. Tous les non
+  // applicables de ce thème restent donc à vérifier par l'auditeur.
+  //
+  // 11.1 — la règle `label` couvre les mêmes conditions que le test 11.1.1, et
+  // `select-name` fait de même pour les listes de choix : les deux acceptent
+  // exactement les quatre sources d'étiquette du glossaire. La pertinence de
+  // l'étiquette est le critère 11.2, hors de portée d'une machine.
   {
     testId: '11.1.1',
     criterionId: '11.1',
-    axeRules: ['label'],
+    axeRules: ['label', 'select-name'],
     naWhen: FIELD,
+    volatileSupport: true,
     provesPass: false,
   },
-  { testId: '11.1.2', criterionId: '11.1', naWhen: FIELD, provesPass: false },
-  { testId: '11.1.3', criterionId: '11.1', naWhen: FIELD, provesPass: false },
+  ...volatileNaOnly('11.1', 3, FIELD, ['11.1.1', '11.1.3']),
+  // `label-title-only` refuse par principe l'étiquette portée par le seul
+  // `title` ; le RGAA l'admet, à condition que son contenu soit compréhensible.
+  // La règle déborde donc le test : elle montre où regarder, elle ne tranche pas.
+  {
+    testId: '11.1.3',
+    criterionId: '11.1',
+    probableRules: ['label-title-only'],
+    naWhen: FIELD,
+    volatileSupport: true,
+    provesPass: false,
+  },
 
-  // — 11.5 Regroupement des champs de même nature ——————————————————————————
-  // Le « si nécessaire » du test est un jugement. Seul le non applicable se
-  // conclut ici.
-  ...naOnly('11.5', 1, FIELD),
+  // 11.2 — pertinence des étiquettes, affaire de jugement. Deux étiquettes sur
+  // un même champ ne prouvent pas l'impertinence, mais rendent indécidable ce
+  // qui sera restitué : c'est un indice, pas un constat.
+  {
+    testId: '11.2.1',
+    criterionId: '11.2',
+    probableRules: ['form-field-multiple-labels'],
+    naWhen: FIELD,
+    volatileSupport: true,
+    provesPass: false,
+  },
+  ...volatileNaOnly('11.2', 6, FIELD, ['11.2.1']),
+
+  ...volatileNaOnly('11.3', 2, FIELD),
+  ...volatileNaOnly('11.4', 3, FIELD),
+  ...volatileNaOnly('11.5', 1, FIELD),
+  ...volatileNaOnly('11.6', 1, FIELD),
+  ...volatileNaOnly('11.7', 1, FIELD),
+  ...volatileNaOnly('11.8', 3, FIELD),
+
+  // 11.9 — l'intitulé du bouton. Les six sources admises par le glossaire sont
+  // exactement celles qu'`axe` accepte : une violation dit qu'il n'y a aucun
+  // intitulé, ce qu'aucune lecture du test ne sauve. Le support est le bouton,
+  // pas le champ de saisie : les deux s'absentent séparément.
+  {
+    testId: '11.9.1',
+    criterionId: '11.9',
+    axeRules: ['button-name', 'input-button-name'],
+    naWhen: BUTTON,
+    volatileSupport: true,
+    provesPass: false,
+  },
+  ...volatileNaOnly('11.9', 2, BUTTON, ['11.9.1']),
+
+  // 11.10 à 11.12 — contrôle de saisie, suggestions de correction, confirmation
+  // avant action irréversible. Tout y est conditionnel (« si nécessaire ») ou
+  // suppose de valider un formulaire : rien qu'une machine ne constate.
+  ...volatileNaOnly('11.10', 7, FIELD),
+  ...volatileNaOnly('11.11', 2, FIELD),
+  ...volatileNaOnly('11.12', 2, FIELD),
+
+  // 11.13 — `autocomplete-valid` vérifie que la valeur figure dans la liste des
+  // valeurs admises, ce que le test demande mot pour mot. Son absence, elle,
+  // reste au jugement : la machine ne sait pas si le champ se rapporte à
+  // l'utilisateur.
+  {
+    testId: '11.13.1',
+    criterionId: '11.13',
+    axeRules: ['autocomplete-valid'],
+    naWhen: FIELD,
+    volatileSupport: true,
+    provesPass: false,
+  },
 ];
 
 /** Les critères que le mapping couvre. */

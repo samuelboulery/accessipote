@@ -85,3 +85,67 @@ describe('rgaaMapping — portée des sélecteurs', () => {
     expect(parPage).toEqual(['8.3.1', '8.5.1']);
   });
 });
+
+/**
+ * Le thème 11 est le plus gros gisement du référentiel : treize critères qu'une
+ * page sans champ de formulaire écarte d'un coup. Encore faut-il que l'absence
+ * soit constatée sur une page où le champ pouvait apparaître — d'où le support
+ * volatil, qui garde ces non applicables sous l'œil de l'auditeur.
+ */
+describe('rgaaMapping — lot formulaires', () => {
+  const THEME_11 = Array.from({ length: 13 }, (_, index) => `11.${index + 1}`);
+
+  it('couvre les treize critères du thème 11', () => {
+    expect(THEME_11.filter(id => !MAPPED_CRITERIA.includes(id))).toEqual([]);
+  });
+
+  it('mappe tous les tests de chaque critère du thème 11', () => {
+    const incomplets = THEME_11.filter(id => {
+      const mappings = RGAA_MAPPING.filter(mapping => mapping.criterionId === id);
+      return mappings.length !== (byId.get(id)?.tests?.length ?? 0);
+    });
+    expect(incomplets).toEqual([]);
+  });
+
+  it('conclut au non applicable sur chaque test du thème 11', () => {
+    const sansSupport = RGAA_MAPPING.filter(
+      mapping => THEME_11.includes(mapping.criterionId) && mapping.naWhen === undefined,
+    );
+    expect(sansSupport.map(mapping => mapping.testId)).toEqual([]);
+  });
+
+  it('tient le support de formulaire pour volatil, jamais pour prouvé', () => {
+    const durs = RGAA_MAPPING.filter(
+      mapping => THEME_11.includes(mapping.criterionId) && mapping.volatileSupport !== true,
+    );
+    expect(durs.map(mapping => mapping.testId)).toEqual([]);
+  });
+
+  it('aucun test du thème 11 ne prouve la conformité', () => {
+    const bavards = RGAA_MAPPING.filter(
+      mapping => THEME_11.includes(mapping.criterionId) && mapping.provesPass,
+    );
+    expect(bavards.map(mapping => mapping.testId)).toEqual([]);
+  });
+
+  it('détecte les échecs que les règles axe recouvrent exactement', () => {
+    const ruleOf = (testId: string) =>
+      RGAA_MAPPING.find(mapping => mapping.testId === testId)?.axeRules ?? [];
+
+    expect(ruleOf('11.1.1')).toEqual(expect.arrayContaining(['label', 'select-name']));
+    expect(ruleOf('11.9.1')).toEqual(
+      expect.arrayContaining(['button-name', 'input-button-name']),
+    );
+    expect(ruleOf('11.13.1')).toEqual(['autocomplete-valid']);
+  });
+
+  it('ne retient qu’un indice là où la règle axe déborde le test RGAA', () => {
+    const hintOf = (testId: string) =>
+      RGAA_MAPPING.find(mapping => mapping.testId === testId)?.probableRules ?? [];
+
+    // Le RGAA admet `title` comme étiquette, sous condition de contenu : axe le
+    // refuse par principe. Il montre où regarder, il ne tranche pas.
+    expect(hintOf('11.1.3')).toEqual(['label-title-only']);
+    expect(hintOf('11.2.1')).toEqual(['form-field-multiple-labels']);
+  });
+});
