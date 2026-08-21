@@ -52,6 +52,9 @@ const OBJECT_IMAGE = 'object[type^="image/"]';
 const EMBED_IMAGE = 'embed[type^="image/"]';
 const SVG = 'svg';
 const CANVAS = 'canvas';
+/** Listes, toutes formes confondues — balises et rôles. */
+const LIST = 'ul, ol, dl, [role="list"], [role="listitem"]';
+
 /** Toute image, quelle que soit sa balise — pour les tests qui les visent en bloc. */
 const ANY_IMAGE = [IMG, AREA, INPUT_IMAGE, OBJECT_IMAGE, EMBED_IMAGE, SVG, CANVAS].join(', ');
 
@@ -537,11 +540,52 @@ export const RGAA_MAPPING: RgaaMapping[] = [
   // — 8.9 Balises de présentation ——————————————————————————————————————————
   { testId: '8.9.1', criterionId: '8.9', failWhen: PRESENTATION_TAGS, provesPass: false },
 
-  // — 9.1 Structuration par les titres ————————————————————————————————————
-  // `heading-order` détecte un saut de niveau, qui rompt objectivement la
-  // hiérarchie. La pertinence du contenu des titres — tests 9.1.2 et 9.1.3 —
-  // n'est pas de son ressort, ni du nôtre.
+  // — Thème 9 Structuration ————————————————————————————————————————————————
+  // 9.1 — `heading-order` détecte un saut de niveau, qui rompt objectivement la
+  // hiérarchie. La pertinence du *contenu* d'un titre n'est pas du ressort
+  // d'une machine — sauf quand ce contenu est vide : personne ne trouve
+  // pertinent un titre sans texte.
   { testId: '9.1.1', criterionId: '9.1', axeRules: ['heading-order'], provesPass: false },
+  { testId: '9.1.2', criterionId: '9.1', axeRules: ['empty-heading'], provesPass: false },
+
+  // 9.2 — la structure du document. Le test énumère ses conditions puis les
+  // assortit d'un « hors cas particuliers » qu'aucune de ces trois règles ne
+  // connaît : elles signalent, elles ne condamnent pas.
+  {
+    testId: '9.2.1',
+    criterionId: '9.2',
+    probableRules: ['region', 'landmark-one-main', 'landmark-unique'],
+    provesPass: false,
+  },
+
+  // 9.3 — les listes. Le seul coin purement mécanique du référentiel : un `<li>`
+  // hors liste, un `<dt>` hors `<dl>` sont des défauts que rien ne rattrape.
+  // Le support reste volatil : une liste peut n'exister que dans un menu déplié.
+  {
+    testId: '9.3.1',
+    criterionId: '9.3',
+    axeRules: ['list', 'listitem'],
+    naWhen: LIST,
+    volatileSupport: true,
+    provesPass: false,
+  },
+  {
+    testId: '9.3.2',
+    criterionId: '9.3',
+    axeRules: ['list', 'listitem'],
+    naWhen: LIST,
+    volatileSupport: true,
+    provesPass: false,
+  },
+  {
+    testId: '9.3.3',
+    criterionId: '9.3',
+    axeRules: ['definition-list', 'dlitem'],
+    naWhen: LIST,
+    volatileSupport: true,
+    provesPass: false,
+  },
+  // 9.4 n'est pas mappé : reconnaître une citation demande de lire le texte.
 
   // — 10.1 Feuilles de styles ——————————————————————————————————————————————
   { testId: '10.1.1', criterionId: '10.1', failWhen: PRESENTATION_TAGS, provesPass: false },

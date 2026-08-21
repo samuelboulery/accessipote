@@ -328,3 +328,55 @@ describe('rgaaMapping — lot ARIA et scripts', () => {
     expect(bavards.map(mapping => mapping.testId)).toEqual([]);
   });
 });
+
+/**
+ * La structuration : le seul endroit du référentiel où la mécanique domine. Un
+ * `<li>` hors liste est un défaut, pas une opinion. La structure du document,
+ * elle, s'assortit d'un « hors cas particuliers » qui interdit d'y conclure
+ * seul.
+ */
+describe('rgaaMapping — lot structuration', () => {
+  const ruleOf = (testId: string) =>
+    RGAA_MAPPING.find(mapping => mapping.testId === testId)?.axeRules ?? [];
+  const hintOf = (testId: string) =>
+    RGAA_MAPPING.find(mapping => mapping.testId === testId)?.probableRules ?? [];
+
+  it('couvre les listes et la structure du document', () => {
+    expect(MAPPED_CRITERIA).toEqual(expect.arrayContaining(['9.1', '9.2', '9.3']));
+  });
+
+  it('prouve les listes mal formées', () => {
+    expect(ruleOf('9.3.1')).toEqual(expect.arrayContaining(['list', 'listitem']));
+    expect(ruleOf('9.3.2')).toEqual(expect.arrayContaining(['list', 'listitem']));
+    expect(ruleOf('9.3.3')).toEqual(expect.arrayContaining(['definition-list', 'dlitem']));
+  });
+
+  it('écarte le critère des listes quand la page n’en porte aucune, sous réserve', () => {
+    const listes = RGAA_MAPPING.filter(mapping => mapping.criterionId === '9.3');
+    expect(listes).toHaveLength(3);
+    expect(listes.every(mapping => mapping.naWhen !== undefined)).toBe(true);
+    // Une liste peut n'exister que dans un menu déplié : l'absence constatée au
+    // chargement ne prouve rien.
+    expect(listes.every(mapping => mapping.volatileSupport === true)).toBe(true);
+  });
+
+  it('ne fait que signaler la structure du document', () => {
+    // « Hors cas particuliers » : le référentiel se réserve des exceptions
+    // qu'aucune de ces trois règles ne connaît.
+    expect(hintOf('9.2.1')).toEqual(
+      expect.arrayContaining(['region', 'landmark-one-main', 'landmark-unique']),
+    );
+    expect(ruleOf('9.2.1')).toEqual([]);
+  });
+
+  it('prouve un titre vide : un contenu absent n’est pertinent pour personne', () => {
+    expect(ruleOf('9.1.2')).toEqual(['empty-heading']);
+  });
+
+  it('aucun test du thème 9 ne prouve la conformité', () => {
+    const bavards = RGAA_MAPPING.filter(
+      mapping => mapping.criterionId.startsWith('9.') && mapping.provesPass,
+    );
+    expect(bavards.map(mapping => mapping.testId)).toEqual([]);
+  });
+});
