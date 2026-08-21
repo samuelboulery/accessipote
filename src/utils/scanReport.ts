@@ -135,11 +135,25 @@ export interface ScanPlanEntry {
   /** Tests RGAA qui ont tranché — ceux dont le verdict porte celui du critère. */
   testIds: string[];
   evidence: Evidence[];
+  /**
+   * Le statut repose sur un indice, pas sur une preuve.
+   *
+   * Voyage jusque dans la provenance : un tag qui ne distinguerait pas les deux
+   * ferait passer un soupçon pour un constat.
+   */
+  fromHint?: boolean;
 }
 
 export interface ScanPlan {
   /** Échecs et non applicables prouvés : écrits directement. */
   direct: ScanPlanEntry[];
+  /**
+   * Échecs soupçonnés sans être prouvés : proposés, jamais écrits.
+   *
+   * L'indice vaut d'être montré — il désigne où regarder — mais il ne tranche
+   * pas. C'est l'auditeur qui décide, et le statut devient le sien.
+   */
+  probable: ScanPlanEntry[];
   /** Conformes proposés : jamais écrits sans confirmation explicite. */
   proposed: ScanPlanEntry[];
   /**
@@ -162,20 +176,22 @@ function entryFrom(criteriaId: string, outcome: ScanOutcome, status: ClassicStat
 }
 
 /**
- * Répartit les verdicts du rapport en trois tas, dans l'ordre du référentiel.
+ * Répartit les verdicts du rapport par certitude, dans l'ordre du référentiel.
  *
  * Le périmètre est celui de l'audit : un critère hors des thèmes retenus n'est
  * ni appliqué, ni compté comme non regardé.
  */
 export function planScanApplication(report: ScanReport, criteria: CriteriaRGAA[]): ScanPlan {
-  const plan: ScanPlan = { direct: [], proposed: [], unscanned: 0 };
+  const plan: ScanPlan = { direct: [], probable: [], proposed: [], unscanned: 0 };
 
   for (const criterion of criteria) {
     const outcome = report.criteria[criterion.id];
     const direct = outcome ? DIRECT_STATUS[outcome.verdict] : undefined;
 
     if (outcome && direct) plan.direct.push(entryFrom(criterion.id, outcome, direct));
-    else if (outcome?.verdict === 'pass') {
+    else if (outcome?.verdict === 'suspect') {
+      plan.probable.push({ ...entryFrom(criterion.id, outcome, 'non-conforme'), fromHint: true });
+    } else if (outcome?.verdict === 'pass') {
       plan.proposed.push(entryFrom(criterion.id, outcome, 'conforme'));
     } else plan.unscanned += 1;
   }

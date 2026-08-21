@@ -359,6 +359,11 @@ describe('App — import d’un rapport de scan', () => {
       },
       '5.4': { verdict: 'na', testVerdicts: { '5.4.1': 'na' }, evidence: [] },
       '8.3': { verdict: 'pass', testVerdicts: { '8.3.1': 'pass' }, evidence: [] },
+      '9.1': {
+        verdict: 'suspect',
+        testVerdicts: { '9.1.1': 'suspect' },
+        evidence: [{ url: 'https://exemple.fr', selector: 'h3', snippet: '<h3>' }],
+      },
     },
   };
 
@@ -433,5 +438,49 @@ describe('App — import d’un rapport de scan', () => {
     await openAudit(user);
 
     expect(screen.queryByRole('button', { name: /importer un scan/i })).not.toBeInTheDocument();
+  });
+
+  it('n’écrit pas un soupçon à l’import', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    const audit = storedAudit();
+    expect(audit.progress['9.1']).toBeUndefined();
+    expect(audit.auto?.['9.1']).toBeUndefined();
+  });
+
+  it('écrit un soupçon accepté, et sa provenance dit qu’il vient d’un indice', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    const section = screen.getByRole('group', { name: /à vérifier/i });
+    const row = within(section).getByRole('listitem', { name: 'Critère 9.1' });
+    await user.click(within(row).getByRole('button', { name: /appliquer/i }));
+
+    const audit = storedAudit();
+    expect(audit.progress['9.1']).toEqual({ status: 'non-conforme' });
+    expect(audit.auto?.['9.1'].fromHint).toBe(true);
+    expect(audit.auto?.['9.1'].evidence[0].selector).toBe('h3');
+  });
+
+  it('oublie la provenance d’un soupçon dès que l’auditeur reprend la main', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    const section = screen.getByRole('group', { name: /à vérifier/i });
+    const row = within(section).getByRole('listitem', { name: 'Critère 9.1' });
+    await user.click(within(row).getByRole('button', { name: /appliquer/i }));
+    await user.click(within(row).getByRole('button', { name: /annuler/i }));
+
+    expect(storedAudit().auto?.['9.1']).toBeUndefined();
   });
 });

@@ -169,3 +169,85 @@ describe('ScanImportPanel', () => {
     expect(onApply).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * Le tri par certitude vu par l'auditeur : ce qui est prouvé est déjà écrit, ce
+ * qui est soupçonné attend qu'il tranche, et le reste est compté. L'ordre des
+ * sections est celui de la certitude — c'est l'ordre dans lequel le travail se
+ * fait.
+ */
+describe('ScanImportPanel — soupçons', () => {
+  const withSuspect = {
+    ...report,
+    schema: 2,
+    criteria: {
+      ...report.criteria,
+      '9.1': {
+        verdict: 'suspect',
+        testVerdicts: { '9.1.1': 'suspect' },
+        evidence: [{ url: 'https://exemple.fr', selector: 'h3#titre', snippet: '<h3 id="titre">' }],
+      },
+    },
+  };
+
+  it('range le soupçon dans sa propre section, pas avec les statuts écrits', async () => {
+    const { user } = setup();
+    await user.upload(input(), file(withSuspect));
+
+    const toCheck = screen.getByRole('group', { name: /à vérifier/i });
+    expect(within(toCheck).getByRole('listitem', { name: /9\.1/ })).toBeInTheDocument();
+
+    const applied = screen.getByRole('group', { name: /appliqué/i });
+    expect(within(applied).queryByRole('listitem', { name: /9\.1/ })).not.toBeInTheDocument();
+  });
+
+  it('n’écrit rien à l’import : le soupçon attend un clic', async () => {
+    const { onApply, user } = setup();
+    await user.upload(input(), file(withSuspect));
+
+    const [entries] = onApply.mock.calls[0];
+    expect(entries.map(entry => entry.criteriaId)).not.toContain('9.1');
+  });
+
+  it('propose le soupçon en non conforme, marqué comme indice', async () => {
+    const { onApply, user } = setup();
+    await user.upload(input(), file(withSuspect));
+
+    const toCheck = screen.getByRole('group', { name: /à vérifier/i });
+    const row = within(toCheck).getByRole('listitem', { name: /9\.1/ });
+    await user.click(within(row).getByRole('button', { name: /appliquer/i }));
+
+    const [entries] = onApply.mock.calls[1];
+    expect(entries[0]).toMatchObject({ criteriaId: '9.1', status: 'non-conforme', fromHint: true });
+  });
+
+  it('montre la preuve du soupçon, pour qu’il soit instruisible', async () => {
+    const { user } = setup();
+    await user.upload(input(), file(withSuspect));
+
+    const toCheck = screen.getByRole('group', { name: /à vérifier/i });
+    expect(within(toCheck).getByText('h3#titre')).toBeInTheDocument();
+  });
+
+  it('annonce le décompte de chaque section', async () => {
+    const { user } = setup();
+    await user.upload(input(), file(withSuspect));
+
+    expect(screen.getByRole('group', { name: /appliqué automatiquement — 2 critères/i })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: /à vérifier — 1 critère/i })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: /à confirmer — 1 conforme/i })).toBeInTheDocument();
+  });
+
+  it('range les sections dans l’ordre de la certitude', async () => {
+    const { user } = setup();
+    await user.upload(input(), file(withSuspect));
+
+    const titles = screen.getAllByRole('heading', { level: 3 }).map(heading => heading.textContent);
+    expect(titles).toEqual([
+      expect.stringMatching(/appliqué/i),
+      expect.stringMatching(/à vérifier/i),
+      expect.stringMatching(/à confirmer/i),
+      expect.stringMatching(/non évalué/i),
+    ]);
+  });
+});

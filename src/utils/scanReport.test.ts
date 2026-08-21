@@ -184,3 +184,67 @@ describe('parseScanReport — schéma 2 et soupçons', () => {
     expect(plan.direct).toEqual([]);
   });
 });
+
+/**
+ * Le tri par certitude. Trois tas, trois traitements : ce qui est prouvé
+ * s'écrit, ce qui est soupçonné se propose, ce qui n'a pas été regardé se
+ * compte. Confondre les deux premiers rendrait le pré-remplissage indéfendable
+ * devant une déclaration d'accessibilité.
+ */
+describe('planScanApplication — tri par certitude', () => {
+  const criteria: CriteriaRGAA[] = [
+    { id: '1.1', title: 'Images', url: 'u', theme: 'Images', level: 'A' },
+    { id: '2.1', title: 'Cadres', url: 'u', theme: 'Cadres', level: 'A' },
+    { id: '5.4', title: 'Tableaux', url: 'u', theme: 'Tableaux', level: 'A' },
+    { id: '8.3', title: 'Langue', url: 'u', theme: 'Éléments obligatoires', level: 'A' },
+  ];
+
+  const parsed = () =>
+    parseScanReport(
+      JSON.stringify({
+        schema: 2,
+        scannedAt: '2026-08-21T10:00:00.000Z',
+        urls: ['https://exemple.fr'],
+        criteria: {
+          '2.1': { verdict: 'fail', testVerdicts: { '2.1.1': 'fail' }, evidence: [] },
+          '5.4': { verdict: 'na', testVerdicts: { '5.4.1': 'na' }, evidence: [] },
+          '1.1': {
+            verdict: 'suspect',
+            testVerdicts: { '1.1.5': 'suspect' },
+            evidence: [{ url: 'https://exemple.fr', selector: 'svg' }],
+          },
+          '8.3': { verdict: 'pass', testVerdicts: { '8.3.1': 'pass' }, evidence: [] },
+        },
+      }),
+      KNOWN,
+    );
+
+  it('sépare le soupçon de la preuve et du conforme proposé', () => {
+    const plan = planScanApplication(parsed(), criteria);
+
+    expect(plan.direct.map(entry => entry.criteriaId)).toEqual(['2.1', '5.4']);
+    expect(plan.probable.map(entry => entry.criteriaId)).toEqual(['1.1']);
+    expect(plan.proposed.map(entry => entry.criteriaId)).toEqual(['8.3']);
+    expect(plan.unscanned).toBe(0);
+  });
+
+  it('propose un soupçon en non conforme, jamais en conforme', () => {
+    expect(planScanApplication(parsed(), criteria).probable[0].status).toBe('non-conforme');
+  });
+
+  it('marque le soupçon pour que sa provenance ne se fasse pas passer pour une preuve', () => {
+    const plan = planScanApplication(parsed(), criteria);
+    expect(plan.probable[0].fromHint).toBe(true);
+    expect(plan.direct.every(entry => !entry.fromHint)).toBe(true);
+  });
+
+  it('joint la preuve du soupçon, pour qu’il soit instruisible', () => {
+    const plan = planScanApplication(parsed(), criteria);
+    expect(plan.probable[0].evidence).toEqual([{ url: 'https://exemple.fr', selector: 'svg' }]);
+  });
+
+  it('ne compte pas un soupçon parmi les critères non évalués', () => {
+    const plan = planScanApplication(parsed(), criteria);
+    expect(plan.unscanned).toBe(0);
+  });
+});

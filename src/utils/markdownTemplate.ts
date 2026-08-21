@@ -43,13 +43,19 @@ function modeLabel(mode: Mode): string {
   return mode === 'classic' ? 'Classic' : 'Design System';
 }
 
-/** « scan automatique du 20/08/2026 (tests 1.1.1) » — vide si l'humain a tranché. */
+/**
+ * « scan automatique du 20/08/2026 (tests 1.1.1) » — vide si l'humain a tranché.
+ *
+ * Un statut accepté sur un indice le dit : dans le document remis, la nature de
+ * la preuve compte autant que son origine.
+ */
 function provenanceOf(audit: Audit, criteriaId: string): string {
   const auto = audit.auto?.[criteriaId];
   if (!auto) return '';
   const date = new Date(auto.scannedAt).toLocaleDateString('fr-FR');
   const tests = auto.testIds.length > 0 ? ` (tests ${auto.testIds.join(', ')})` : '';
-  return `scan automatique du ${date}${tests}`;
+  const origine = auto.fromHint ? 'indice du scan automatique' : 'scan automatique';
+  return `${origine} du ${date}${tests}`;
 }
 
 function statusOf(audit: Audit, criteriaId: string): CriteriaStatus | undefined {

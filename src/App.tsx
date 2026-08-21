@@ -197,6 +197,7 @@ function App() {
             testIds: entry.testIds,
             scannedAt,
             evidence: entry.evidence,
+            ...(entry.fromHint ? { fromHint: true } : {}),
           };
         }
 

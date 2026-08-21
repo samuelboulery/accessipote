@@ -19,12 +19,15 @@ export default function AutoBadge({ auto }: AutoBadgeProps) {
   if (!auto) return null;
 
   const scannedAt = new Date(auto.scannedAt).toLocaleDateString('fr-FR');
+  const libelle = auto.fromHint
+    ? `Posé sur un indice du scan du ${scannedAt}`
+    : `Pré-rempli par le scan du ${scannedAt}`;
 
   return (
     <details className="w-full rounded-ctrl border-1 border-border bg-sunk px-3 py-2 text-meta">
       <summary className="flex cursor-pointer items-center gap-2 font-semibold">
         <Bot size={14} aria-hidden="true" />
-        Pré-rempli par le scan du {scannedAt}
+        {libelle}
       </summary>
 
       {auto.testIds.length > 0 && (

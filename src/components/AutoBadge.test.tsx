@@ -46,3 +46,23 @@ describe('AutoBadge', () => {
     expect(screen.getByRole('group')).not.toHaveAttribute('open');
   });
 });
+
+describe('AutoBadge — statut posé sur un indice', () => {
+  const surIndice: AutoVerdict = { ...auto, fromHint: true };
+
+  it('dit que le statut repose sur un indice, pas sur une preuve', () => {
+    render(<AutoBadge auto={surIndice} />);
+    expect(screen.getByText(/indice/i)).toBeInTheDocument();
+  });
+
+  it('ne prétend pas au pré-remplissage prouvé', () => {
+    render(<AutoBadge auto={surIndice} />);
+    expect(screen.queryByText(/^Pré-rempli par le scan du/)).not.toBeInTheDocument();
+  });
+
+  it('garde la date et les preuves consultables', () => {
+    render(<AutoBadge auto={surIndice} />);
+    expect(screen.getByText(/20\/08\/2026/)).toBeInTheDocument();
+    expect(screen.getByText('header img')).toBeInTheDocument();
+  });
+});

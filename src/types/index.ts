@@ -180,6 +180,13 @@ export interface ScanReport {
  */
 export interface AutoVerdict {
   status: ClassicStatus;
+  /**
+   * Le statut a été accepté sur un indice, non sur une preuve.
+   *
+   * Sans cette distinction, le marqueur ferait passer un soupçon instruit par
+   * l'auditeur pour un constat de la machine.
+   */
+  fromHint?: boolean;
   /** Tests RGAA qui ont tranché, ex. « 2.1.1 ». */
   testIds: string[];
   scannedAt: string;

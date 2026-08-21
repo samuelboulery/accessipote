@@ -325,3 +325,23 @@ describe('renderTemplate — provenance du scan', () => {
     expect(out).toBe('1');
   });
 });
+
+describe('renderTemplate — provenance sur indice', () => {
+  it('distingue un statut posé sur indice d’un statut prouvé', () => {
+    const out = renderTemplate('{{#critères}}{{id}}:{{provenance}}|{{/critères}}', {
+      audit: makeAudit({
+        auto: {
+          '1.2': {
+            status: 'non-conforme',
+            testIds: ['1.2.1'],
+            scannedAt: '2026-08-20T09:30:00.000Z',
+            evidence: [],
+            fromHint: true,
+          },
+        },
+      }),
+      criteria,
+    });
+    expect(out).toContain('1.2:indice du scan automatique du 20/08/2026 (tests 1.2.1)');
+  });
+});

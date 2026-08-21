@@ -186,6 +186,35 @@ export default function ScanImportPanel({
               <ul>{plan.direct.map(row)}</ul>
             </div>
 
+            <div role="group" aria-labelledby="scan-probable-title">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 id="scan-probable-title" className="text-body font-semibold">
+                  À vérifier — {plan.probable.length} critère
+                  {plan.probable.length > 1 ? 's' : ''} soupçonné
+                  {plan.probable.length > 1 ? 's' : ''} en échec
+                </h3>
+                {plan.probable.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onApply(
+                        plan.probable.filter(entry => !isApplied(entry.criteriaId)),
+                        scannedAt ?? '',
+                      )
+                    }
+                    className="target-44 h-ctrl rounded-ctrl border-1 border-border bg-surface px-3 text-dense"
+                  >
+                    Tout accepter
+                  </button>
+                )}
+              </div>
+              <p className="text-dense text-ink-muted">
+                Un indice n’est pas une preuve : la machine dit où regarder, elle ne tranche pas.
+                Ce qui est accepté ici porte la mention dans sa provenance.
+              </p>
+              <ul>{plan.probable.map(row)}</ul>
+            </div>
+
             <div role="group" aria-labelledby="scan-proposed-title">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 id="scan-proposed-title" className="text-body font-semibold">
