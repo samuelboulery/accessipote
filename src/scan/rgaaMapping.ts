@@ -294,8 +294,16 @@ export const RGAA_MAPPING: RgaaMapping[] = [
     naWhen: FRAME,
     provesPass: true,
   },
-  // 2.2 : pertinence du titre de cadre. Hors de portée d'une machine.
-  ...naOnly('2.2', 1, FRAME),
+  // 2.2 : pertinence du titre de cadre. Hors de portée d'une machine — mais
+  // deux cadres au même titre rendent l'impertinence probable : au moins l'un
+  // des deux ne décrit pas ce qu'il contient.
+  {
+    testId: '2.2.1',
+    criterionId: '2.2',
+    probableRules: ['frame-title-unique'],
+    naWhen: FRAME,
+    provesPass: false,
+  },
 
   // — 3.2 Contraste du texte ——————————————————————————————————————————————
   // `color-contrast` ne connaît ni les cas particuliers du RGAA — texte
@@ -401,6 +409,26 @@ export const RGAA_MAPPING: RgaaMapping[] = [
     provesPass: false,
   },
 
+  // — 8.2 Validité du code source ——————————————————————————————————————————
+  // Le test énumère cinq conditions, dont « les valeurs d'attribut id sont
+  // uniques dans la page ». `duplicate-id-aria` ne couvre que les identifiants
+  // référencés par ARIA ou par un `<label>` : un sous-ensemble, dont la
+  // violation dirait l'échec du test. Ses deux voisines, `duplicate-id` et
+  // `duplicate-id-active`, sont dépréciées et désactivées dans axe 4.13 — les
+  // citer donnerait une couverture qui ne s'exécute pas.
+  //
+  // ponytail: indice et non preuve, parce que les résultats d'axe sont fusionnés
+  // tous cadres confondus : un `id` dupliqué dans un `<iframe>` appartient au
+  // document embarqué, pas à la page. Passer à la preuve demande des résultats
+  // axe rattachés à leur cadre, comme `mainFrameOnly` le fait déjà pour les
+  // sélecteurs.
+  {
+    testId: '8.2.1',
+    criterionId: '8.2',
+    probableRules: ['duplicate-id-aria'],
+    provesPass: false,
+  },
+
   // — 8.3 Langue par défaut ————————————————————————————————————————————————
   // La validité du code de langue relève du critère 8.4 : sa présence suffit
   // donc à prouver le succès de ce test-ci.
@@ -412,6 +440,20 @@ export const RGAA_MAPPING: RgaaMapping[] = [
     provesPass: true,
   },
 
+  // — 8.4 Validité du code de langue par défaut ————————————————————————————
+  // Le test demande un code valide *et* pertinent. `html-lang-valid` tranche la
+  // première condition, et l'échec d'une condition suffit à faire échouer le
+  // test ; la pertinence, elle, reste à l'auditeur — d'où l'absence de
+  // `provesPass`. Un `lang` et un `xml:lang` qui divergent disent que l'un des
+  // deux est faux sans dire lequel : c'est un indice.
+  {
+    testId: '8.4.1',
+    criterionId: '8.4',
+    axeRules: ['html-lang-valid'],
+    probableRules: ['html-xml-lang-mismatch'],
+    provesPass: false,
+  },
+
   // — 8.5 Titre de page ————————————————————————————————————————————————————
   // La pertinence du titre est le critère 8.6. Ici, seule sa présence compte.
   {
@@ -421,6 +463,13 @@ export const RGAA_MAPPING: RgaaMapping[] = [
     mainFrameOnly: true,
     provesPass: true,
   },
+
+  // — 8.8 Code de langue des changements de langue ——————————————————————————
+  // `valid-lang` vérifie la validité des `lang` posés sur les éléments, ce que
+  // le test demande mot pour mot. Reconnaître un changement de langue *non
+  // signalé* — le critère 8.7 — suppose de lire le texte : ce critère reste
+  // entier à l'auditeur, et n'est pas mappé.
+  { testId: '8.8.1', criterionId: '8.8', axeRules: ['valid-lang'], provesPass: false },
 
   // — 8.9 Balises de présentation ——————————————————————————————————————————
   { testId: '8.9.1', criterionId: '8.9', failWhen: PRESENTATION_TAGS, provesPass: false },

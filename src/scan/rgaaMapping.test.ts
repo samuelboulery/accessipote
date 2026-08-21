@@ -213,3 +213,51 @@ describe('rgaaMapping — lot images', () => {
     );
   });
 });
+
+/**
+ * Le lot mécanique : un code de langue est valide ou ne l'est pas, un `id` est
+ * unique ou ne l'est pas. Aucun jugement, et donc aucune raison de se contenter
+ * d'un indice — sauf là où la règle parle d'unicité quand le test parle de
+ * pertinence.
+ */
+describe('rgaaMapping — lot éléments obligatoires', () => {
+  const ruleOf = (testId: string) =>
+    RGAA_MAPPING.find(mapping => mapping.testId === testId)?.axeRules ?? [];
+  const hintOf = (testId: string) =>
+    RGAA_MAPPING.find(mapping => mapping.testId === testId)?.probableRules ?? [];
+
+  it('tranche la validité du code de langue par défaut', () => {
+    expect(ruleOf('8.4.1')).toEqual(['html-lang-valid']);
+  });
+
+  it('tranche la validité du code de langue des changements de langue', () => {
+    expect(ruleOf('8.8.1')).toEqual(['valid-lang']);
+  });
+
+  it('signale les identifiants dupliqués sans les écrire', () => {
+    // Les résultats d'axe sont fusionnés tous cadres confondus : un `id`
+    // dupliqué dans un `<iframe>` n'est pas celui de la page.
+    expect(hintOf('8.2.1')).toEqual(['duplicate-id-aria']);
+    expect(ruleOf('8.2.1')).toEqual([]);
+  });
+
+  it('ne retient qu’un indice là où la règle parle d’autre chose que le test', () => {
+    // Deux cadres au même titre ne prouvent pas l'impertinence du titre : ils
+    // la rendent probable.
+    expect(hintOf('2.2.1')).toEqual(['frame-title-unique']);
+    // Un `lang` et un `xml:lang` qui divergent disent que l'un des deux est
+    // faux, sans dire lequel.
+    expect(hintOf('8.4.1')).toEqual(['html-xml-lang-mismatch']);
+  });
+
+  it('laisse 8.7 à l’auditeur : reconnaître un changement de langue n’est pas mécanique', () => {
+    expect(MAPPED_CRITERIA).not.toContain('8.7');
+  });
+
+  it('aucun de ces tests ne prouve la conformité', () => {
+    const bavards = ['8.2.1', '8.4.1', '8.8.1', '2.2.1'].filter(
+      testId => RGAA_MAPPING.find(mapping => mapping.testId === testId)?.provesPass,
+    );
+    expect(bavards).toEqual([]);
+  });
+});
