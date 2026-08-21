@@ -43,6 +43,18 @@ const FIELD = [
   '[role="switch"]',
 ].join(', ');
 
+// Supports d'image, un par balise : le référentiel écrit un test par balise,
+// et l'absence de l'une ne dit rien de l'autre.
+const IMG = 'img, [role="img"]';
+const AREA = 'area';
+const INPUT_IMAGE = 'input[type="image"]';
+const OBJECT_IMAGE = 'object[type^="image/"]';
+const EMBED_IMAGE = 'embed[type^="image/"]';
+const SVG = 'svg';
+const CANVAS = 'canvas';
+/** Toute image, quelle que soit sa balise — pour les tests qui les visent en bloc. */
+const ANY_IMAGE = [IMG, AREA, INPUT_IMAGE, OBJECT_IMAGE, EMBED_IMAGE, SVG, CANVAS].join(', ');
+
 /**
  * Boutons de formulaire, au sens du glossaire RGAA : trois formes HTML et le
  * rôle WAI-ARIA. Le bouton n'est pas un champ de saisie — le thème 11 les
@@ -126,52 +138,151 @@ function volatileNaOnly(
   naWhen: string,
   except: string[] = [],
 ): RgaaMapping[] {
-  return naOnly(criterionId, count, naWhen)
-    .filter(mapping => !except.includes(mapping.testId))
-    .map(mapping => ({ ...mapping, volatileSupport: true as const }));
+  return volatileNaBySupport(criterionId, Array.from({ length: count }, () => naWhen), except);
+}
+
+/**
+ * Comme `volatileNaOnly`, mais un support par test.
+ *
+ * Le thème 1 écrit un test par balise — `<img>`, `<object>`, `<svg>`… — et
+ * l'absence de l'une ne dit rien de l'autre. Le rang dans la liste est le
+ * numéro du test.
+ */
+function volatileNaBySupport(
+  criterionId: string,
+  supports: string[],
+  except: string[] = [],
+): RgaaMapping[] {
+  return supports
+    .map((naWhen, index) => ({
+      testId: `${criterionId}.${index + 1}`,
+      criterionId,
+      naWhen,
+      volatileSupport: true as const,
+      provesPass: false,
+    }))
+    .filter(mapping => !except.includes(mapping.testId));
 }
 
 export const RGAA_MAPPING: RgaaMapping[] = [
-  // — 1.1 Alternative textuelle des images ————————————————————————————————
-  // Aucun test ne prouve le succès : l'absence d'attribut `alt` est un échec
-  // certain, mais sa présence ne dit rien de la pertinence de son contenu —
-  // c'est le critère 1.3, et c'est du ressort de l'auditeur.
+  // — Thème 1 Images ——————————————————————————————————————————————————————
+  // Le support d'image est volatil : galerie chargée au défilement, visuel
+  // derrière un onglet. Aucun non applicable du thème ne s'écrit donc seul.
+  //
+  // 1.1 — aucun test ne prouve le succès : l'absence d'attribut `alt` est un
+  // échec certain, mais sa présence ne dit rien de la pertinence de son
+  // contenu — c'est le critère 1.3, et c'est du ressort de l'auditeur.
+  // `image-alt` n'est pas cité : le sélecteur ci-dessous dit déjà, et plus
+  // littéralement, ce que le test demande.
   {
     testId: '1.1.1',
     criterionId: '1.1',
     failWhen: 'img:not([alt])',
-    naWhen: 'img, [role="img"]',
+    // Une balise `role="img"` sans nom accessible n'a aucune alternative, quel
+    // que soit le chemin retenu par le référentiel.
+    axeRules: ['role-img-alt'],
+    naWhen: IMG,
+    volatileSupport: true,
     provesPass: false,
   },
   {
     testId: '1.1.2',
     criterionId: '1.1',
     failWhen: 'area[href]:not([alt])',
+    axeRules: ['area-alt'],
     naWhen: 'area[href]',
+    volatileSupport: true,
     provesPass: false,
   },
   {
     testId: '1.1.3',
     criterionId: '1.1',
     failWhen: 'input[type="image"]:not([alt])',
-    naWhen: 'input[type="image"]',
+    axeRules: ['input-image-alt'],
+    naWhen: INPUT_IMAGE,
+    volatileSupport: true,
     provesPass: false,
   },
-  { testId: '1.1.4', criterionId: '1.1', naWhen: 'img[ismap]', provesPass: false },
+  { testId: '1.1.4', criterionId: '1.1', naWhen: 'img[ismap]', volatileSupport: true, provesPass: false },
   // Un `<svg>` sans rôle, sans nom accessible et non masqué est un défaut dans
   // les deux branches — image porteuse sans alternative (1.1.5), ou image de
   // décoration mal marquée (1.2.4) — mais la machine ne sait pas laquelle.
-  // C'est la définition même d'un indice.
+  // C'est la définition même d'un indice. `svg-img-alt`, lui, ne vise que le
+  // `<svg role="img">` sans alternative : exactement les deux conditions du test.
   {
     testId: '1.1.5',
     criterionId: '1.1',
+    axeRules: ['svg-img-alt'],
     probableWhen: 'svg:not([role="img"]):not([aria-hidden="true"]):not([aria-label]):not(:has(title))',
-    naWhen: 'svg',
+    naWhen: SVG,
+    volatileSupport: true,
     provesPass: false,
   },
-  { testId: '1.1.6', criterionId: '1.1', naWhen: 'object[type^="image/"]', provesPass: false },
-  { testId: '1.1.7', criterionId: '1.1', naWhen: 'embed[type^="image/"]', provesPass: false },
-  { testId: '1.1.8', criterionId: '1.1', naWhen: 'canvas', provesPass: false },
+  // `object-alt` vise tous les `<object>` ; le test ne vise que ceux qui portent
+  // une image, le reste relevant du thème 4. La règle déborde : elle alerte.
+  {
+    testId: '1.1.6',
+    criterionId: '1.1',
+    probableRules: ['object-alt'],
+    naWhen: OBJECT_IMAGE,
+    volatileSupport: true,
+    provesPass: false,
+  },
+  { testId: '1.1.7', criterionId: '1.1', naWhen: EMBED_IMAGE, volatileSupport: true, provesPass: false },
+  { testId: '1.1.8', criterionId: '1.1', naWhen: CANVAS, volatileSupport: true, provesPass: false },
+
+  // 1.2 — l'image de décoration. Savoir qu'une image est décorative est un acte
+  // d'auditeur : rien ici ne s'écrit, et les deux règles retenues ne font que
+  // désigner des images dont le marquage sent le défaut.
+  {
+    testId: '1.2.1',
+    criterionId: '1.2',
+    probableRules: ['image-redundant-alt', 'presentation-role-conflict'],
+    naWhen: 'img',
+    volatileSupport: true,
+    provesPass: false,
+  },
+  ...volatileNaBySupport(
+    '1.2',
+    ['img', 'area:not([href])', OBJECT_IMAGE, SVG, CANVAS, EMBED_IMAGE],
+    ['1.2.1'],
+  ),
+
+  // 1.3 n'est pas mappé, pas même pour le non applicable : la pertinence d'une
+  // alternative est le cœur du travail de l'auditeur, et lui laisser le critère
+  // entier vaut mieux que de le lui rendre à moitié préjugé.
+
+  // 1.4 et 1.5 — CAPTCHA. Reconnaître un CAPTCHA suppose de comprendre à quoi
+  // sert l'image ; seule son absence se constate.
+  ...volatileNaBySupport('1.4', [IMG, AREA, INPUT_IMAGE, OBJECT_IMAGE, EMBED_IMAGE, SVG, CANVAS]),
+  ...volatileNaBySupport('1.5', [ANY_IMAGE, INPUT_IMAGE]),
+
+  // 1.6 à 1.8 — description détaillée, pertinence de cette description, image
+  // texte. Trois fois un « si nécessaire » ou un jugement sur le contenu.
+  ...volatileNaBySupport('1.6', [
+    'img',
+    OBJECT_IMAGE,
+    'embed',
+    INPUT_IMAGE,
+    SVG,
+    SVG,
+    CANVAS,
+    CANVAS,
+    ANY_IMAGE,
+    '[role="img"]',
+  ]),
+  ...volatileNaBySupport('1.7', ['img', INPUT_IMAGE, OBJECT_IMAGE, EMBED_IMAGE, SVG, CANVAS]),
+  ...volatileNaBySupport('1.8', [IMG, INPUT_IMAGE, OBJECT_IMAGE, EMBED_IMAGE, CANVAS, SVG]),
+
+  // 1.9 — la légende d'image. Le lien entre une image et sa légende adjacente
+  // se juge à l'œil ; l'absence d'image, elle, se compte.
+  ...volatileNaBySupport('1.9', [
+    'img, input[type="image"], [role="img"]',
+    OBJECT_IMAGE,
+    'embed',
+    SVG,
+    CANVAS,
+  ]),
 
   // — 2.1 Titre de cadre ——————————————————————————————————————————————————
   // Le seul critère du lot qui prouve sa conformité par un sélecteur : le test

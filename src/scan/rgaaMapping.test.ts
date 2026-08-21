@@ -149,3 +149,67 @@ describe('rgaaMapping — lot formulaires', () => {
     expect(hintOf('11.2.1')).toEqual(['form-field-multiple-labels']);
   });
 });
+
+/**
+ * Le thème 1 se partage en deux : de la mécanique — un support absent, une
+ * alternative absente — et du jugement pur. Le critère 1.3, pertinence des
+ * alternatives, reste entièrement à l'auditeur : il n'est pas mappé du tout,
+ * pas même pour le non applicable.
+ */
+describe('rgaaMapping — lot images', () => {
+  const COUVERTS = ['1.1', '1.2', '1.4', '1.5', '1.6', '1.7', '1.8', '1.9'];
+
+  it('couvre huit des neuf critères du thème 1', () => {
+    expect(COUVERTS.filter(id => !MAPPED_CRITERIA.includes(id))).toEqual([]);
+  });
+
+  it('laisse la pertinence des alternatives entièrement à l’auditeur', () => {
+    expect(MAPPED_CRITERIA).not.toContain('1.3');
+  });
+
+  it('mappe tous les tests de chaque critère couvert', () => {
+    const incomplets = COUVERTS.filter(id => {
+      const mappings = RGAA_MAPPING.filter(mapping => mapping.criterionId === id);
+      return mappings.length !== (byId.get(id)?.tests?.length ?? 0);
+    });
+    expect(incomplets).toEqual([]);
+  });
+
+  it('tient le support d’image pour volatil — galerie au défilement, onglet déplié', () => {
+    const durs = RGAA_MAPPING.filter(
+      mapping => COUVERTS.includes(mapping.criterionId) && mapping.volatileSupport !== true,
+    );
+    expect(durs.map(mapping => mapping.testId)).toEqual([]);
+  });
+
+  it('aucun test du thème 1 ne prouve la conformité', () => {
+    const bavards = RGAA_MAPPING.filter(
+      mapping => COUVERTS.includes(mapping.criterionId) && mapping.provesPass,
+    );
+    expect(bavards.map(mapping => mapping.testId)).toEqual([]);
+  });
+
+  it('détecte les échecs que les règles axe recouvrent exactement', () => {
+    const ruleOf = (testId: string) =>
+      RGAA_MAPPING.find(mapping => mapping.testId === testId)?.axeRules ?? [];
+
+    expect(ruleOf('1.1.1')).toEqual(['role-img-alt']);
+    expect(ruleOf('1.1.2')).toEqual(['area-alt']);
+    expect(ruleOf('1.1.3')).toEqual(['input-image-alt']);
+    expect(ruleOf('1.1.5')).toEqual(['svg-img-alt']);
+  });
+
+  it('ne retient qu’un indice là où la règle axe déborde le test RGAA', () => {
+    const hintOf = (testId: string) =>
+      RGAA_MAPPING.find(mapping => mapping.testId === testId)?.probableRules ?? [];
+
+    // `object-alt` vise tous les `<object>`, quand le test ne vise que ceux qui
+    // portent une image : le reste relève du thème 4.
+    expect(hintOf('1.1.6')).toEqual(['object-alt']);
+    // Une image de décoration mal marquée est un indice de 1.2 — encore
+    // faudrait-il savoir qu'elle est décorative, ce qu'aucune machine ne sait.
+    expect(hintOf('1.2.1')).toEqual(
+      expect.arrayContaining(['image-redundant-alt', 'presentation-role-conflict']),
+    );
+  });
+});
