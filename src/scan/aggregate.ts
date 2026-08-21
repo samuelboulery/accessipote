@@ -23,9 +23,10 @@ export const SNIPPET_MAX = 200;
  *    vers le NA, `inapplicable` d'axe n'est jamais consulté (axe raisonne par
  *    page, le RGAA par échantillon) ;
  * 2. un contre-exemple, trouvé par sélecteur ou par axe, prouve l'échec ;
- * 3. un `incomplete` d'axe ne prouve rien. C'est là que se logent les
+ * 3. un indice — sélecteur, règle-indice, ou `incomplete` d'axe — rend le test
+ *    suspect. Un `incomplete` ne prouve rien : c'est là que se logent les
  *    contrastes sur image de fond, sur dégradé, sur opacité. Le compter comme
- *    échec ou comme succès serait mentir ;
+ *    échec ou comme succès serait mentir ; le taire serait le gâcher ;
  * 4. le succès n'est retenu que si tout ce que le test sait vérifier a été
  *    effectivement vérifié sur la page. Un sélecteur non évalué n'est pas un
  *    sélecteur sans résultat.
@@ -38,7 +39,17 @@ function verdictOnPage(mapping: RgaaMapping, page: PageScan): TestVerdict {
 
   const rules = mapping.axeRules ?? [];
   if (rules.some(rule => page.violations.some(violation => violation.id === rule))) return 'fail';
-  if (rules.some(rule => page.incomplete.includes(rule))) return 'unknown';
+
+  const hints = mapping.suspectWhen === undefined ? undefined : page.found[mapping.suspectWhen];
+  if (hints !== undefined && hints.length > 0) return 'suspect';
+
+  const suspectRules = mapping.suspectRules ?? [];
+  if (suspectRules.some(rule => page.violations.some(violation => violation.id === rule))) {
+    return 'suspect';
+  }
+
+  const watched = [...rules, ...suspectRules];
+  if (watched.some(rule => page.incomplete.some(entry => entry.id === rule))) return 'suspect';
 
   const axeSatisfied = rules.length === 0 || rules.every(rule => page.passes.includes(rule));
   const selectorSatisfied = mapping.failWhen === undefined || counterExamples !== undefined;
@@ -52,6 +63,7 @@ function verdictOnPage(mapping: RgaaMapping, page: PageScan): TestVerdict {
 function combinePages(verdicts: TestVerdict[]): TestVerdict {
   if (verdicts.length === 0) return 'unknown';
   if (verdicts.includes('fail')) return 'fail';
+  if (verdicts.includes('suspect')) return 'suspect';
   if (verdicts.every(verdict => verdict === 'na')) return 'na';
   if (verdicts.every(verdict => verdict === 'na' || verdict === 'pass')) return 'pass';
   return 'unknown';
@@ -66,6 +78,7 @@ function combinePages(verdicts: TestVerdict[]): TestVerdict {
  */
 function combineTests(tests: Array<{ verdict: TestVerdict; provesPass: boolean }>): TestVerdict {
   if (tests.some(test => test.verdict === 'fail')) return 'fail';
+  if (tests.some(test => test.verdict === 'suspect')) return 'suspect';
   if (tests.every(test => test.verdict === 'na')) return 'na';
   if (tests.every(test => (test.verdict === 'na' || test.verdict === 'pass') && test.provesPass)) {
     return 'pass';
@@ -107,14 +120,26 @@ export function aggregate(
     };
     outcome.testVerdicts[mapping.testId] = verdict;
 
-    if (verdict === 'fail') {
+    // Un soupçon sans sa preuve n'est pas instruisible : l'auditeur ne saurait
+    // pas où regarder, et le laisserait tomber.
+    if (verdict === 'fail' || verdict === 'suspect') {
+      const selector = verdict === 'fail' ? mapping.failWhen : mapping.suspectWhen;
+      const rules = verdict === 'fail' ? (mapping.axeRules ?? []) : (mapping.suspectRules ?? []);
+
       for (const page of pages) {
-        const nodes = mapping.failWhen === undefined ? [] : (page.found[mapping.failWhen] ?? []);
+        const nodes = selector === undefined ? [] : (page.found[selector] ?? []);
         outcome.evidence.push(...evidenceFrom(page.url, { id: mapping.testId, nodes }));
 
-        for (const rule of mapping.axeRules ?? []) {
-          const violation = page.violations.find(candidate => candidate.id === rule);
-          if (violation) outcome.evidence.push(...evidenceFrom(page.url, violation));
+        for (const rule of rules) {
+          const found = [...page.violations, ...page.incomplete].find(entry => entry.id === rule);
+          if (found) outcome.evidence.push(...evidenceFrom(page.url, found));
+        }
+
+        if (verdict === 'suspect') {
+          for (const rule of mapping.axeRules ?? []) {
+            const pending = page.incomplete.find(entry => entry.id === rule);
+            if (pending) outcome.evidence.push(...evidenceFrom(page.url, pending));
+          }
         }
       }
     }

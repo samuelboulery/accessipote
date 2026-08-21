@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   RGAA_MAPPING,
   MAPPED_CRITERIA,
-  FAIL_SELECTORS,
+  FOUND_SELECTORS,
   MAIN_FRAME_FAIL_SELECTORS,
 } from './rgaaMapping.ts';
 import criteriaData from '../data/criteria.json';
@@ -76,7 +76,7 @@ describe('rgaaMapping — retenue sur le conforme', () => {
 
 describe('rgaaMapping — portée des sélecteurs', () => {
   it("un sélecteur du document principal n'est pas aussi cherché dans les cadres", () => {
-    const doublons = MAIN_FRAME_FAIL_SELECTORS.filter(selector => FAIL_SELECTORS.includes(selector));
+    const doublons = MAIN_FRAME_FAIL_SELECTORS.filter(selector => FOUND_SELECTORS.includes(selector));
     expect(doublons).toEqual([]);
   });
 

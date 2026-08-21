@@ -51,7 +51,7 @@ describe('parseScanReport', () => {
   });
 
   it('rejette un schéma inconnu', () => {
-    const wrong = JSON.stringify({ schema: 2, scannedAt: 'x', urls: [], criteria: {} });
+    const wrong = JSON.stringify({ schema: 9, scannedAt: 'x', urls: [], criteria: {} });
     expect(() => parseScanReport(wrong, KNOWN)).toThrow(/schéma/i);
   });
 
@@ -139,5 +139,48 @@ describe('planScanApplication', () => {
     expect(plan.direct).toHaveLength(1);
     expect(plan.proposed).toHaveLength(0);
     expect(plan.unscanned).toBe(0);
+  });
+});
+
+/**
+ * Le rapport a gagné un troisième niveau de certitude. Les rapports produits
+ * avant lui restent lisibles : un auditeur ne doit pas voir son travail refusé
+ * parce que le moteur a évolué entre-temps.
+ */
+describe('parseScanReport — schéma 2 et soupçons', () => {
+  const withSchema = (schema: number, verdict: string) =>
+    JSON.stringify({
+      schema,
+      scannedAt: '2026-08-21T10:00:00.000Z',
+      urls: ['https://exemple.fr'],
+      criteria: { '2.1': { verdict, testVerdicts: { '2.1.1': verdict }, evidence: [] } },
+    });
+
+  it('accepte un rapport de schéma 2', () => {
+    expect(parseScanReport(withSchema(2, 'fail'), KNOWN).criteria['2.1'].verdict).toBe('fail');
+  });
+
+  it('accepte encore un rapport de schéma 1', () => {
+    expect(parseScanReport(withSchema(1, 'na'), KNOWN).criteria['2.1'].verdict).toBe('na');
+  });
+
+  it('accepte le verdict « suspect »', () => {
+    const parsed = parseScanReport(withSchema(2, 'suspect'), KNOWN);
+    expect(parsed.criteria['2.1'].verdict).toBe('suspect');
+    expect(parsed.criteria['2.1'].testVerdicts['2.1.1']).toBe('suspect');
+  });
+
+  it('conserve le schéma du rapport reçu', () => {
+    expect(parseScanReport(withSchema(1, 'fail'), KNOWN).schema).toBe(1);
+    expect(parseScanReport(withSchema(2, 'fail'), KNOWN).schema).toBe(2);
+  });
+
+  it("n'écrit jamais un soupçon sans confirmation humaine", () => {
+    const parsed = parseScanReport(withSchema(2, 'suspect'), KNOWN);
+    const criteria: CriteriaRGAA[] = [
+      { id: '2.1', title: 'Cadres', url: 'u', theme: 'Cadres', level: 'A' },
+    ];
+    const plan = planScanApplication(parsed, criteria);
+    expect(plan.direct).toEqual([]);
   });
 });

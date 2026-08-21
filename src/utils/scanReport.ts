@@ -7,10 +7,19 @@ import type {
   ScanVerdict,
 } from '../types';
 
-/** Version de rapport que cette application sait lire. */
-export const SCAN_SCHEMA = 1;
+/** Version de rapport que le scan produit aujourd'hui. */
+export const SCAN_SCHEMA = 2;
 
-const VERDICTS: ScanVerdict[] = ['fail', 'na', 'pass', 'unknown'];
+/**
+ * Versions que cette application sait lire.
+ *
+ * La 1 reste acceptée : elle ne connaît simplement pas le verdict `suspect`. Un
+ * auditeur ne doit pas voir un rapport refusé parce que le moteur a évolué
+ * entre le scan et l'import.
+ */
+const READABLE_SCHEMAS = [1, 2];
+
+const VERDICTS: ScanVerdict[] = ['fail', 'na', 'pass', 'suspect', 'unknown'];
 
 /**
  * Verdicts que le scan est autorisé à écrire sans intervention humaine.
@@ -91,9 +100,9 @@ export function parseScanReport(text: string, knownCriteriaIds: ReadonlySet<stri
     fail("Le fichier n'est pas un rapport de scan.");
   }
 
-  if (raw.schema !== SCAN_SCHEMA) {
+  if (typeof raw.schema !== 'number' || !READABLE_SCHEMAS.includes(raw.schema)) {
     fail(
-      `Schéma de rapport inconnu : ${String(raw.schema)} au lieu de ${SCAN_SCHEMA}. ` +
+      `Schéma de rapport inconnu : ${String(raw.schema)} au lieu de ${READABLE_SCHEMAS.join(' ou ')}. ` +
         'Ce rapport vient d’une autre version de l’outil de scan.',
     );
   }
@@ -112,7 +121,7 @@ export function parseScanReport(text: string, knownCriteriaIds: ReadonlySet<stri
   }
 
   return {
-    schema: SCAN_SCHEMA,
+    schema: raw.schema,
     scannedAt: raw.scannedAt,
     urls: raw.urls as string[],
     criteria,

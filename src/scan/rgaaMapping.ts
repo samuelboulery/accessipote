@@ -126,7 +126,17 @@ export const RGAA_MAPPING: RgaaMapping[] = [
     provesPass: false,
   },
   { testId: '1.1.4', criterionId: '1.1', naWhen: 'img[ismap]', provesPass: false },
-  { testId: '1.1.5', criterionId: '1.1', naWhen: 'svg', provesPass: false },
+  // Un `<svg>` sans rôle, sans nom accessible et non masqué est un défaut dans
+  // les deux branches — image porteuse sans alternative (1.1.5), ou image de
+  // décoration mal marquée (1.2.4) — mais la machine ne sait pas laquelle.
+  // C'est la définition même d'un indice.
+  {
+    testId: '1.1.5',
+    criterionId: '1.1',
+    suspectWhen: 'svg:not([role="img"]):not([aria-hidden="true"]):not([aria-label]):not(:has(title))',
+    naWhen: 'svg',
+    provesPass: false,
+  },
   { testId: '1.1.6', criterionId: '1.1', naWhen: 'object[type^="image/"]', provesPass: false },
   { testId: '1.1.7', criterionId: '1.1', naWhen: 'embed[type^="image/"]', provesPass: false },
   { testId: '1.1.8', criterionId: '1.1', naWhen: 'canvas', provesPass: false },
@@ -143,6 +153,19 @@ export const RGAA_MAPPING: RgaaMapping[] = [
   },
   // 2.2 : pertinence du titre de cadre. Hors de portée d'une machine.
   ...naOnly('2.2', 1, FRAME),
+
+  // — 3.2 Contraste du texte ——————————————————————————————————————————————
+  // `color-contrast` ne connaît ni les cas particuliers du RGAA — texte
+  // décoratif, logo, texte dans une image — ni la répartition des tests par
+  // taille et par graisse : la sonde ne remonte ni l'une ni l'autre. Aucun test
+  // n'est donc désigné, et les quatre passent ensemble à « à vérifier ». Dire
+  // lequel des quatre serait une invention.
+  ...['1', '2', '3', '4'].map(numero => ({
+    testId: `3.2.${numero}`,
+    criterionId: '3.2',
+    suspectRules: ['color-contrast'],
+    provesPass: false,
+  })),
 
   // — Thème 4 Multimédia ——————————————————————————————————————————————————
   // Treize critères, vingt-cinq tests, aucun automatisable : transcriptions,
@@ -225,7 +248,15 @@ export const RGAA_MAPPING: RgaaMapping[] = [
   // accepterait un `aria-label` seul, que le RGAA refuse. Le sélecteur ne
   // retient que le cas certain, un lien strictement vide. Sans `naWhen` : une
   // page sans lien reste à évaluer plutôt que d'être déclarée sans objet.
-  { testId: '6.2.1', criterionId: '6.2', failWhen: 'a[href]:empty', provesPass: false },
+  // `link-name` accepte un `aria-label` seul, que le RGAA refuse, et connaît des
+  // exceptions qu'il ignore : sa violation alerte, le sélecteur prouve.
+  {
+    testId: '6.2.1',
+    criterionId: '6.2',
+    failWhen: 'a[href]:empty',
+    suspectRules: ['link-name'],
+    provesPass: false,
+  },
 
   // — 8.3 Langue par défaut ————————————————————————————————————————————————
   // La validité du code de langue relève du critère 8.4 : sa présence suffit
@@ -290,10 +321,18 @@ export const NA_SELECTORS: string[] = [
   ...new Set(RGAA_MAPPING.flatMap(mapping => mapping.naWhen ?? [])),
 ];
 
-/** Sélecteurs de contre-exemple, à collecter dans tous les cadres. */
-export const FAIL_SELECTORS: string[] = [
+/**
+ * Sélecteurs à récolter dans tous les cadres.
+ *
+ * Contre-exemples et indices sont récoltés de la même façon — ce qui les
+ * distingue est le verdict qu'ils produisent, pas la façon de les trouver.
+ */
+export const FOUND_SELECTORS: string[] = [
   ...new Set(
-    RGAA_MAPPING.filter(mapping => !mapping.mainFrameOnly).flatMap(mapping => mapping.failWhen ?? []),
+    RGAA_MAPPING.filter(mapping => !mapping.mainFrameOnly).flatMap(mapping => [
+      ...(mapping.failWhen ?? []),
+      ...(mapping.suspectWhen ?? []),
+    ]),
   ),
 ];
 
@@ -304,7 +343,9 @@ export const MAIN_FRAME_FAIL_SELECTORS: string[] = [
   ),
 ];
 
-/** Les règles axe dont le scan a besoin. Rien d'autre ne sera exécuté. */
+/** Les règles axe dont le scan a besoin — preuves et indices. Rien d'autre ne sera exécuté. */
 export const AXE_RULES: string[] = [
-  ...new Set(RGAA_MAPPING.flatMap(mapping => mapping.axeRules ?? [])),
+  ...new Set(
+    RGAA_MAPPING.flatMap(mapping => [...(mapping.axeRules ?? []), ...(mapping.suspectRules ?? [])]),
+  ),
 ];

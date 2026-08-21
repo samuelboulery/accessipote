@@ -120,18 +120,6 @@ describe('aggregate — conforme', () => {
 });
 
 describe('aggregate — indéterminé', () => {
-  it("un `incomplete` d'axe ne prouve rien, ni échec ni succès", () => {
-    const pages = [page('/a', { present: { iframe: 1 }, incomplete: ['frame-title'] })];
-    expect(aggregate(pages, [FRAME])['2.1'].verdict).toBe('unknown');
-  });
-
-  it("un `incomplete` sur une page annule le succès des autres", () => {
-    const pages = [
-      page('/a', { present: { iframe: 1 }, passes: ['frame-title'] }),
-      page('/b', { present: { iframe: 1 }, incomplete: ['frame-title'] }),
-    ];
-    expect(aggregate(pages, [FRAME])['2.1'].verdict).toBe('unknown');
-  });
 
   it("une règle ni passée ni violée ne prouve pas le succès", () => {
     const pages = [page('/a', { present: { iframe: 1 } })];
@@ -216,5 +204,111 @@ describe('aggregate — contre-exemple par sélecteur', () => {
     const nu: RgaaMapping = { testId: '1.1.5', criterionId: '1.1', naWhen: 'svg', provesPass: false };
     const pages = [page('/a', { present: { svg: 1 } })];
     expect(aggregate(pages, [nu])['1.1'].verdict).toBe('unknown');
+  });
+});
+
+/**
+ * Le troisième niveau de certitude. Un soupçon n'est pas une preuve : il
+ * propose, il n'écrit pas. Ce qui compte ici est qu'il ne se confonde ni avec
+ * l'échec prouvé — qui, lui, s'écrit — ni avec le silence.
+ */
+describe('aggregate — soupçon', () => {
+  const CONTRASTE: RgaaMapping = {
+    testId: '3.2.1',
+    criterionId: '3.2',
+    suspectRules: ['color-contrast'],
+    provesPass: false,
+  };
+
+  const SVG: RgaaMapping = {
+    testId: '1.1.5',
+    criterionId: '1.1',
+    suspectWhen: 'svg:not([role="img"])',
+    naWhen: 'svg',
+    provesPass: false,
+  };
+
+  it("un `incomplete` d'axe rend le critère suspect, jamais en échec", () => {
+    const pages = [
+      page('/a', {
+        present: { iframe: 1 },
+        incomplete: [{ id: 'frame-title', nodes: [{ selector: 'iframe', snippet: '<iframe>' }] }],
+      }),
+    ];
+    expect(aggregate(pages, [FRAME])['2.1'].verdict).toBe('suspect');
+  });
+
+  it("un `incomplete` sur une page annule le succès des autres", () => {
+    const pages = [
+      page('/a', { present: { iframe: 1 }, passes: ['frame-title'] }),
+      page('/b', {
+        present: { iframe: 1 },
+        incomplete: [{ id: 'frame-title', nodes: [] }],
+      }),
+    ];
+    expect(aggregate(pages, [FRAME])['2.1'].verdict).toBe('suspect');
+  });
+
+  it('une violation de règle-indice rend le critère suspect, pas en échec', () => {
+    const pages = [
+      page('/a', {
+        violations: [{ id: 'color-contrast', nodes: [{ selector: 'p', snippet: '<p>' }] }],
+      }),
+    ];
+    expect(aggregate(pages, [CONTRASTE])['3.2'].verdict).toBe('suspect');
+  });
+
+  it('un sélecteur-indice trouvé rend le critère suspect', () => {
+    const pages = [
+      page('/a', {
+        present: { svg: 1 },
+        found: { 'svg:not([role="img"])': [{ selector: 'svg', snippet: '<svg>' }] },
+      }),
+    ];
+    expect(aggregate(pages, [SVG])['1.1'].verdict).toBe('suspect');
+  });
+
+  it("l'échec prouvé l'emporte sur le soupçon", () => {
+    const pages = [
+      page('/a', {
+        present: { iframe: 1, svg: 1 },
+        violations: [{ id: 'frame-title', nodes: [{ selector: 'iframe', snippet: '<iframe>' }] }],
+        incomplete: [{ id: 'frame-title', nodes: [] }],
+      }),
+    ];
+    expect(aggregate(pages, [FRAME])['2.1'].verdict).toBe('fail');
+  });
+
+  it('le soupçon l’emporte sur le non applicable et sur le succès', () => {
+    const pages = [
+      page('/a', { present: { svg: 0 } }),
+      page('/b', {
+        present: { svg: 1 },
+        found: { 'svg:not([role="img"])': [{ selector: 'svg', snippet: '<svg>' }] },
+      }),
+    ];
+    expect(aggregate(pages, [SVG])['1.1'].verdict).toBe('suspect');
+  });
+
+  it('joint la preuve du soupçon : page, sélecteur et extrait', () => {
+    const pages = [
+      page('https://ex.fr/a', {
+        violations: [{ id: 'color-contrast', nodes: [{ selector: 'p#intro', snippet: '<p id="intro">' }] }],
+      }),
+    ];
+    expect(aggregate(pages, [CONTRASTE])['3.2'].evidence).toEqual([
+      { url: 'https://ex.fr/a', selector: 'p#intro', snippet: '<p id="intro">' },
+    ]);
+  });
+
+  it('un soupçon ne devient jamais un conforme, même sur un test de présence pure', () => {
+    const pages = [
+      page('/a', {
+        present: { iframe: 1 },
+        passes: ['frame-title'],
+        incomplete: [{ id: 'frame-title', nodes: [] }],
+      }),
+    ];
+    expect(aggregate(pages, [FRAME])['2.1'].verdict).toBe('suspect');
   });
 });

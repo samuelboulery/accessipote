@@ -143,7 +143,11 @@ export interface Evidence {
   snippet?: string;
 }
 
-export type ScanVerdict = 'fail' | 'na' | 'pass' | 'unknown';
+/**
+ * `suspect` est le troisième niveau de certitude : un indice d'échec que rien
+ * ne prouve. Il propose, il n'écrit jamais.
+ */
+export type ScanVerdict = 'fail' | 'na' | 'pass' | 'suspect' | 'unknown';
 
 /** Résultat du scan pour un critère, sur l'échantillon entier. */
 export interface ScanOutcome {
@@ -160,6 +164,7 @@ export interface ScanOutcome {
  * qu'on a reçu.
  */
 export interface ScanReport {
+  /** Version du rapport reçu, telle qu'elle a été lue. */
   schema: number;
   scannedAt: string;
   urls: string[];

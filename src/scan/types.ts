@@ -5,8 +5,13 @@
  * la règle et la raison.
  */
 
-/** Verdict d'un test RGAA, sur une page ou agrégé sur l'échantillon. */
-export type TestVerdict = 'fail' | 'na' | 'pass' | 'unknown';
+/**
+ * Verdict d'un test RGAA, sur une page ou agrégé sur l'échantillon.
+ *
+ * `suspect` est le troisième niveau de certitude : un indice d'échec que rien
+ * ne prouve. Il propose, il n'écrit jamais — c'est l'auditeur qui tranche.
+ */
+export type TestVerdict = 'fail' | 'na' | 'pass' | 'suspect' | 'unknown';
 
 /** De quoi retrouver ce qui a produit un verdict, dans la page réelle. */
 export interface Evidence {
@@ -37,6 +42,23 @@ export interface RgaaMapping {
    * refuse.
    */
   failWhen?: string;
+  /**
+   * Sélecteur CSS dont chaque élément trouvé est un *indice* d'échec.
+   *
+   * Là où `failWhen` désigne un contre-exemple certain, celui-ci désigne une
+   * zone grise que la machine ne sait pas trancher — un `<svg>` sans rôle ni
+   * nom accessible est soit une image porteuse sans alternative, soit une image
+   * de décoration mal marquée. Les deux sont des défauts, mais pas le même.
+   */
+  suspectWhen?: string;
+  /**
+   * Règles axe dont une violation est un indice, non une preuve.
+   *
+   * Pour les règles dont le périmètre déborde celui du test RGAA, ou dont le
+   * référentiel prévoit des exceptions qu'axe ignore — le contraste d'un texte
+   * purement décoratif, par exemple.
+   */
+  suspectRules?: string[];
   /** Sélecteur CSS : absent de toutes les pages, le test est non applicable. */
   naWhen?: string;
   /**
@@ -89,8 +111,14 @@ export interface AxeRuleResult {
 export interface PageScan {
   url: string;
   violations: AxeRuleResult[];
-  /** Ids des règles qu'axe n'a pas su trancher. Ne prouvent rien. */
-  incomplete: string[];
+  /**
+   * Règles qu'axe n'a pas su trancher, avec leurs occurrences.
+   *
+   * Elles ne prouvent rien — c'est là que se logent les contrastes sur image de
+   * fond, sur dégradé, sur opacité. Elles rendent le test suspect, et leurs
+   * nœuds sont ce que l'auditeur ira regarder.
+   */
+  incomplete: AxeRuleResult[];
   /** Ids des règles passées sur cette page. */
   passes: string[];
   /** Sélecteur `naWhen` → nombre d'éléments trouvés sur cette page. */
