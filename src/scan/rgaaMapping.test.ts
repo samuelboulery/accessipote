@@ -380,3 +380,44 @@ describe('rgaaMapping — lot structuration', () => {
     expect(bavards.map(mapping => mapping.testId)).toEqual([]);
   });
 });
+
+/**
+ * Consultation, navigation, présentation : six critères que le référentiel
+ * assortit presque tous d'une porte de sortie — un mécanisme de remplacement,
+ * un contrôle offert à l'utilisateur. Une seule chose s'y prouve : une
+ * redirection `<meta>` est immédiate ou elle ne l'est pas.
+ */
+describe('rgaaMapping — lot consultation, navigation et présentation', () => {
+  const ruleOf = (testId: string) =>
+    RGAA_MAPPING.find(mapping => mapping.testId === testId)?.axeRules ?? [];
+  const hintOf = (testId: string) =>
+    RGAA_MAPPING.find(mapping => mapping.testId === testId)?.probableRules ?? [];
+
+  it('couvre les six critères visés', () => {
+    expect(MAPPED_CRITERIA).toEqual(
+      expect.arrayContaining(['10.4', '10.6', '10.12', '12.7', '13.1', '13.8']),
+    );
+  });
+
+  it('prouve une redirection différée', () => {
+    expect(ruleOf('13.1.2')).toEqual(['meta-refresh']);
+  });
+
+  it('signale sans condamner tout ce qui admet un mécanisme de remplacement', () => {
+    expect(hintOf('12.7.1')).toEqual(expect.arrayContaining(['bypass', 'skip-link']));
+    expect(hintOf('10.4.2')).toEqual(expect.arrayContaining(['meta-viewport']));
+    expect(hintOf('10.6.1')).toEqual(['link-in-text-block']);
+    expect(hintOf('10.12.1')).toEqual(['avoid-inline-spacing']);
+    expect(hintOf('13.8.1')).toEqual(['marquee']);
+    expect(hintOf('13.8.2')).toEqual(['blink']);
+  });
+
+  it('aucun de ces tests ne prouve la conformité', () => {
+    const bavards = RGAA_MAPPING.filter(
+      mapping =>
+        ['10.4', '10.6', '10.12', '12.7', '13.1', '13.8'].includes(mapping.criterionId) &&
+        mapping.provesPass,
+    );
+    expect(bavards.map(mapping => mapping.testId)).toEqual([]);
+  });
+});

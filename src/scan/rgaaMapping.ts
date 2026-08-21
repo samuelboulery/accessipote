@@ -591,6 +591,50 @@ export const RGAA_MAPPING: RgaaMapping[] = [
   { testId: '10.1.1', criterionId: '10.1', failWhen: PRESENTATION_TAGS, provesPass: false },
   { testId: '10.1.2', criterionId: '10.1', failWhen: PRESENTATION_ATTRS, provesPass: false },
 
+  // — Thème 10 Présentation ————————————————————————————————————————————————
+  // 10.4.2 — `meta-viewport` dit qu'un `user-scalable=no` ou un
+  // `maximum-scale` trop bas empêche le zoom natif. Le test admet pourtant
+  // qu'un autre mécanisme d'agrandissement fasse l'affaire : indice.
+  {
+    testId: '10.4.2',
+    criterionId: '10.4',
+    probableRules: ['meta-viewport', 'meta-viewport-large'],
+    provesPass: false,
+  },
+  // 10.6.1 — `link-in-text-block` vérifie le contraste du lien avec le texte
+  // environnant. Le test n'y soumet que les liens « dont la nature n'est pas
+  // évidente », ce qu'aucune machine ne juge.
+  { testId: '10.6.1', criterionId: '10.6', probableRules: ['link-in-text-block'], provesPass: false },
+  // 10.12.1 — un espacement figé en style en ligne empêche l'utilisateur de le
+  // modifier. « Hors cas particuliers » : indice.
+  {
+    testId: '10.12.1',
+    criterionId: '10.12',
+    probableRules: ['avoid-inline-spacing'],
+    provesPass: false,
+  },
+
+  // — 12.7 Lien d'évitement ————————————————————————————————————————————————
+  // `bypass` échoue quand la page n'offre aucun moyen d'atteindre le contenu —
+  // ni lien d'évitement, ni région, ni titre. Une page d'un seul bloc n'en a
+  // pourtant pas besoin : c'est le cas particulier que la règle ignore.
+  {
+    testId: '12.7.1',
+    criterionId: '12.7',
+    probableRules: ['bypass', 'skip-link'],
+    provesPass: false,
+  },
+
+  // — Thème 13 Consultation ————————————————————————————————————————————————
+  // 13.1.2 — le seul énoncé binaire du lot : la redirection `<meta>` est
+  // immédiate, ou elle ne l'est pas.
+  { testId: '13.1.2', criterionId: '13.1', axeRules: ['meta-refresh'], provesPass: false },
+  // 13.8 — contenu en mouvement ou clignotant déclenché automatiquement. Les
+  // deux balises historiques le font ; le test admet malgré tout qu'un contrôle
+  // soit offert à l'utilisateur.
+  { testId: '13.8.1', criterionId: '13.8', probableRules: ['marquee'], provesPass: false },
+  { testId: '13.8.2', criterionId: '13.8', probableRules: ['blink'], provesPass: false },
+
   // — Thème 11 Formulaires ————————————————————————————————————————————————
   // Le plus gros gisement du référentiel : treize critères qu'une page sans
   // champ écarte d'un coup. Mais le champ est un support volatil — mesuré sur
