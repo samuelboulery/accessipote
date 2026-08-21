@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Accessipote — pic T-0063",
+  "version": "0.0.1",
+  "description": "Pic jetable : mesurer ce qu'une extension atteint qu'une CLI Playwright n'atteint pas.",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["http://localhost:5173/*"],
+  "action": {
+    "default_title": "Accessipote — pic",
+    "default_popup": "popup.html"
+  }
+}
