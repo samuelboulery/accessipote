@@ -114,7 +114,18 @@ function drawCover(doc: jsPDF, audit: Audit) {
   doc.text(`${scope} · ${new Date().toLocaleDateString('fr-FR')}`, margin, 53);
 }
 
-function drawSummary(doc: jsPDF, cursor: Cursor, view: SummaryView) {
+/** « 2 critères pré-remplis par scan automatique le 20/08/2026 », ou rien. */
+function autoLine(audit: Audit, criteria: CriteriaRGAA[]): string | null {
+  const entries = criteria.map(c => audit.auto?.[c.id]).filter(entry => entry !== undefined);
+  if (entries.length === 0) return null;
+
+  const scannedAt = entries.map(entry => entry.scannedAt).sort().at(-1)!;
+  const date = new Date(scannedAt).toLocaleDateString('fr-FR');
+  const plural = entries.length > 1 ? 's' : '';
+  return `${entries.length} critère${plural} pré-rempli${plural} par scan automatique le ${date}`;
+}
+
+function drawSummary(doc: jsPDF, cursor: Cursor, view: SummaryView, auto: string | null) {
   const { margin, contentWidth, radiusCtrl } = PDF_LAYOUT;
   cursor.y = PDF_LAYOUT.bannerHeight + 18;
 
@@ -151,6 +162,16 @@ function drawSummary(doc: jsPDF, cursor: Cursor, view: SummaryView) {
     doc.text(doc.splitTextToSize(bucket.label, pillWidth - 8)[0], x + 4, cursor.y + 15);
   });
   cursor.y += 28;
+
+  // L'origine d'un statut compte le plus dans le document remis : sans cette
+  // ligne, le rapport présente comme humaine une décision de machine.
+  if (auto) {
+    ink(doc, PDF_RGB.inkMuted);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(auto, margin, cursor.y);
+    cursor.y += 8;
+  }
 }
 
 function drawThemeBars(doc: jsPDF, cursor: Cursor, byTheme: ThemeStats[]) {
@@ -305,7 +326,7 @@ export async function exportAuditPdf(audit: Audit, criteria: CriteriaRGAA[]): Pr
 
   const cursor = makeCursor(doc);
   drawCover(doc, audit);
-  drawSummary(doc, cursor, view);
+  drawSummary(doc, cursor, view, autoLine(audit, criteria));
   drawThemeBars(doc, cursor, stats.byTheme);
   drawDetail(doc, autoTable, cursor, audit, criteria);
   drawFooters(doc, audit);

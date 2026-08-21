@@ -290,3 +290,34 @@ describe('exportAuditPdf', () => {
     expect(mockAddPage.mock.calls.length).toBeGreaterThan(1);
   });
 });
+
+describe('exportAuditPdf — provenance du scan', () => {
+  const auto = {
+    '1.2': {
+      status: 'non-conforme' as const,
+      testIds: ['1.2.1'],
+      scannedAt: '2026-08-20T09:30:00.000Z',
+      evidence: [],
+    },
+    '3.1': {
+      status: 'non-applicable' as const,
+      testIds: [],
+      scannedAt: '2026-08-20T09:30:00.000Z',
+      evidence: [],
+    },
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('mentionne en synthèse le nombre de critères pré-remplis et la date du scan', async () => {
+    await exportAuditPdf(makeAudit({ auto }), criteria);
+    expect(writtenText()).toContain('2 critères pré-remplis par scan automatique le 20/08/2026');
+  });
+
+  it('ne dit rien quand aucun statut ne vient du scan', async () => {
+    await exportAuditPdf(makeAudit(), criteria);
+    expect(writtenText()).not.toContain('scan automatique');
+  });
+});

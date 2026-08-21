@@ -277,3 +277,51 @@ describe('DEFAULT_TEMPLATES', () => {
     expect(out).toContain('| 1.2 | Image de décoration |');
   });
 });
+
+describe('renderTemplate — provenance du scan', () => {
+  const auto = {
+    '1.2': {
+      status: 'non-conforme' as const,
+      testIds: ['1.2.1'],
+      scannedAt: '2026-08-20T09:30:00.000Z',
+      evidence: [{ url: 'https://exemple.fr/', selector: 'img' }],
+    },
+    '3.1': {
+      status: 'non-applicable' as const,
+      testIds: [],
+      scannedAt: '2026-08-20T09:30:00.000Z',
+      evidence: [],
+    },
+  };
+
+  it('compte les critères pré-remplis et donne la date du scan', () => {
+    const out = renderTemplate('{{préRemplis}} le {{dateScan}}', {
+      audit: makeAudit({ auto }),
+      criteria,
+    });
+    expect(out).toBe('2 le 20/08/2026');
+  });
+
+  it('rend un décompte nul et une date vide sans provenance', () => {
+    const out = renderTemplate('[{{préRemplis}}][{{dateScan}}]', { audit: makeAudit(), criteria });
+    expect(out).toBe('[0][]');
+  });
+
+  it('marque le critère pré-rempli dans un bloc, et lui seul', () => {
+    const out = renderTemplate('{{#critères}}{{id}}:{{provenance}}|{{/critères}}', {
+      audit: makeAudit({ auto }),
+      criteria,
+    });
+    expect(out).toBe('1.1:|1.2:scan automatique du 20/08/2026 (tests 1.2.1)|3.1:scan automatique du 20/08/2026|');
+  });
+
+  it('suit la reprise en main : le statut modifié n’est plus compté', () => {
+    // L'application supprime la provenance en même temps qu'elle change le
+    // statut ; le décompte n'a donc rien à recalculer de son côté.
+    const out = renderTemplate('{{préRemplis}}', {
+      audit: makeAudit({ auto: { '3.1': auto['3.1'] } }),
+      criteria,
+    });
+    expect(out).toBe('1');
+  });
+});
