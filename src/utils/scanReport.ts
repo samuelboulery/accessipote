@@ -100,6 +100,23 @@ function parseOutcome(raw: unknown, criteriaId: string): ScanOutcome {
 }
 
 /**
+ * Ce qu'une zone permet de conclure, et ce qu'elle ne permet pas.
+ *
+ * Un contre-exemple trouvé dans un en-tête reste un contre-exemple du site.
+ * L'absence d'un support, elle, ne prouve plus rien : « aucun tableau dans cet
+ * en-tête » ne fait pas un site sans tableau. Le non applicable de zone rejoint
+ * donc les critères à vérifier — sans quoi le scan de zone serait le moyen le
+ * plus simple de fabriquer des non applicables faux.
+ *
+ * La règle est appliquée ici, à la frontière : l'outil qui a produit le rapport
+ * n'a pas à être cru sur parole.
+ */
+function zonedOutcome(outcome: ScanOutcome, zones: string[] | undefined): ScanOutcome {
+  if (!zones || zones.length === 0 || outcome.verdict !== 'na') return outcome;
+  return { ...outcome, certainty: 'probable' };
+}
+
+/**
  * Valide un rapport de scan reçu sous forme de texte.
  *
  * C'est une frontière du système : le fichier vient du dehors et rien n'y est
@@ -135,18 +152,27 @@ export function parseScanReport(text: string, knownCriteriaIds: ReadonlySet<stri
     fail('Rapport incomplet : le champ « urls » doit être une liste d’adresses.');
   }
 
+  if (
+    raw.zones !== undefined &&
+    (!Array.isArray(raw.zones) || raw.zones.some(zone => typeof zone !== 'string'))
+  ) {
+    fail('Rapport illisible : le champ « zones » doit être une liste de sélecteurs.');
+  }
+  const zones = raw.zones as string[] | undefined;
+
   const criteria: Record<string, ScanOutcome> = {};
   for (const [criteriaId, outcome] of Object.entries(raw.criteria)) {
     if (!knownCriteriaIds.has(criteriaId)) {
       fail(`Critère inconnu dans le rapport : « ${criteriaId} ».`);
     }
-    criteria[criteriaId] = parseOutcome(outcome, criteriaId);
+    criteria[criteriaId] = zonedOutcome(parseOutcome(outcome, criteriaId), zones);
   }
 
   return {
     schema: raw.schema,
     scannedAt: raw.scannedAt,
     urls: raw.urls as string[],
+    ...(zones ? { zones } : {}),
     criteria,
   };
 }

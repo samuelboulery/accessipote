@@ -52,6 +52,7 @@ export default function ScanImportPanel({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [plan, setPlan] = useState<ScanPlan | null>(null);
   const [scannedAt, setScannedAt] = useState<string | null>(null);
+  const [zones, setZones] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // `showModal` apporte le piège à focus, l'échappement et l'inertie du fond :
@@ -76,12 +77,14 @@ export default function ScanImportPanel({
         setError(null);
         setPlan(next);
         setScannedAt(report.scannedAt);
+        setZones(report.zones ?? null);
         onApply(next.direct, report.scannedAt);
       } catch (caught) {
         // L'audit reste intact : rien n'a été écrit avant que tout soit validé.
         setError(messageOf(caught));
         setPlan(null);
         setScannedAt(null);
+        setZones(null);
       }
     },
     [criteriaList, knownCriteriaIds, onApply],
@@ -193,6 +196,14 @@ export default function ScanImportPanel({
             className="w-full rounded-ctrl border-1 border-border bg-surface p-2 text-dense"
           />
         </div>
+
+        {zones && zones.length > 0 && (
+          <p className="rounded-ctrl bg-todo-bg p-3 text-dense text-todo-fg">
+            Scan de zone — <code className="font-mono">{zones.join(', ')}</code>. Le reste de la
+            page n’a pas été regardé : les non applicables issus d’une zone sont à vérifier, jamais
+            écrits.
+          </p>
+        )}
 
         {error && (
           <p role="alert" className="rounded-ctrl bg-ko-bg p-3 text-dense text-ko-fg">

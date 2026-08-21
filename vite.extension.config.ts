@@ -71,7 +71,16 @@ export default defineConfig({
     emptyOutDir: true,
     target: 'chrome120',
     rollupOptions: {
-      input: resolve(import.meta.dirname, 'extension/popup.html'),
+      input: {
+        popup: resolve(import.meta.dirname, 'extension/popup.html'),
+        // Le manifest nomme le service worker : son fichier ne peut pas porter
+        // d'empreinte, contrairement au reste du build.
+        background: resolve(import.meta.dirname, 'extension/src/background.ts'),
+      },
+      output: {
+        entryFileNames: chunk =>
+          chunk.name === 'background' ? 'background.js' : 'assets/[name]-[hash].js',
+      },
     },
   },
 });

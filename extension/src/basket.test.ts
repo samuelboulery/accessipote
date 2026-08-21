@@ -106,6 +106,28 @@ describe('rapport du panier', () => {
     expect(report.axeVersion).toBe('4.10.0');
   });
 
+  it('porte les zones scannées, et rien si le lot ne contient que des pages', () => {
+    expect(reportOf([entry('https://exemple.fr/a')]).zones).toBeUndefined();
+
+    const report = reportOf([
+      entry('https://exemple.fr/a'),
+      { ...entry('https://exemple.fr/b'), zone: '#header' },
+    ]);
+
+    // Une seule zone dans le lot suffit : l'app dégradera tous les non
+    // applicables, faute de savoir lequel vient d'où.
+    expect(report.zones).toEqual(['#header']);
+  });
+
+  it('dégrade le non applicable dès qu’une zone est dans le lot', () => {
+    // Le décompte du popup dit alors la même chose que l'écran de revue :
+    // l'absence d'un support dans une zone ne prouve rien pour le site.
+    const report = reportOf([{ ...entry('https://exemple.fr/a'), zone: '#header' }]);
+
+    expect(report.criteria['5.7'].verdict).toBe('na');
+    expect(report.criteria['5.7'].certainty).toBe('probable');
+  });
+
   it('ne conclut au non applicable que si le support manque à toutes les pages', () => {
     const sansTable = reportOf([entry('https://exemple.fr/a'), entry('https://exemple.fr/b')]);
     expect(sansTable.criteria['5.7'].verdict).toBe('na');

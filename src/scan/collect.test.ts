@@ -99,3 +99,36 @@ describe('probeDocument — sérialisable pour injection', () => {
     expect(source).not.toMatch(/_[a-zA-Z]+\.\w+\(/);
   });
 });
+
+describe('probeDocument — sonde restreinte à une zone', () => {
+  const options = {
+    naSelectors: ['table'],
+    failSelectors: ['img:not([alt])'],
+    snippetMax: 200,
+    nodesPerSelector: 5,
+  };
+
+  it('ne regarde que la zone demandée', () => {
+    mount('<header id="head"><img></header><main><table></table><img></main>');
+    const result = probeDocument({ ...options, root: '#head' });
+
+    expect(result.present.table).toBe(0);
+    expect(result.found['img:not([alt])']).toHaveLength(1);
+  });
+
+  it('compte la zone elle-même, pas seulement sa descendance', () => {
+    mount('<table id="grille"><tr><td>x</td></tr></table>');
+    const result = probeDocument({ ...options, root: '#grille' });
+
+    expect(result.present.table).toBe(1);
+  });
+
+  it('ne renseigne rien si la zone a disparu', () => {
+    // Zone évanouie entre le choix et le scan : « pas vérifié » et non « vide ».
+    mount('<main><img></main>');
+    const result = probeDocument({ ...options, root: '#absent' });
+
+    expect(result.present).toEqual({});
+    expect(result.found).toEqual({});
+  });
+});

@@ -308,3 +308,75 @@ describe('parseScanReport — schéma 3, verdict et certitude', () => {
     expect(plan.proposed.map(entry => entry.status)).toEqual(['conforme']);
   });
 });
+
+describe('parseScanReport — rapport de zone', () => {
+  // Un rapport de zone porte les sélecteurs sur lesquels le scan a réellement
+  // porté. Le reste de la page n'a pas été regardé.
+  function zoneReport(zones: unknown, criteria: Record<string, unknown>): string {
+    return JSON.stringify({
+      schema: 3,
+      scannedAt: '2026-08-21T10:00:00.000Z',
+      urls: ['https://exemple.fr'],
+      zones,
+      criteria,
+    });
+  }
+
+  const notApplicable = {
+    '5.4': {
+      verdict: 'na',
+      certainty: 'proven',
+      testVerdicts: { '5.4.1': 'na' },
+      evidence: [],
+    },
+  };
+
+  it('retient les zones scannées', () => {
+    const parsed = parseScanReport(zoneReport(['#header'], notApplicable), KNOWN);
+    expect(parsed.zones).toEqual(['#header']);
+  });
+
+  it('dégrade tout non applicable de zone en probable', () => {
+    const parsed = parseScanReport(zoneReport(['#header'], notApplicable), KNOWN);
+
+    expect(parsed.criteria['5.4'].verdict).toBe('na');
+    expect(parsed.criteria['5.4'].certainty).toBe('probable');
+  });
+
+  it('n’écrit donc jamais un non applicable issu d’une zone', () => {
+    const parsed = parseScanReport(zoneReport(['#header'], notApplicable), KNOWN);
+    const plan = planScanApplication(parsed, [{ id: '5.4' } as CriteriaRGAA]);
+
+    expect(plan.direct).toEqual([]);
+    expect(plan.probable.map(entry => entry.criteriaId)).toEqual(['5.4']);
+  });
+
+  it('laisse un échec prouvé de zone tel quel : un contre-exemple reste un contre-exemple', () => {
+    const parsed = parseScanReport(
+      zoneReport(['#header'], {
+        '2.1': {
+          verdict: 'fail',
+          certainty: 'proven',
+          testVerdicts: { '2.1.1': 'fail' },
+          evidence: [{ url: 'https://exemple.fr' }],
+        },
+      }),
+      KNOWN,
+    );
+
+    expect(parsed.criteria['2.1'].certainty).toBe('proven');
+  });
+
+  it('rejette une liste de zones qui n’en est pas une', () => {
+    expect(() => parseScanReport(zoneReport([{ selector: '#header' }], notApplicable), KNOWN)).toThrow(
+      /zones/,
+    );
+  });
+
+  it('lit un rapport sans zones comme un rapport de pages', () => {
+    const parsed = parseScanReport(zoneReport(undefined, notApplicable), KNOWN);
+
+    expect(parsed.zones).toBeUndefined();
+    expect(parsed.criteria['5.4'].certainty).toBe('proven');
+  });
+});

@@ -20,6 +20,7 @@ const byId = <T extends HTMLElement>(id: string): T => document.getElementById(i
 
 const pageLabel = byId<HTMLParagraphElement>('page');
 const scanButton = byId<HTMLButtonElement>('scan');
+const zoneButton = byId<HTMLButtonElement>('zone');
 const sendButton = byId<HTMLButtonElement>('send');
 const emptyButton = byId<HTMLButtonElement>('empty');
 const status = byId<HTMLParagraphElement>('status');
@@ -46,7 +47,7 @@ function render(basket: BasketEntry[]): void {
     ...basket.map(entry => {
       const item = document.createElement('li');
       const label = document.createElement('span');
-      label.textContent = entry.page.url;
+      label.textContent = entry.zone ? `${entry.page.url} — zone ${entry.zone}` : entry.page.url;
       label.className = 'url';
 
       const remove = document.createElement('button');
@@ -95,6 +96,20 @@ function render(basket: BasketEntry[]): void {
 }
 
 void readBasket().then(render);
+// Le badge disait le panier tant qu'aucune fenêtre ne le montrait ; elle est là.
+void chrome.action.setBadgeText({ text: '' });
+
+/**
+ * Choisir une zone ferme ce popup : le clic part dans la page.
+ *
+ * Le service worker prend donc la suite — surbrillance, clic, scan, panier — et
+ * le badge de l'icône rend compte du reste.
+ */
+zoneButton.addEventListener('click', async () => {
+  const tab = await activeTab();
+  await chrome.runtime.sendMessage({ type: 'pick-zone', tabId: tab.id });
+  window.close();
+});
 
 scanButton.addEventListener('click', async () => {
   scanButton.disabled = true;

@@ -23,6 +23,14 @@ export interface BasketEntry {
   axeVersion: string | null;
   /** Cadres visités sur cette page — le rapport en porte la somme. */
   frames: number;
+  /**
+   * Sélecteur de la zone scannée, si le scan n'a pas porté sur la page entière.
+   *
+   * Ce qui suit tient à ça : « aucun tableau dans cet en-tête » ne fait pas un
+   * site sans tableau. L'app dégrade les non applicables d'un rapport de zone,
+   * et c'est ce champ qui l'en informe.
+   */
+  zone?: string;
 }
 
 /** Le rapport, tel que l'application sait le lire. */
@@ -30,6 +38,7 @@ export interface ExtensionReport {
   schema: number;
   scannedAt: string;
   urls: string[];
+  zones?: string[];
   axeVersion: string | null;
   crawl: { networkIdle: boolean; scrolled: boolean; frames: number };
   criteria: ReturnType<typeof aggregate>;
@@ -69,10 +78,15 @@ export async function emptyBasket(): Promise<void> {
  * règle du non applicable, qui exige l'absence du support partout.
  */
 export function reportOf(basket: BasketEntry[]): ExtensionReport {
+  // Une seule zone dans le lot suffit à teinter le rapport : le rapport ne dit
+  // pas quel non applicable vient de quelle entrée, et prudence vaut mieux.
+  const zones = basket.map(entry => entry.zone).filter((zone): zone is string => zone !== undefined);
+
   return {
     schema: SCHEMA,
     scannedAt: new Date().toISOString(),
     urls: basket.map(entry => entry.page.url),
+    ...(zones.length > 0 ? { zones } : {}),
     axeVersion: basket.map(entry => entry.axeVersion).find(Boolean) ?? null,
     // Le parcours fait partie du rapport : ici, c'est l'état où l'auditeur a
     // lui-même amené chaque page — ce qu'aucun scan automatique ne sait atteindre.
@@ -81,9 +95,35 @@ export function reportOf(basket: BasketEntry[]): ExtensionReport {
       scrolled: false,
       frames: basket.reduce((total, entry) => total + entry.frames, 0),
     },
-    criteria: aggregate(
-      basket.map(entry => entry.page),
-      RGAA_MAPPING,
+    criteria: zoned(
+      aggregate(
+        basket.map(entry => entry.page),
+        RGAA_MAPPING,
+      ),
+      zones.length > 0,
     ),
   };
+}
+
+/**
+ * Ce qu'une zone permet de conclure, et ce qu'elle ne permet pas.
+ *
+ * Un contre-exemple trouvé dans un en-tête reste un contre-exemple du site.
+ * L'absence d'un support, non : « aucun tableau dans cet en-tête » ne fait pas
+ * un site sans tableau. L'application applique la même règle à la réception —
+ * elle ne croit personne sur parole — mais le décompte du popup doit dire la
+ * même chose qu'elle, sans quoi il ment à l'auditeur.
+ */
+function zoned(
+  criteria: ReturnType<typeof aggregate>,
+  fromZone: boolean,
+): ReturnType<typeof aggregate> {
+  if (!fromZone) return criteria;
+
+  return Object.fromEntries(
+    Object.entries(criteria).map(([id, outcome]) => [
+      id,
+      outcome.verdict === 'na' ? { ...outcome, certainty: 'probable' as const } : outcome,
+    ]),
+  );
 }

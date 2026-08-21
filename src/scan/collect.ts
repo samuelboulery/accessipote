@@ -20,24 +20,34 @@ import type { ProbeOptions, ProbeResult } from './types.ts';
  * ou au non applicable.
  */
 export function probeDocument(options: ProbeOptions): ProbeResult {
-  const { naSelectors, failSelectors, snippetMax, nodesPerSelector } = options;
+  const { root, naSelectors, failSelectors, snippetMax, nodesPerSelector } = options;
 
   const label = (element: Element): string =>
     element.tagName.toLowerCase() + (element.id ? `#${element.id}` : '');
 
+  // Sur une zone, la zone elle-même compte : un scan de tableau doit voir son
+  // tableau. Zone introuvable : plus rien n'est renseigné.
+  const zone = root === undefined ? null : document.querySelector(root);
+  const missing = root !== undefined && zone === null;
+  const queryAll = (selector: string): Element[] => {
+    if (!zone) return [...document.querySelectorAll(selector)];
+    const inside = [...zone.querySelectorAll(selector)];
+    return zone.matches(selector) ? [zone, ...inside] : inside;
+  };
+
   const present: Record<string, number> = {};
-  for (const selector of naSelectors) {
+  for (const selector of missing ? [] : naSelectors) {
     try {
-      present[selector] = document.querySelectorAll(selector).length;
+      present[selector] = queryAll(selector).length;
     } catch {
       // Sélecteur non supporté : on ne renseigne rien.
     }
   }
 
   const found: Record<string, Array<{ selector: string; snippet: string }>> = {};
-  for (const selector of failSelectors) {
+  for (const selector of missing ? [] : failSelectors) {
     try {
-      found[selector] = [...document.querySelectorAll(selector)]
+      found[selector] = queryAll(selector)
         .slice(0, nodesPerSelector)
         .map(element => ({
           selector: label(element),

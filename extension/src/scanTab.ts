@@ -28,11 +28,14 @@ const NODES_PER_SELECTOR = 5;
  * suffit à elle-même. `iframes: false` coupe la mécanique inter-cadres d'axe —
  * chaque cadre est déjà visité, et les résultats sont réunis par `mergePageScan`.
  */
-async function runAxe(rules: string[]) {
+async function runAxe(rules: string[], within: string | null) {
   const axe = (globalThis as unknown as { axe?: typeof import('axe-core') }).axe;
   if (!axe) return null;
 
-  const results = await axe.run({ runOnly: { type: 'rule', values: rules }, iframes: false });
+  const context = within === null ? document : document.querySelector(within);
+  if (!context) return null;
+
+  const results = await axe.run(context, { runOnly: { type: 'rule', values: rules }, iframes: false });
   const nodesOf = (rule: { nodes: Array<{ target: unknown[]; html: string }> }) =>
     rule.nodes.map(node => ({ selector: node.target.join(' '), snippet: node.html.slice(0, 200) }));
 
@@ -58,20 +61,28 @@ export async function activeTab(): Promise<chrome.tabs.Tab> {
  * Scanne une page. Rien n'est agrégé ici : le verdict se rend sur l'échantillon
  * entier, une fois le panier envoyé.
  */
-export async function scanTab(tab: chrome.tabs.Tab): Promise<BasketEntry> {
+export async function scanTab(tab: chrome.tabs.Tab, zone?: string): Promise<BasketEntry> {
   const tabId = tab.id!;
-  const target = { tabId, allFrames: true } as const;
+  // Une zone est un élément du document principal : ses cadres sont sondés avec
+  // elle, et les cadres du reste de la page ne la concernent pas.
+  const target: chrome.scripting.InjectionTarget =
+    zone === undefined ? { tabId, allFrames: true } : { tabId, frameIds: [0] };
 
   // axe est un fichier de l'extension, chargé dans le monde isolé de chaque
   // cadre : la CSP de la page ne s'y applique pas, et rien n'est ajouté au DOM.
   await chrome.scripting.executeScript({ target, files: ['axe.min.js'] });
 
-  const axeResults = await chrome.scripting.executeScript({ target, func: runAxe, args: [AXE_RULES] });
+  const axeResults = await chrome.scripting.executeScript({
+    target,
+    func: runAxe,
+    args: [AXE_RULES, zone ?? null],
+  });
   const probes = await chrome.scripting.executeScript({
     target,
     func: probeDocument,
     args: [
       {
+        ...(zone === undefined ? {} : { root: zone }),
         naSelectors: NA_SELECTORS,
         failSelectors: FOUND_SELECTORS,
         snippetMax: SNIPPET_MAX,
@@ -86,6 +97,7 @@ export async function scanTab(tab: chrome.tabs.Tab): Promise<BasketEntry> {
     func: probeDocument,
     args: [
       {
+        ...(zone === undefined ? {} : { root: zone }),
         naSelectors: [],
         failSelectors: MAIN_FRAME_FAIL_SELECTORS,
         snippetMax: SNIPPET_MAX,
@@ -109,7 +121,13 @@ export async function scanTab(tab: chrome.tabs.Tab): Promise<BasketEntry> {
   const version = axeResults.map(entry => entry.result?.version).find(Boolean) ?? null;
   const page = mergePageScan(tab.url!, frames, (mainProbe?.result as ProbeResult | null) ?? undefined);
 
-  return { page, scannedAt: new Date().toISOString(), axeVersion: version, frames: probes.length };
+  return {
+    page,
+    scannedAt: new Date().toISOString(),
+    axeVersion: version,
+    frames: probes.length,
+    ...(zone === undefined ? {} : { zone }),
+  };
 }
 
 /** Poste le rapport dans l'onglet Accessipote et l'amène au premier plan. */

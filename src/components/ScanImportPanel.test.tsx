@@ -321,3 +321,41 @@ describe('ScanImportPanel — non applicable probable', () => {
     });
   });
 });
+
+describe('ScanImportPanel — rapport de zone', () => {
+  const zoneReport = {
+    ...report,
+    schema: 3,
+    zones: ['#header'],
+    criteria: {
+      '1.1': report.criteria['1.1'],
+      '2.1': { verdict: 'na', certainty: 'proven', testVerdicts: { '2.1.1': 'na' }, evidence: [] },
+    },
+  };
+
+  it('dit sur quelle zone le scan a porté', async () => {
+    const { user } = setup();
+    await user.upload(input(), file(zoneReport));
+
+    expect(await screen.findByText(/scan de zone/i)).toHaveTextContent('#header');
+  });
+
+  it('n’écrit pas le non applicable d’une zone : il passe à vérifier', async () => {
+    const { user, onApply } = setup();
+    await user.upload(input(), file(zoneReport));
+
+    const written = onApply.mock.calls[0][0].map(entry => entry.criteriaId);
+    expect(written).toEqual(['1.1']);
+    expect(
+      within(await screen.findByRole('group', { name: /à vérifier/i })).getByText('2.1'),
+    ).toBeInTheDocument();
+  });
+
+  it('ne parle pas de zone pour un rapport de pages', async () => {
+    const { user } = setup();
+    await user.upload(input(), file(report));
+
+    await screen.findByRole('group', { name: /non conformes/i });
+    expect(screen.queryByText(/scan de zone/i)).not.toBeInTheDocument();
+  });
+});

@@ -175,6 +175,14 @@ export interface ScanReport {
   schema: number;
   scannedAt: string;
   urls: string[];
+  /**
+   * Sélecteurs des zones sur lesquelles le scan a porté, s'il n'a pas porté sur
+   * des pages entières.
+   *
+   * Le reste de la page n'a alors pas été regardé : l'absence d'un support dans
+   * une zone ne dit rien du site, et tout non applicable en devient probable.
+   */
+  zones?: string[];
   criteria: Record<string, ScanOutcome>;
 }
 

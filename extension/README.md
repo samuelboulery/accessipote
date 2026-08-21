@@ -30,6 +30,22 @@ sur l'échantillon entier.
 Le panier n'est pas vidé après l'envoi : le renvoyer vers un autre audit reste
 possible. « Vider le panier » est explicite.
 
+## Le scan de zone
+
+« Ajouter une zone… » met la page en mode choix : l'élément survolé se souligne,
+un clic le retient, `Échap` annule. Le scan ne porte alors que sur cet élément et
+sa descendance.
+
+Un piège vient avec, et il est traité à trois endroits : l'absence d'un support
+dans une zone ne prouve plus rien pour le site. Tout non applicable issu d'un lot
+qui contient au moins une zone est donc dégradé en « à vérifier » — par le popup
+pour que son décompte soit honnête, et par l'application à la réception, qui ne
+croit aucun outil sur parole.
+
+Ce geste vit dans le service worker (`background.ts`) et non dans le popup :
+cliquer dans la page ferme le popup de Chrome. Le badge de l'icône rend compte
+du panier tant qu'aucune fenêtre n'est ouverte pour le faire.
+
 ## Ce que fait l'extension
 
 Elle récolte, et rien d'autre. Le mapping RGAA, l'agrégation et les verdicts

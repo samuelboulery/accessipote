@@ -98,6 +98,13 @@ export interface RgaaMapping {
  * `executeScript` sait transmettre à la fonction qu'il injecte.
  */
 export interface ProbeOptions {
+  /**
+   * Sélecteur de la zone à sonder. Absent, la sonde regarde tout le document.
+   *
+   * Une zone introuvable ne renseigne rien : « pas vérifié » n'est pas « vide »,
+   * et seul le second peut mener au non applicable.
+   */
+  root?: string;
   /** Sélecteurs de support, à compter. */
   naSelectors: string[];
   /** Sélecteurs de contre-exemple, à récolter. */
