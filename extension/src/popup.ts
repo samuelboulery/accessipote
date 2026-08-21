@@ -1,24 +1,35 @@
 /**
- * Le popup : trois gestes, aucun jargon.
+ * Le popup : naviguer, ajouter au panier, envoyer le lot.
  *
  * Il n'affiche qu'un décompte par niveau de certitude — le tri fin et la
- * décision appartiennent à l'application, qui sait ce qu'est un audit.
+ * décision appartiennent à l'application, qui sait ce qu'est un audit. Le
+ * décompte porte sur le panier entier, parce que c'est sur l'échantillon
+ * complet que se rend un verdict.
  */
+import {
+  emptyBasket,
+  putInBasket,
+  readBasket,
+  removeFromBasket,
+  reportOf,
+} from './basket.ts';
+import type { BasketEntry } from './basket.ts';
 import { activeTab, scanTab, sendToApp } from './scanTab.ts';
-import type { ExtensionReport } from './scanTab.ts';
 
 const byId = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
 const pageLabel = byId<HTMLParagraphElement>('page');
 const scanButton = byId<HTMLButtonElement>('scan');
 const sendButton = byId<HTMLButtonElement>('send');
+const emptyButton = byId<HTMLButtonElement>('empty');
 const status = byId<HTMLParagraphElement>('status');
 const tally = byId<HTMLUListElement>('tally');
-
-let report: ExtensionReport | null = null;
+const basketList = byId<HTMLUListElement>('basket');
 
 const messageOf = (error: unknown): string =>
   error instanceof Error ? error.message : 'Scan impossible sur cette page.';
+
+const pageCount = (count: number) => `${count} page${count > 1 ? 's' : ''}`;
 
 void activeTab()
   .then(tab => {
@@ -29,9 +40,40 @@ void activeTab()
     scanButton.disabled = true;
   });
 
-function showTally(scanned: ExtensionReport): void {
+/** Le panier vu par l'auditeur : ses pages, et ce que le lot vaut aujourd'hui. */
+function render(basket: BasketEntry[]): void {
+  basketList.replaceChildren(
+    ...basket.map(entry => {
+      const item = document.createElement('li');
+      const label = document.createElement('span');
+      label.textContent = entry.page.url;
+      label.className = 'url';
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'remove';
+      remove.textContent = 'Retirer';
+      remove.setAttribute('aria-label', `Retirer ${entry.page.url} du panier`);
+      remove.addEventListener('click', async () => {
+        render(await removeFromBasket(entry.page.url));
+      });
+
+      item.append(label, remove);
+      return item;
+    }),
+  );
+
+  const filled = basket.length > 0;
+  basketList.hidden = !filled;
+  emptyButton.hidden = !filled;
+  sendButton.hidden = !filled;
+  tally.hidden = !filled;
+  if (!filled) return;
+
+  sendButton.textContent = `Envoyer ${pageCount(basket.length)} vers Accessipote`;
+
   const counts = { fail: 0, na: 0, probable: 0, pass: 0, unknown: 0 };
-  for (const outcome of Object.values(scanned.criteria)) {
+  for (const outcome of Object.values(reportOf(basket).criteria)) {
     if (outcome.certainty === 'probable' && outcome.verdict !== 'pass') counts.probable += 1;
     else counts[outcome.verdict] += 1;
   }
@@ -50,34 +92,38 @@ function showTally(scanned: ExtensionReport): void {
       return item;
     }),
   );
-  tally.hidden = false;
 }
+
+void readBasket().then(render);
 
 scanButton.addEventListener('click', async () => {
   scanButton.disabled = true;
   status.textContent = 'Scan en cours…';
-  tally.hidden = true;
 
   try {
-    report = await scanTab(await activeTab());
-    showTally(report);
-    status.textContent = 'Page scannée. Rien n’a encore été écrit dans votre audit.';
-    sendButton.hidden = false;
+    render(await putInBasket(await scanTab(await activeTab())));
+    status.textContent = 'Page ajoutée au panier. Rien n’a encore été écrit dans votre audit.';
   } catch (error) {
-    report = null;
     status.textContent = messageOf(error);
   } finally {
     scanButton.disabled = false;
   }
 });
 
+emptyButton.addEventListener('click', async () => {
+  await emptyBasket();
+  render([]);
+  status.textContent = 'Panier vidé.';
+});
+
 sendButton.addEventListener('click', async () => {
-  if (!report) return;
   sendButton.disabled = true;
 
   try {
-    await sendToApp(report);
-    status.textContent = 'Rapport envoyé — la revue s’ouvre dans Accessipote.';
+    const basket = await readBasket();
+    if (basket.length === 0) return;
+    await sendToApp(reportOf(basket));
+    status.textContent = 'Panier envoyé — la revue s’ouvre dans Accessipote.';
   } catch (error) {
     status.textContent = messageOf(error);
   } finally {

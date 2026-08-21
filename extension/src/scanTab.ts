@@ -7,7 +7,7 @@
  *
  * Rien ne sort du poste : aucune requête réseau n'est faite ici.
  */
-import { aggregate } from '../../src/scan/aggregate.ts';
+import type { BasketEntry, ExtensionReport } from './basket.ts';
 import { probeDocument } from '../../src/scan/collect.ts';
 import { mergePageScan } from '../../src/scan/mergeFrames.ts';
 import {
@@ -15,23 +15,11 @@ import {
   FOUND_SELECTORS,
   MAIN_FRAME_FAIL_SELECTORS,
   NA_SELECTORS,
-  RGAA_MAPPING,
 } from '../../src/scan/rgaaMapping.ts';
 import type { FrameScan, ProbeResult } from '../../src/scan/types.ts';
 
-const SCHEMA = 3;
 const SNIPPET_MAX = 200;
 const NODES_PER_SELECTOR = 5;
-
-/** Le rapport, tel que l'application sait le lire. */
-export interface ExtensionReport {
-  schema: number;
-  scannedAt: string;
-  urls: string[];
-  axeVersion: string | null;
-  crawl: { networkIdle: boolean; scrolled: boolean; frames: number };
-  criteria: ReturnType<typeof aggregate>;
-}
 
 /**
  * Exécuté dans chaque cadre de la page.
@@ -66,7 +54,11 @@ export async function activeTab(): Promise<chrome.tabs.Tab> {
   return tab;
 }
 
-export async function scanTab(tab: chrome.tabs.Tab): Promise<ExtensionReport> {
+/**
+ * Scanne une page. Rien n'est agrégé ici : le verdict se rend sur l'échantillon
+ * entier, une fois le panier envoyé.
+ */
+export async function scanTab(tab: chrome.tabs.Tab): Promise<BasketEntry> {
   const tabId = tab.id!;
   const target = { tabId, allFrames: true } as const;
 
@@ -117,16 +109,7 @@ export async function scanTab(tab: chrome.tabs.Tab): Promise<ExtensionReport> {
   const version = axeResults.map(entry => entry.result?.version).find(Boolean) ?? null;
   const page = mergePageScan(tab.url!, frames, (mainProbe?.result as ProbeResult | null) ?? undefined);
 
-  return {
-    schema: SCHEMA,
-    scannedAt: new Date().toISOString(),
-    urls: [tab.url!],
-    axeVersion: version,
-    // Le parcours fait partie du rapport : ici, c'est l'état où l'auditeur a
-    // lui-même amené la page — ce qu'aucun scan automatique ne sait atteindre.
-    crawl: { networkIdle: false, scrolled: false, frames: probes.length },
-    criteria: aggregate([page], RGAA_MAPPING),
-  };
+  return { page, scannedAt: new Date().toISOString(), axeVersion: version, frames: probes.length };
 }
 
 /** Poste le rapport dans l'onglet Accessipote et l'amène au premier plan. */

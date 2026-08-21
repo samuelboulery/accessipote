@@ -5,7 +5,8 @@
   "description": "Scanne la page ouverte et pré-remplit un audit RGAA dans Accessipote. Aucune donnée ne quitte votre poste.",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "host_permissions": [
     "http://localhost:5173/*",

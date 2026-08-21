@@ -9,11 +9,16 @@
     <h1>Scan RGAA</h1>
     <p id="page" class="page">—</p>
 
-    <button id="scan" type="button" class="primary">Scanner cette page</button>
-    <button id="send" type="button" hidden>Envoyer vers Accessipote</button>
+    <button id="scan" type="button" class="primary">Ajouter cette page au panier</button>
 
     <p id="status" role="status" class="status"></p>
+
+    <h2>Panier d’échantillon</h2>
+    <ul id="basket" class="basket" hidden></ul>
     <ul id="tally" class="tally" hidden></ul>
+
+    <button id="send" type="button" hidden>Envoyer vers Accessipote</button>
+    <button id="empty" type="button" class="quiet" hidden>Vider le panier</button>
 
     <script type="module" src="./src/popup.ts"></script>
   </body>
