@@ -14,6 +14,7 @@ import { chromium } from 'playwright';
 import type { Frame, Page } from 'playwright';
 import type { AxeResults } from 'axe-core';
 import { aggregate } from '../scan/aggregate.ts';
+import { probeDocument } from '../scan/collect.ts';
 import {
   AXE_RULES,
   FAIL_SELECTORS,
@@ -21,7 +22,7 @@ import {
   NA_SELECTORS,
   RGAA_MAPPING,
 } from '../scan/rgaaMapping.ts';
-import type { PageScan, TestVerdict } from '../scan/types.ts';
+import type { PageScan, ProbeResult, TestVerdict } from '../scan/types.ts';
 
 const SCHEMA = 1;
 const SNIPPET_MAX = 200;
@@ -59,61 +60,26 @@ function readAxeSource(): string {
   return readFileSync(require.resolve('axe-core'), 'utf8');
 }
 
-interface Collected {
-  present: Record<string, number>;
-  found: Record<string, Array<{ selector: string; snippet: string }>>;
-}
-
 /**
- * Compte les supports et collecte les contre-exemples dans un document.
+ * Injecte la sonde dans un document et rapporte ce qu'elle y trouve.
  *
- * Un sélecteur qui lève — syntaxe non supportée par le navigateur — n'est
- * simplement pas renseigné. C'est voulu : le moteur distingue « vérifié, aucun
- * contre-exemple » de « pas vérifié », et seul le premier peut mener au succès.
+ * `evaluate` sérialise `probeDocument` par `toString()` : la fonction doit se
+ * suffire à elle-même, et c'est un invariant tenu par ses tests. Un cadre
+ * détaché ou inaccessible rend `null` — pas un résultat vide, qui ferait croire
+ * à une page vérifiée.
  */
 async function collect(
   frame: Frame,
   naSelectors: string[],
   failSelectors: string[],
-): Promise<Collected | null> {
+): Promise<ProbeResult | null> {
   return frame
-    .evaluate(
-      ({ na, fail, snippetMax, nodesPerSelector }) => {
-        const label = (element: Element): string =>
-          element.tagName.toLowerCase() + (element.id ? `#${element.id}` : '');
-
-        const present: Record<string, number> = {};
-        for (const selector of na) {
-          try {
-            present[selector] = document.querySelectorAll(selector).length;
-          } catch {
-            // Sélecteur non supporté : on ne renseigne rien.
-          }
-        }
-
-        const found: Record<string, Array<{ selector: string; snippet: string }>> = {};
-        for (const selector of fail) {
-          try {
-            found[selector] = [...document.querySelectorAll(selector)]
-              .slice(0, nodesPerSelector)
-              .map((element) => ({
-                selector: label(element),
-                snippet: element.outerHTML.slice(0, snippetMax),
-              }));
-          } catch {
-            // Idem : un sélecteur qui lève n'est pas un sélecteur sans résultat.
-          }
-        }
-
-        return { present, found };
-      },
-      {
-        na: naSelectors,
-        fail: failSelectors,
-        snippetMax: SNIPPET_MAX,
-        nodesPerSelector: NODES_PER_SELECTOR,
-      },
-    )
+    .evaluate(probeDocument, {
+      naSelectors,
+      failSelectors,
+      snippetMax: SNIPPET_MAX,
+      nodesPerSelector: NODES_PER_SELECTOR,
+    })
     .catch(() => null);
 }
 

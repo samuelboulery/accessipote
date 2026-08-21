@@ -56,6 +56,29 @@ export interface RgaaMapping {
   provesPass: boolean;
 }
 
+/**
+ * Ce que la sonde doit chercher dans un document.
+ *
+ * Un seul argument sérialisable : c'est tout ce qu'un `evaluate` ou un
+ * `executeScript` sait transmettre à la fonction qu'il injecte.
+ */
+export interface ProbeOptions {
+  /** Sélecteurs de support, à compter. */
+  naSelectors: string[];
+  /** Sélecteurs de contre-exemple, à récolter. */
+  failSelectors: string[];
+  /** Longueur maximale d'un extrait — le rapport finit dans localStorage. */
+  snippetMax: number;
+  /** Nombre maximal de contre-exemples retenus par sélecteur. */
+  nodesPerSelector: number;
+}
+
+/** Ce que la sonde rapporte d'un document. Un sélecteur absent n'a pas été évalué. */
+export interface ProbeResult {
+  present: Record<string, number>;
+  found: Record<string, Array<{ selector: string; snippet: string }>>;
+}
+
 /** Une règle axe en violation sur une page, avec ses occurrences. */
 export interface AxeRuleResult {
   id: string;
