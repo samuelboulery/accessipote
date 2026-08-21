@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AlertTriangle, ChevronLeft, ChevronRight, ExternalLink, Info, Plus, Trash2 } from 'lucide-react';
 import { getWcagCriteriaUrl, getTechniqueUrl, parseWcagReference } from '../utils/generateWcagLinks';
-import type { CriteriaRGAA, Mode, CriteriaStatus } from '../types';
+import type { AutoVerdict, CriteriaRGAA, Mode, CriteriaStatus } from '../types';
 import { parseMarkdownLinks } from '../utils/parseMarkdown';
 import { parseInlineCode } from '../utils/parseInlineCode';
 import { cleanCriteriaTitle } from '../utils/stripMarkdown';
 import StatusButtons from './StatusButtons';
+import AutoBadge from './AutoBadge';
 import CriteriaNotice from './CriteriaNotice';
 import { getSelectableStatuses } from '../utils/statusPresentation';
 
@@ -13,6 +14,8 @@ interface CriteriaDetailProps {
   criterion: CriteriaRGAA;
   mode: Mode;
   currentStatus?: CriteriaStatus;
+  /** Provenance du scan, tant que l'humain n'a pas repris la main sur le statut. */
+  auto?: AutoVerdict;
   checkedTests: string[];
   note: string;
   pages: string[];
@@ -30,6 +33,7 @@ export default function CriteriaDetail({
   criterion,
   mode,
   currentStatus,
+  auto,
   checkedTests,
   note,
   pages,
@@ -207,6 +211,8 @@ export default function CriteriaDetail({
             blocks={criterion.technicalNote ?? []}
             onGlossaryClick={onGlossaryClick}
           />
+
+          <AutoBadge auto={auto} />
 
           <StatusButtons
             criteriaId={criteriaId}

@@ -1,16 +1,19 @@
 import { useMemo, memo } from 'react';
 import { ExternalLink } from 'lucide-react';
-import type { CriteriaRGAA, Mode, CriteriaStatus } from '../types';
+import type { AutoVerdict, CriteriaRGAA, Mode, CriteriaStatus } from '../types';
 import { parseMarkdownLinks } from '../utils/parseMarkdown';
 import { getWcagCriteriaUrl, parseWcagReference } from '../utils/generateWcagLinks';
 import { getStatusPresentation } from '../utils/statusPresentation';
 import StatusPill from './StatusPill';
 import StatusButtons from './StatusButtons';
+import AutoBadge from './AutoBadge';
 
 interface CriteriaItemProps {
   criterion: CriteriaRGAA;
   mode: Mode;
   currentStatus?: CriteriaStatus;
+  /** Provenance du scan, tant que l'humain n'a pas repris la main sur le statut. */
+  auto?: AutoVerdict;
   onStatusChange: (criteriaId: string, status: CriteriaStatus | '') => void;
   onGlossaryClick: (slug: string) => void;
   onCriteriaClick?: (criteriaId: string) => void;
@@ -23,6 +26,7 @@ function CriteriaItem({
   criterion,
   mode,
   currentStatus,
+  auto,
   onStatusChange,
   onGlossaryClick,
   onCriteriaClick,
@@ -93,6 +97,12 @@ function CriteriaItem({
         <span className="flex-1" />
         <StatusPill status={currentStatus} mode={mode} />
       </div>
+
+      {auto && (
+        <div className="mb-3">
+          <AutoBadge auto={auto} />
+        </div>
+      )}
 
       <h3 className="mb-3 max-w-[66ch] text-lead font-semibold [text-wrap:pretty]">
         {parsedTitle}
