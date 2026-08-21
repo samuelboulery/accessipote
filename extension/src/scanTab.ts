@@ -19,7 +19,7 @@ import {
 } from '../../src/scan/rgaaMapping.ts';
 import type { FrameScan, ProbeResult } from '../../src/scan/types.ts';
 
-const SCHEMA = 2;
+const SCHEMA = 3;
 const SNIPPET_MAX = 200;
 const NODES_PER_SELECTOR = 5;
 

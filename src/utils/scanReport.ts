@@ -2,27 +2,34 @@ import type {
   ClassicStatus,
   CriteriaRGAA,
   Evidence,
+  ScanCertainty,
   ScanOutcome,
   ScanReport,
   ScanVerdict,
 } from '../types';
 
 /** Version de rapport que le scan produit aujourd'hui. */
-export const SCAN_SCHEMA = 2;
+export const SCAN_SCHEMA = 3;
 
 /**
  * Versions que cette application sait lire.
  *
- * La 1 reste acceptée : elle ne connaît simplement pas le verdict `suspect`. Un
+ * Les anciennes restent acceptées : la 1 ignore la certitude, la 2 la porte
+ * sous la forme d'un verdict `suspect` qui se relit ici en échec probable. Un
  * auditeur ne doit pas voir un rapport refusé parce que le moteur a évolué
  * entre le scan et l'import.
  */
-const READABLE_SCHEMAS = [1, 2];
+const READABLE_SCHEMAS = [1, 2, 3];
 
-const VERDICTS: ScanVerdict[] = ['fail', 'na', 'pass', 'suspect', 'unknown'];
+const VERDICTS: ScanVerdict[] = ['fail', 'na', 'pass', 'unknown'];
+const CERTAINTIES: ScanCertainty[] = ['proven', 'probable'];
+
+/** Le verdict du schéma 2 : un échec que rien ne prouve. */
+const LEGACY_SUSPECT = 'suspect';
 
 /**
- * Verdicts que le scan est autorisé à écrire sans intervention humaine.
+ * Verdicts que le scan est autorisé à écrire sans intervention humaine — et
+ * seulement quand ils sont prouvés.
  *
  * `pass` en est absent, et ce n'est pas un oubli : « rien trouvé dans les états
  * scannés » ne prouve pas la conformité. Il passe par une confirmation.
@@ -52,10 +59,21 @@ function parseEvidence(raw: unknown, criteriaId: string): Evidence {
 }
 
 function parseVerdict(raw: unknown, criteriaId: string): ScanVerdict {
+  // Un `suspect` de schéma 2 disait « non conforme probable » : il se relit sur
+  // les deux axes, sans quoi le travail fait avant la bascule serait perdu.
+  if (raw === LEGACY_SUSPECT) return 'fail';
   if (typeof raw !== 'string' || !VERDICTS.includes(raw as ScanVerdict)) {
     fail(`Verdict inconnu sur le critère ${criteriaId} : « ${String(raw)} ».`);
   }
   return raw as ScanVerdict;
+}
+
+function parseCertainty(raw: unknown, verdict: unknown, criteriaId: string): ScanCertainty {
+  if (raw === undefined) return verdict === LEGACY_SUSPECT ? 'probable' : 'proven';
+  if (typeof raw !== 'string' || !CERTAINTIES.includes(raw as ScanCertainty)) {
+    fail(`Certitude inconnue sur le critère ${criteriaId} : « ${String(raw)} ».`);
+  }
+  return raw as ScanCertainty;
 }
 
 function parseOutcome(raw: unknown, criteriaId: string): ScanOutcome {
@@ -73,7 +91,12 @@ function parseOutcome(raw: unknown, criteriaId: string): ScanOutcome {
     ? raw.evidence.map(item => parseEvidence(item, criteriaId))
     : [];
 
-  return { verdict: parseVerdict(raw.verdict, criteriaId), testVerdicts, evidence };
+  return {
+    verdict: parseVerdict(raw.verdict, criteriaId),
+    certainty: parseCertainty(raw.certainty, raw.verdict, criteriaId),
+    testVerdicts,
+    evidence,
+  };
 }
 
 /**
@@ -186,14 +209,27 @@ export function planScanApplication(report: ScanReport, criteria: CriteriaRGAA[]
 
   for (const criterion of criteria) {
     const outcome = report.criteria[criterion.id];
-    const direct = outcome ? DIRECT_STATUS[outcome.verdict] : undefined;
+    if (!outcome) {
+      plan.unscanned += 1;
+      continue;
+    }
 
-    if (outcome && direct) plan.direct.push(entryFrom(criterion.id, outcome, direct));
-    else if (outcome?.verdict === 'suspect') {
-      plan.probable.push({ ...entryFrom(criterion.id, outcome, 'non-conforme'), fromHint: true });
-    } else if (outcome?.verdict === 'pass') {
+    // Le conforme ne s'écrit jamais seul, prouvé ou non : il se propose.
+    if (outcome.verdict === 'pass') {
       plan.proposed.push(entryFrom(criterion.id, outcome, 'conforme'));
-    } else plan.unscanned += 1;
+      continue;
+    }
+
+    const status = DIRECT_STATUS[outcome.verdict];
+    if (status === undefined) {
+      plan.unscanned += 1;
+    } else if (outcome.certainty === 'proven') {
+      plan.direct.push(entryFrom(criterion.id, outcome, status));
+    } else {
+      // Le verdict est conservé : un non applicable probable se propose en non
+      // applicable, jamais en non conforme.
+      plan.probable.push({ ...entryFrom(criterion.id, outcome, status), fromHint: true });
+    }
   }
 
   return plan;

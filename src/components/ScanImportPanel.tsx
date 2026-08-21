@@ -218,8 +218,8 @@ export default function ScanImportPanel({
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 id="scan-probable-title" className="text-body font-semibold">
                   À vérifier — {plan.probable.length} critère
-                  {plan.probable.length > 1 ? 's' : ''} soupçonné
-                  {plan.probable.length > 1 ? 's' : ''} en échec
+                  {plan.probable.length > 1 ? 's' : ''} probable
+                  {plan.probable.length > 1 ? 's' : ''}
                 </h3>
                 {plan.probable.length > 0 && (
                   <button
@@ -237,8 +237,9 @@ export default function ScanImportPanel({
                 )}
               </div>
               <p className="text-dense text-ink-muted">
-                Un indice n’est pas une preuve : la machine dit où regarder, elle ne tranche pas.
-                Ce qui est accepté ici porte la mention dans sa provenance.
+                Un indice n’est pas une preuve : un écart soupçonné, ou un support qui
+                n’apparaît peut-être qu’après un clic. La machine dit où regarder, elle ne
+                tranche pas — ce qui est accepté ici porte la mention dans sa provenance.
               </p>
               <ul>{plan.probable.map(row)}</ul>
             </div>

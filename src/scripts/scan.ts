@@ -23,9 +23,9 @@ import {
   NA_SELECTORS,
   RGAA_MAPPING,
 } from '../scan/rgaaMapping.ts';
-import type { FrameScan, PageScan, ProbeResult, TestVerdict } from '../scan/types.ts';
+import type { Certainty, FrameScan, PageScan, ProbeResult, TestVerdict } from '../scan/types.ts';
 
-const SCHEMA = 2;
+const SCHEMA = 3;
 const SNIPPET_MAX = 200;
 const NODES_PER_SELECTOR = 5;
 const PAGE_TIMEOUT_MS = 30_000;
@@ -201,9 +201,14 @@ const LABELS: Record<TestVerdict, string> = {
   fail: 'non conforme',
   na: 'non applicable',
   pass: 'conforme (à confirmer)',
-  suspect: 'non conforme ? (à vérifier)',
   unknown: 'à évaluer',
 };
+
+/** Ce que la certitude change au libellé : un probable attend l'auditeur. */
+function label(outcome: { verdict: TestVerdict; certainty: Certainty }): string {
+  const base = LABELS[outcome.verdict];
+  return outcome.certainty === 'probable' ? `${base} ? (à vérifier)` : base;
+}
 
 async function main(): Promise<void> {
   const { urls, out } = parseArgs(process.argv.slice(2));
@@ -247,16 +252,18 @@ async function main(): Promise<void> {
     criteria,
   };
 
-  const counts: Record<TestVerdict, number> = { fail: 0, na: 0, pass: 0, suspect: 0, unknown: 0 };
+  const counts: Record<TestVerdict, number> = { fail: 0, na: 0, pass: 0, unknown: 0 };
+  let probable = 0;
   console.log(`\n${urls.length} page(s), ${Object.keys(criteria).length} critère(s) regardé(s)\n`);
   for (const [id, outcome] of Object.entries(criteria)) {
-    counts[outcome.verdict] += 1;
-    console.log(`  ${id.padEnd(5)} ${LABELS[outcome.verdict]}`);
+    if (outcome.certainty === 'probable' && outcome.verdict !== 'pass') probable += 1;
+    else counts[outcome.verdict] += 1;
+    console.log(`  ${id.padEnd(5)} ${label(outcome)}`);
   }
 
   const preRemplis = counts.fail + counts.na;
   console.log(`\n  ${counts.fail} non conforme(s), ${counts.na} non applicable(s) — écrits directement`);
-  console.log(`  ${counts.suspect} soupçon(s) — à vérifier par l'auditeur`);
+  console.log(`  ${probable} probable(s) — à vérifier par l'auditeur`);
   console.log(`  ${counts.pass} conforme(s) proposé(s) — à confirmer par l'auditeur`);
   console.log(`  ${counts.unknown} laissé(s) à évaluer`);
   console.log(`\n  Pré-remplissage sans intervention : ${preRemplis} critère(s).`);

@@ -3,6 +3,7 @@
 // la résolution ESM de Node exige un spécificateur complet.
 import type {
   AxeRuleResult,
+  Certainty,
   CriterionOutcome,
   Evidence,
   PageScan,
@@ -14,59 +15,86 @@ import type {
 export const EVIDENCE_MAX = 3;
 export const SNIPPET_MAX = 200;
 
+/** Un verdict et ce qui le fonde. Les deux voyagent toujours ensemble. */
+interface Judgement {
+  verdict: TestVerdict;
+  certainty: Certainty;
+}
+
+const PROVEN = (verdict: TestVerdict): Judgement => ({ verdict, certainty: 'proven' });
+const PROBABLE = (verdict: TestVerdict): Judgement => ({ verdict, certainty: 'probable' });
+
 /**
- * Verdict d'un test sur une seule page.
+ * Verdict d'un test sur une seule page, avec sa certitude.
  *
  * L'ordre des règles n'est pas cosmétique :
  *
  * 1. l'absence du support rend le test non applicable — c'est le seul chemin
  *    vers le NA, `inapplicable` d'axe n'est jamais consulté (axe raisonne par
- *    page, le RGAA par échantillon) ;
+ *    page, le RGAA par échantillon). La certitude suit la nature du support :
+ *    un support volatil n'apparaît parfois qu'après un clic, son absence ne
+ *    prouve donc rien ;
  * 2. un contre-exemple, trouvé par sélecteur ou par axe, prouve l'échec ;
- * 3. un indice — sélecteur, règle-indice, ou `incomplete` d'axe — rend le test
- *    suspect. Un `incomplete` ne prouve rien : c'est là que se logent les
+ * 3. un indice — sélecteur, règle-indice, ou `incomplete` d'axe — rend l'échec
+ *    probable. Un `incomplete` ne prouve rien : c'est là que se logent les
  *    contrastes sur image de fond, sur dégradé, sur opacité. Le compter comme
  *    échec ou comme succès serait mentir ; le taire serait le gâcher ;
  * 4. le succès n'est retenu que si tout ce que le test sait vérifier a été
  *    effectivement vérifié sur la page. Un sélecteur non évalué n'est pas un
  *    sélecteur sans résultat.
  */
-function verdictOnPage(mapping: RgaaMapping, page: PageScan): TestVerdict {
-  if (mapping.naWhen !== undefined && (page.present[mapping.naWhen] ?? 0) === 0) return 'na';
-
-  const counterExamples = mapping.failWhen === undefined ? undefined : page.found[mapping.failWhen];
-  if (counterExamples !== undefined && counterExamples.length > 0) return 'fail';
-
-  const rules = mapping.axeRules ?? [];
-  if (rules.some(rule => page.violations.some(violation => violation.id === rule))) return 'fail';
-
-  const hints = mapping.suspectWhen === undefined ? undefined : page.found[mapping.suspectWhen];
-  if (hints !== undefined && hints.length > 0) return 'suspect';
-
-  const suspectRules = mapping.suspectRules ?? [];
-  if (suspectRules.some(rule => page.violations.some(violation => violation.id === rule))) {
-    return 'suspect';
+function verdictOnPage(mapping: RgaaMapping, page: PageScan): Judgement {
+  if (mapping.naWhen !== undefined && (page.present[mapping.naWhen] ?? 0) === 0) {
+    return mapping.volatileSupport ? PROBABLE('na') : PROVEN('na');
   }
 
-  const watched = [...rules, ...suspectRules];
-  if (watched.some(rule => page.incomplete.some(entry => entry.id === rule))) return 'suspect';
+  const counterExamples = mapping.failWhen === undefined ? undefined : page.found[mapping.failWhen];
+  if (counterExamples !== undefined && counterExamples.length > 0) return PROVEN('fail');
+
+  const rules = mapping.axeRules ?? [];
+  if (rules.some(rule => page.violations.some(violation => violation.id === rule))) {
+    return PROVEN('fail');
+  }
+
+  const hints = mapping.probableWhen === undefined ? undefined : page.found[mapping.probableWhen];
+  if (hints !== undefined && hints.length > 0) return PROBABLE('fail');
+
+  const probableRules = mapping.probableRules ?? [];
+  if (probableRules.some(rule => page.violations.some(violation => violation.id === rule))) {
+    return PROBABLE('fail');
+  }
+
+  const watched = [...rules, ...probableRules];
+  if (watched.some(rule => page.incomplete.some(entry => entry.id === rule))) return PROBABLE('fail');
 
   const axeSatisfied = rules.length === 0 || rules.every(rule => page.passes.includes(rule));
   const selectorSatisfied = mapping.failWhen === undefined || counterExamples !== undefined;
   const somethingWasChecked = rules.length > 0 || counterExamples !== undefined;
-  if (axeSatisfied && selectorSatisfied && somethingWasChecked) return 'pass';
+  if (axeSatisfied && selectorSatisfied && somethingWasChecked) return PROVEN('pass');
 
-  return 'unknown';
+  return PROVEN('unknown');
 }
 
-/** Verdict d'un test sur l'échantillon entier. */
-function combinePages(verdicts: TestVerdict[]): TestVerdict {
-  if (verdicts.length === 0) return 'unknown';
-  if (verdicts.includes('fail')) return 'fail';
-  if (verdicts.includes('suspect')) return 'suspect';
-  if (verdicts.every(verdict => verdict === 'na')) return 'na';
-  if (verdicts.every(verdict => verdict === 'na' || verdict === 'pass')) return 'pass';
-  return 'unknown';
+/** L'échec prouvé prime le probable, et le probable prime tout le reste. */
+function combinePages(judgements: Judgement[]): Judgement {
+  if (judgements.length === 0) return PROVEN('unknown');
+
+  const fails = judgements.filter(judgement => judgement.verdict === 'fail');
+  if (fails.length > 0) {
+    return fails.some(judgement => judgement.certainty === 'proven')
+      ? PROVEN('fail')
+      : PROBABLE('fail');
+  }
+
+  const verdicts = judgements.map(judgement => judgement.verdict);
+  // Un seul non applicable douteux suffit à rendre douteux celui de l'échantillon.
+  if (verdicts.every(verdict => verdict === 'na')) {
+    return judgements.some(judgement => judgement.certainty === 'probable')
+      ? PROBABLE('na')
+      : PROVEN('na');
+  }
+  if (verdicts.every(verdict => verdict === 'na' || verdict === 'pass')) return PROVEN('pass');
+  return PROVEN('unknown');
 }
 
 /**
@@ -76,14 +104,10 @@ function combinePages(verdicts: TestVerdict[]): TestVerdict {
  * test de pertinence dans le lot et le critère retombe en indéterminé : la
  * machine ne tranche pas la pertinence d'une alternative ou d'un intitulé.
  */
-function combineTests(tests: Array<{ verdict: TestVerdict; provesPass: boolean }>): TestVerdict {
-  if (tests.some(test => test.verdict === 'fail')) return 'fail';
-  if (tests.some(test => test.verdict === 'suspect')) return 'suspect';
-  if (tests.every(test => test.verdict === 'na')) return 'na';
-  if (tests.every(test => (test.verdict === 'na' || test.verdict === 'pass') && test.provesPass)) {
-    return 'pass';
-  }
-  return 'unknown';
+function combineTests(tests: Array<Judgement & { provesPass: boolean }>): Judgement {
+  const combined = combinePages(tests);
+  if (combined.verdict !== 'pass') return combined;
+  return tests.every(test => test.provesPass) ? combined : PROVEN('unknown');
 }
 
 function truncate(snippet: string): string {
@@ -110,11 +134,16 @@ export function aggregate(
 ): Record<string, CriterionOutcome> {
   const outcomes: Record<string, CriterionOutcome> = {};
 
+  const judgements: Record<string, Judgement> = {};
+
   for (const mapping of mappings) {
-    const verdict = combinePages(pages.map(page => verdictOnPage(mapping, page)));
+    const judgement = combinePages(pages.map(page => verdictOnPage(mapping, page)));
+    const { verdict, certainty } = judgement;
+    judgements[`${mapping.criterionId}/${mapping.testId}`] = judgement;
 
     const outcome = outcomes[mapping.criterionId] ?? {
       verdict: 'unknown' as TestVerdict,
+      certainty: 'proven' as Certainty,
       testVerdicts: {},
       evidence: [],
     };
@@ -122,9 +151,10 @@ export function aggregate(
 
     // Un soupçon sans sa preuve n'est pas instruisible : l'auditeur ne saurait
     // pas où regarder, et le laisserait tomber.
-    if (verdict === 'fail' || verdict === 'suspect') {
-      const selector = verdict === 'fail' ? mapping.failWhen : mapping.suspectWhen;
-      const rules = verdict === 'fail' ? (mapping.axeRules ?? []) : (mapping.suspectRules ?? []);
+    if (verdict === 'fail') {
+      const proven = certainty === 'proven';
+      const selector = proven ? mapping.failWhen : mapping.probableWhen;
+      const rules = proven ? (mapping.axeRules ?? []) : (mapping.probableRules ?? []);
 
       for (const page of pages) {
         const nodes = selector === undefined ? [] : (page.found[selector] ?? []);
@@ -135,7 +165,7 @@ export function aggregate(
           if (found) outcome.evidence.push(...evidenceFrom(page.url, found));
         }
 
-        if (verdict === 'suspect') {
+        if (!proven) {
           for (const rule of mapping.axeRules ?? []) {
             const pending = page.incomplete.find(entry => entry.id === rule);
             if (pending) outcome.evidence.push(...evidenceFrom(page.url, pending));
@@ -151,11 +181,13 @@ export function aggregate(
     const tests = mappings
       .filter(mapping => mapping.criterionId === criterionId)
       .map(mapping => ({
-        verdict: outcome.testVerdicts[mapping.testId],
+        ...judgements[`${criterionId}/${mapping.testId}`],
         provesPass: mapping.provesPass,
       }));
 
-    outcome.verdict = combineTests(tests);
+    const combined = combineTests(tests);
+    outcome.verdict = combined.verdict;
+    outcome.certainty = combined.certainty;
     outcome.evidence = outcome.evidence.slice(0, EVIDENCE_MAX);
   }
 

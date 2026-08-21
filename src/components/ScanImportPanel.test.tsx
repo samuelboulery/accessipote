@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ScanImportPanel from './ScanImportPanel';
-import type { Audit, CriteriaRGAA, ScanReport } from '../types';
+import type { Audit, CriteriaRGAA } from '../types';
 import type { ScanPlanEntry } from '../utils/scanReport';
 
 const criteriaList: CriteriaRGAA[] = [
@@ -27,7 +27,7 @@ const report = {
     '2.1': { verdict: 'na', testVerdicts: { '2.1.1': 'na' }, evidence: [] },
     '8.3': { verdict: 'pass', testVerdicts: { '8.3.1': 'pass' }, evidence: [] },
   },
-} satisfies ScanReport;
+};
 
 const audit: Audit = {
   id: 'audit-1',
@@ -273,5 +273,51 @@ describe('ScanImportPanel — soupçons', () => {
 
     const [entries] = onApply.mock.calls[0];
     expect(entries.map(entry => entry.criteriaId).sort()).toEqual(['1.1', '2.1']);
+  });
+});
+
+/**
+ * Le non applicable probable : le support n'a pas été vu, mais il pouvait être
+ * caché derrière un clic. Il se propose comme non applicable — le proposer en
+ * non conforme écrirait le contraire de ce que la machine a constaté.
+ */
+describe('ScanImportPanel — non applicable probable', () => {
+  const withProbableNa = {
+    ...report,
+    schema: 3,
+    criteria: {
+      ...report.criteria,
+      '9.1': {
+        verdict: 'na',
+        certainty: 'probable',
+        testVerdicts: { '9.1.1': 'na' },
+        evidence: [],
+      },
+    },
+  };
+
+  it('range le non applicable probable dans « à vérifier », en non applicable', async () => {
+    const { user } = setup();
+    await user.upload(input(), file(withProbableNa));
+
+    const toCheck = screen.getByRole('group', { name: /à vérifier/i });
+    const row = within(toCheck).getByRole('listitem', { name: /9\.1/ });
+    expect(within(row).getByText(/non applicable/i)).toBeInTheDocument();
+  });
+
+  it('ne l’écrit pas à l’import, et le marque comme indice une fois accepté', async () => {
+    const { onApply, user } = setup();
+    await user.upload(input(), file(withProbableNa));
+    expect(onApply.mock.calls[0][0].map(entry => entry.criteriaId)).not.toContain('9.1');
+
+    const toCheck = screen.getByRole('group', { name: /à vérifier/i });
+    const row = within(toCheck).getByRole('listitem', { name: /9\.1/ });
+    await user.click(within(row).getByRole('button', { name: /appliquer/i }));
+
+    expect(onApply.mock.calls[1][0][0]).toMatchObject({
+      criteriaId: '9.1',
+      status: 'non-applicable',
+      fromHint: true,
+    });
   });
 });

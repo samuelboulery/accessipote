@@ -30,13 +30,16 @@ void activeTab()
   });
 
 function showTally(scanned: ExtensionReport): void {
-  const counts = { fail: 0, na: 0, suspect: 0, pass: 0, unknown: 0 };
-  for (const outcome of Object.values(scanned.criteria)) counts[outcome.verdict] += 1;
+  const counts = { fail: 0, na: 0, probable: 0, pass: 0, unknown: 0 };
+  for (const outcome of Object.values(scanned.criteria)) {
+    if (outcome.certainty === 'probable' && outcome.verdict !== 'pass') counts.probable += 1;
+    else counts[outcome.verdict] += 1;
+  }
 
   const lines: Array<[number, string]> = [
     [counts.fail, 'non conforme(s) — prouvé(s)'],
     [counts.na, 'non applicable(s) — prouvé(s)'],
-    [counts.suspect, 'à vérifier — soupçon(s)'],
+    [counts.probable, 'à vérifier — probable(s)'],
     [counts.pass, 'conforme(s) proposé(s)'],
   ];
 

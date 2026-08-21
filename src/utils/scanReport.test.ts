@@ -2,9 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { parseScanReport, planScanApplication } from './scanReport';
 import type { CriteriaRGAA, ScanReport } from '../types';
 
-const KNOWN = new Set(['1.1', '2.1', '5.4', '8.3']);
+const KNOWN = new Set(['1.1', '2.1', '5.4', '8.3', '11.1']);
 
-function report(criteria: ScanReport['criteria']): string {
+// Du JSON brut de schéma 1, tel qu'il arrive du dehors : il n'a pas encore la
+// forme d'un `ScanReport`, et le typer ainsi masquerait ce que la validation fait.
+function report(criteria: Record<string, unknown>): string {
   return JSON.stringify({
     schema: 1,
     scannedAt: '2026-08-20T10:00:00.000Z',
@@ -90,11 +92,13 @@ const criteriaList: CriteriaRGAA[] = [
   { id: '8.3', title: 'Langue', url: 'u', theme: 'Éléments obligatoires', level: 'A' },
 ];
 
+const proven = { certainty: 'proven' } as const;
+
 const outcomes: ScanReport['criteria'] = {
-  '1.1': { verdict: 'fail', testVerdicts: { '1.1.1': 'fail', '1.1.2': 'unknown' }, evidence: [{ url: 'p' }] },
-  '2.1': { verdict: 'na', testVerdicts: { '2.1.1': 'na' }, evidence: [] },
-  '8.3': { verdict: 'pass', testVerdicts: { '8.3.1': 'pass' }, evidence: [] },
-  '5.4': { verdict: 'unknown', testVerdicts: { '5.4.1': 'unknown' }, evidence: [] },
+  '1.1': { ...proven, verdict: 'fail', testVerdicts: { '1.1.1': 'fail', '1.1.2': 'unknown' }, evidence: [{ url: 'p' }] },
+  '2.1': { ...proven, verdict: 'na', testVerdicts: { '2.1.1': 'na' }, evidence: [] },
+  '8.3': { ...proven, verdict: 'pass', testVerdicts: { '8.3.1': 'pass' }, evidence: [] },
+  '5.4': { ...proven, verdict: 'unknown', testVerdicts: { '5.4.1': 'unknown' }, evidence: [] },
 };
 
 const parsed: ScanReport = {
@@ -164,10 +168,15 @@ describe('parseScanReport — schéma 2 et soupçons', () => {
     expect(parseScanReport(withSchema(1, 'na'), KNOWN).criteria['2.1'].verdict).toBe('na');
   });
 
-  it('accepte le verdict « suspect »', () => {
+  it('relit un « suspect » de schéma 2 en échec probable', () => {
     const parsed = parseScanReport(withSchema(2, 'suspect'), KNOWN);
-    expect(parsed.criteria['2.1'].verdict).toBe('suspect');
-    expect(parsed.criteria['2.1'].testVerdicts['2.1.1']).toBe('suspect');
+    expect(parsed.criteria['2.1'].verdict).toBe('fail');
+    expect(parsed.criteria['2.1'].certainty).toBe('probable');
+    expect(parsed.criteria['2.1'].testVerdicts['2.1.1']).toBe('fail');
+  });
+
+  it('tient un verdict sans certitude pour prouvé', () => {
+    expect(parseScanReport(withSchema(2, 'fail'), KNOWN).criteria['2.1'].certainty).toBe('proven');
   });
 
   it('conserve le schéma du rapport reçu', () => {
@@ -246,5 +255,56 @@ describe('planScanApplication — tri par certitude', () => {
   it('ne compte pas un soupçon parmi les critères non évalués', () => {
     const plan = planScanApplication(parsed(), criteria);
     expect(plan.unscanned).toBe(0);
+  });
+});
+
+/**
+ * Le schéma 3 sépare le verdict de sa certitude. Ce qui compte ici : un non
+ * applicable probable se propose comme non applicable, jamais comme non
+ * conforme — c'est exactement l'erreur qu'un troisième verdict aurait produite.
+ */
+describe('parseScanReport — schéma 3, verdict et certitude', () => {
+  const criteria: CriteriaRGAA[] = [
+    { id: '2.1', title: 'Cadres', url: 'u', theme: 'Cadres', level: 'A' },
+    { id: '11.1', title: 'Champs', url: 'u', theme: 'Formulaires', level: 'A' },
+  ];
+
+  const report3 = (verdict: string, certainty: string) =>
+    JSON.stringify({
+      schema: 3,
+      scannedAt: '2026-08-21T10:00:00.000Z',
+      urls: ['https://exemple.fr'],
+      criteria: {
+        '11.1': { verdict, certainty, testVerdicts: { '11.1.1': verdict }, evidence: [] },
+      },
+    });
+
+  it('accepte un rapport de schéma 3', () => {
+    const parsed = parseScanReport(report3('na', 'probable'), KNOWN);
+    expect(parsed.schema).toBe(3);
+    expect(parsed.criteria['11.1']).toMatchObject({ verdict: 'na', certainty: 'probable' });
+  });
+
+  it('refuse une certitude inconnue', () => {
+    expect(() => parseScanReport(report3('na', 'peut-être'), KNOWN)).toThrow(/certitude/i);
+  });
+
+  it('propose un non applicable probable en non applicable, jamais en non conforme', () => {
+    const plan = planScanApplication(parseScanReport(report3('na', 'probable'), KNOWN), criteria);
+    expect(plan.direct).toEqual([]);
+    expect(plan.probable.map(entry => entry.status)).toEqual(['non-applicable']);
+    expect(plan.probable[0].fromHint).toBe(true);
+  });
+
+  it('écrit directement un non applicable prouvé', () => {
+    const plan = planScanApplication(parseScanReport(report3('na', 'proven'), KNOWN), criteria);
+    expect(plan.direct.map(entry => entry.status)).toEqual(['non-applicable']);
+    expect(plan.probable).toEqual([]);
+  });
+
+  it('ne propose jamais un conforme probable en écriture directe', () => {
+    const plan = planScanApplication(parseScanReport(report3('pass', 'probable'), KNOWN), criteria);
+    expect(plan.direct).toEqual([]);
+    expect(plan.proposed.map(entry => entry.status)).toEqual(['conforme']);
   });
 });

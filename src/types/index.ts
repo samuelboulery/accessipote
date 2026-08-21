@@ -143,15 +143,22 @@ export interface Evidence {
   snippet?: string;
 }
 
+/** Ce que le critère devient. */
+export type ScanVerdict = 'fail' | 'na' | 'pass' | 'unknown';
+
 /**
- * `suspect` est le troisième niveau de certitude : un indice d'échec que rien
- * ne prouve. Il propose, il n'écrit jamais.
+ * Ce qui fonde le verdict, sur un axe séparé.
+ *
+ * `probable` se combine à n'importe quel verdict — un échec soupçonné, un non
+ * applicable dont le support n'apparaît peut-être qu'après un clic. Rien de
+ * probable ne s'écrit sans l'auditeur.
  */
-export type ScanVerdict = 'fail' | 'na' | 'pass' | 'suspect' | 'unknown';
+export type ScanCertainty = 'proven' | 'probable';
 
 /** Résultat du scan pour un critère, sur l'échantillon entier. */
 export interface ScanOutcome {
   verdict: ScanVerdict;
+  certainty: ScanCertainty;
   testVerdicts: Record<string, ScanVerdict>;
   evidence: Evidence[];
 }

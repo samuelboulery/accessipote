@@ -133,7 +133,7 @@ export const RGAA_MAPPING: RgaaMapping[] = [
   {
     testId: '1.1.5',
     criterionId: '1.1',
-    suspectWhen: 'svg:not([role="img"]):not([aria-hidden="true"]):not([aria-label]):not(:has(title))',
+    probableWhen: 'svg:not([role="img"]):not([aria-hidden="true"]):not([aria-label]):not(:has(title))',
     naWhen: 'svg',
     provesPass: false,
   },
@@ -163,7 +163,7 @@ export const RGAA_MAPPING: RgaaMapping[] = [
   ...['1', '2', '3', '4'].map(numero => ({
     testId: `3.2.${numero}`,
     criterionId: '3.2',
-    suspectRules: ['color-contrast'],
+    probableRules: ['color-contrast'],
     provesPass: false,
   })),
 
@@ -254,7 +254,7 @@ export const RGAA_MAPPING: RgaaMapping[] = [
     testId: '6.2.1',
     criterionId: '6.2',
     failWhen: 'a[href]:empty',
-    suspectRules: ['link-name'],
+    probableRules: ['link-name'],
     provesPass: false,
   },
 
@@ -331,7 +331,7 @@ export const FOUND_SELECTORS: string[] = [
   ...new Set(
     RGAA_MAPPING.filter(mapping => !mapping.mainFrameOnly).flatMap(mapping => [
       ...(mapping.failWhen ?? []),
-      ...(mapping.suspectWhen ?? []),
+      ...(mapping.probableWhen ?? []),
     ]),
   ),
 ];
@@ -346,6 +346,6 @@ export const MAIN_FRAME_FAIL_SELECTORS: string[] = [
 /** Les règles axe dont le scan a besoin — preuves et indices. Rien d'autre ne sera exécuté. */
 export const AXE_RULES: string[] = [
   ...new Set(
-    RGAA_MAPPING.flatMap(mapping => [...(mapping.axeRules ?? []), ...(mapping.suspectRules ?? [])]),
+    RGAA_MAPPING.flatMap(mapping => [...(mapping.axeRules ?? []), ...(mapping.probableRules ?? [])]),
   ),
 ];

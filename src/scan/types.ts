@@ -5,13 +5,18 @@
  * la règle et la raison.
  */
 
+/** Verdict d'un test RGAA, sur une page ou agrégé sur l'échantillon. */
+export type TestVerdict = 'fail' | 'na' | 'pass' | 'unknown';
+
 /**
- * Verdict d'un test RGAA, sur une page ou agrégé sur l'échantillon.
+ * Ce qui fonde un verdict — un axe séparé, et non un verdict de plus.
  *
- * `suspect` est le troisième niveau de certitude : un indice d'échec que rien
- * ne prouve. Il propose, il n'écrit jamais — c'est l'auditeur qui tranche.
+ * `probable` dit « la machine penche par là sans le prouver ». Il se combine à
+ * n'importe quel verdict : un échec soupçonné, un non applicable dont le
+ * support n'apparaît peut-être qu'après un clic. Confondre les deux axes
+ * proposerait un non applicable probable en non conforme.
  */
-export type TestVerdict = 'fail' | 'na' | 'pass' | 'suspect' | 'unknown';
+export type Certainty = 'proven' | 'probable';
 
 /** De quoi retrouver ce qui a produit un verdict, dans la page réelle. */
 export interface Evidence {
@@ -50,7 +55,7 @@ export interface RgaaMapping {
    * nom accessible est soit une image porteuse sans alternative, soit une image
    * de décoration mal marquée. Les deux sont des défauts, mais pas le même.
    */
-  suspectWhen?: string;
+  probableWhen?: string;
   /**
    * Règles axe dont une violation est un indice, non une preuve.
    *
@@ -58,9 +63,17 @@ export interface RgaaMapping {
    * référentiel prévoit des exceptions qu'axe ignore — le contraste d'un texte
    * purement décoratif, par exemple.
    */
-  suspectRules?: string[];
+  probableRules?: string[];
   /** Sélecteur CSS : absent de toutes les pages, le test est non applicable. */
   naWhen?: string;
+  /**
+   * Le support de `naWhen` peut n'apparaître qu'après une interaction.
+   *
+   * Mesuré sur Accessipote : zéro champ de formulaire au chargement, quatorze
+   * après trois clics. Pour ces supports, l'absence ne prouve rien — le non
+   * applicable reste `probable`, et attend l'auditeur.
+   */
+  volatileSupport?: true;
   /**
    * Restreint le test au document principal.
    *
@@ -144,6 +157,7 @@ export interface PageScan {
 /** Résultat agrégé pour un critère, sur l'ensemble de l'échantillon. */
 export interface CriterionOutcome {
   verdict: TestVerdict;
+  certainty: Certainty;
   testVerdicts: Record<string, TestVerdict>;
   evidence: Evidence[];
 }

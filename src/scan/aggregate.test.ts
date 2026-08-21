@@ -208,34 +208,46 @@ describe('aggregate — contre-exemple par sélecteur', () => {
 });
 
 /**
- * Le troisième niveau de certitude. Un soupçon n'est pas une preuve : il
- * propose, il n'écrit pas. Ce qui compte ici est qu'il ne se confonde ni avec
- * l'échec prouvé — qui, lui, s'écrit — ni avec le silence.
+ * Deux axes, lus séparément : le verdict dit ce que le critère devient, la
+ * certitude dit ce qui le fonde. Les confondre proposerait un non applicable
+ * probable en non conforme, et écrirait des soupçons comme des constats.
  */
-describe('aggregate — soupçon', () => {
+describe('aggregate — certitude', () => {
   const CONTRASTE: RgaaMapping = {
     testId: '3.2.1',
     criterionId: '3.2',
-    suspectRules: ['color-contrast'],
+    probableRules: ['color-contrast'],
     provesPass: false,
   };
 
   const SVG: RgaaMapping = {
     testId: '1.1.5',
     criterionId: '1.1',
-    suspectWhen: 'svg:not([role="img"])',
+    probableWhen: 'svg:not([role="img"])',
     naWhen: 'svg',
     provesPass: false,
   };
 
-  it("un `incomplete` d'axe rend le critère suspect, jamais en échec", () => {
+  /** Un champ de formulaire n'existe pas toujours au chargement : son absence ne prouve rien. */
+  const CHAMP: RgaaMapping = {
+    testId: '11.1.1',
+    criterionId: '11.1',
+    naWhen: 'input',
+    volatileSupport: true,
+    provesPass: false,
+  };
+
+  it("un `incomplete` d'axe rend l'échec probable, jamais prouvé", () => {
     const pages = [
       page('/a', {
         present: { iframe: 1 },
         incomplete: [{ id: 'frame-title', nodes: [{ selector: 'iframe', snippet: '<iframe>' }] }],
       }),
     ];
-    expect(aggregate(pages, [FRAME])['2.1'].verdict).toBe('suspect');
+    expect(aggregate(pages, [FRAME])['2.1']).toMatchObject({
+      verdict: 'fail',
+      certainty: 'probable',
+    });
   });
 
   it("un `incomplete` sur une page annule le succès des autres", () => {
@@ -246,29 +258,38 @@ describe('aggregate — soupçon', () => {
         incomplete: [{ id: 'frame-title', nodes: [] }],
       }),
     ];
-    expect(aggregate(pages, [FRAME])['2.1'].verdict).toBe('suspect');
+    expect(aggregate(pages, [FRAME])['2.1']).toMatchObject({
+      verdict: 'fail',
+      certainty: 'probable',
+    });
   });
 
-  it('une violation de règle-indice rend le critère suspect, pas en échec', () => {
+  it('une violation de règle-indice rend l’échec probable, pas prouvé', () => {
     const pages = [
       page('/a', {
         violations: [{ id: 'color-contrast', nodes: [{ selector: 'p', snippet: '<p>' }] }],
       }),
     ];
-    expect(aggregate(pages, [CONTRASTE])['3.2'].verdict).toBe('suspect');
+    expect(aggregate(pages, [CONTRASTE])['3.2']).toMatchObject({
+      verdict: 'fail',
+      certainty: 'probable',
+    });
   });
 
-  it('un sélecteur-indice trouvé rend le critère suspect', () => {
+  it('un sélecteur-indice trouvé rend l’échec probable', () => {
     const pages = [
       page('/a', {
         present: { svg: 1 },
         found: { 'svg:not([role="img"])': [{ selector: 'svg', snippet: '<svg>' }] },
       }),
     ];
-    expect(aggregate(pages, [SVG])['1.1'].verdict).toBe('suspect');
+    expect(aggregate(pages, [SVG])['1.1']).toMatchObject({
+      verdict: 'fail',
+      certainty: 'probable',
+    });
   });
 
-  it("l'échec prouvé l'emporte sur le soupçon", () => {
+  it("l'échec prouvé l'emporte sur l'échec probable", () => {
     const pages = [
       page('/a', {
         present: { iframe: 1, svg: 1 },
@@ -276,10 +297,13 @@ describe('aggregate — soupçon', () => {
         incomplete: [{ id: 'frame-title', nodes: [] }],
       }),
     ];
-    expect(aggregate(pages, [FRAME])['2.1'].verdict).toBe('fail');
+    expect(aggregate(pages, [FRAME])['2.1']).toMatchObject({
+      verdict: 'fail',
+      certainty: 'proven',
+    });
   });
 
-  it('le soupçon l’emporte sur le non applicable et sur le succès', () => {
+  it('l’échec probable l’emporte sur le non applicable et sur le succès', () => {
     const pages = [
       page('/a', { present: { svg: 0 } }),
       page('/b', {
@@ -287,7 +311,10 @@ describe('aggregate — soupçon', () => {
         found: { 'svg:not([role="img"])': [{ selector: 'svg', snippet: '<svg>' }] },
       }),
     ];
-    expect(aggregate(pages, [SVG])['1.1'].verdict).toBe('suspect');
+    expect(aggregate(pages, [SVG])['1.1']).toMatchObject({
+      verdict: 'fail',
+      certainty: 'probable',
+    });
   });
 
   it('joint la preuve du soupçon : page, sélecteur et extrait', () => {
@@ -309,6 +336,40 @@ describe('aggregate — soupçon', () => {
         incomplete: [{ id: 'frame-title', nodes: [] }],
       }),
     ];
-    expect(aggregate(pages, [FRAME])['2.1'].verdict).toBe('suspect');
+    expect(aggregate(pages, [FRAME])['2.1']).toMatchObject({
+      verdict: 'fail',
+      certainty: 'probable',
+    });
+  });
+
+  it('un support structurel absent prouve le non applicable', () => {
+    const pages = [page('/a', { present: { iframe: 0 } })];
+    expect(aggregate(pages, [FRAME])['2.1']).toMatchObject({
+      verdict: 'na',
+      certainty: 'proven',
+    });
+  });
+
+  it('un support volatil absent rend le non applicable probable, pas un échec', () => {
+    const pages = [page('/a', { present: { input: 0 } })];
+    expect(aggregate(pages, [CHAMP])['11.1']).toMatchObject({
+      verdict: 'na',
+      certainty: 'probable',
+    });
+  });
+
+  it('un seul non applicable probable suffit à dégrader la certitude du critère', () => {
+    const pages = [page('/a', { present: { input: 0 } }), page('/b', { present: { input: 0 } })];
+    expect(aggregate(pages, [CHAMP])['11.1'].certainty).toBe('probable');
+  });
+
+  it('un verdict prouvé porte la certitude « proven »', () => {
+    const pages = [
+      page('/a', {
+        present: { iframe: 1 },
+        violations: [{ id: 'frame-title', nodes: [{ selector: 'iframe', snippet: '<iframe>' }] }],
+      }),
+    ];
+    expect(aggregate(pages, [FRAME])['2.1'].certainty).toBe('proven');
   });
 });
