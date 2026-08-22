@@ -27,6 +27,36 @@ export interface CrawlLimits {
   maxDepth: number;
 }
 
+/** Bornes du parcours, celles-là mêmes que le formulaire affiche. */
+const BOUNDS = {
+  pages: { min: 1, max: 50, fallback: 10 },
+  depth: { min: 0, max: 5, fallback: 2 },
+};
+
+function bounded(raw: string, { min, max, fallback }: { min: number; max: number; fallback: number }): number {
+  // Un champ vide n'est pas un zéro : `Number('')` en fait un, et le crawl
+  // partirait sur une limite que personne n'a saisie.
+  if (raw.trim() === '') return fallback;
+  const value = Math.floor(Number(raw));
+  if (!Number.isFinite(value)) return fallback;
+  return Math.min(max, Math.max(min, value));
+}
+
+/**
+ * Les limites telles qu'on peut les lancer, à partir de ce qui a été saisi.
+ *
+ * Un champ vide vaut zéro et un champ illisible vaut `NaN` : les deux
+ * produiraient un crawl qui ne scanne rien sans jamais dire pourquoi. Les bornes
+ * du formulaire ne valent rien non plus tant qu'aucun envoi ne les vérifie.
+ */
+export function boundedLimits(start: string, pages: string, depth: string): CrawlLimits {
+  return {
+    start,
+    maxPages: bounded(pages, BOUNDS.pages),
+    maxDepth: bounded(depth, BOUNDS.depth),
+  };
+}
+
 /** Ce que le popup affiche pendant que le crawl tourne — et après. */
 export interface CrawlState {
   running: boolean;
@@ -113,9 +143,19 @@ export async function crawl(limits: CrawlLimits): Promise<void> {
   const origin = new URL(limits.start).origin;
   const rules = await fetchRobots(origin);
 
-  const queue: Array<{ url: string; depth: number }> = [{ url: limits.start, depth: 0 }];
+  // L'adresse de départ est une adresse comme les autres : la règle du site
+  // vaut pour elle aussi, sans quoi elle ne serait respectée qu'à partir de la
+  // deuxième page.
+  const allowed = (url: string): boolean => {
+    const target = new URL(url);
+    // La query fait partie du chemin qu'un motif peut viser (`/*?print=`).
+    return target.origin === origin && isAllowed(rules, target.pathname + target.search);
+  };
+
+  const start = allowed(limits.start);
+  const queue: Array<{ url: string; depth: number }> = start ? [{ url: limits.start, depth: 0 }] : [];
   const seen = new Set([limits.start]);
-  const failed: string[] = [];
+  const failed: string[] = start ? [] : [limits.start];
   let scanned = 0;
 
   const state = (): CrawlState => ({
@@ -144,8 +184,7 @@ export async function crawl(limits: CrawlLimits): Promise<void> {
         if (depth >= limits.maxDepth) continue;
         for (const link of await linksOf(tabId)) {
           if (seen.has(link)) continue;
-          const target = new URL(link);
-          if (target.origin !== origin || !isAllowed(rules, target.pathname)) continue;
+          if (!allowed(link)) continue;
           seen.add(link);
           queue.push({ url: link, depth: depth + 1 });
         }

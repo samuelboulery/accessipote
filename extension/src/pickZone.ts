@@ -52,12 +52,18 @@ function pickInPage(): Promise<string | null> {
     };
 
     const stop = (selector: string | null) => {
+      clearTimeout(giveUp);
       document.removeEventListener('mousemove', move, true);
       document.removeEventListener('click', click, true);
       document.removeEventListener('keydown', key, true);
       outline.remove();
       resolve(selector);
     };
+
+    // Sans issue, la promesse ne rendrait jamais la main : le service worker
+    // resterait suspendu et le badge de l'icône bloqué sur son attente. Une
+    // minute sans geste vaut renoncement.
+    const giveUp = setTimeout(() => stop(null), 60_000);
 
     // Le clic sert à choisir, pas à naviguer : la page ne doit pas le recevoir.
     const click = (event: MouseEvent) => {

@@ -15,7 +15,7 @@ import {
   reportOf,
 } from './basket.ts';
 import type { BasketEntry } from './basket.ts';
-import { CRAWL_KEY, readCrawlState } from './crawl.ts';
+import { boundedLimits, CRAWL_KEY, readCrawlState } from './crawl.ts';
 import type { CrawlState } from './crawl.ts';
 import { activeTab, scanTab, sendToApp } from './scanTab.ts';
 
@@ -201,14 +201,13 @@ crawlButton.addEventListener('click', async () => {
     return;
   }
 
-  await chrome.runtime.sendMessage({
-    type: 'start-crawl',
-    limits: {
-      start: crawlUrl.value,
-      maxPages: Number(crawlPages.value),
-      maxDepth: Number(crawlDepth.value),
-    },
-  });
+  const limits = boundedLimits(crawlUrl.value, crawlPages.value, crawlDepth.value);
+  // Les bornes retenues sont celles du parcours : les champs disent la même
+  // chose, sinon l'avancement afficherait un total que personne n'a demandé.
+  crawlPages.value = String(limits.maxPages);
+  crawlDepth.value = String(limits.maxDepth);
+
+  await chrome.runtime.sendMessage({ type: 'start-crawl', limits });
 });
 
 crawlStop.addEventListener('click', async () => {

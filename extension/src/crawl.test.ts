@@ -5,7 +5,7 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { collectLinks } from '../../src/scan/collect';
-import { crawl, readCrawlState, stopCrawl } from './crawl';
+import { boundedLimits, crawl, readCrawlState, stopCrawl } from './crawl';
 import { readBasket } from './basket';
 
 const ORIGIN = 'https://exemple.fr';
@@ -18,7 +18,7 @@ const SITE: Record<string, string[]> = {
   [`${ORIGIN}/prive`]: [],
 };
 
-const ROBOTS = 'User-agent: *\nDisallow: /prive\n';
+const ROBOTS = 'User-agent: *\nDisallow: /prive\nDisallow: /*?print=\n';
 
 function fakeChrome(): void {
   const data: Record<string, unknown> = {};
@@ -91,6 +91,22 @@ describe('crawl', () => {
     expect(await visited()).not.toContain(`${ORIGIN}/prive`);
   });
 
+  it('refuse une adresse de départ que robots.txt interdit', async () => {
+    // Le premier lien du parcours est une adresse comme les autres : un robot
+    // qui ne s'applique la règle qu'aux suivantes ne la respecte pas.
+    await crawl({ start: `${ORIGIN}/prive`, maxPages: 10, maxDepth: 2 });
+
+    expect(await visited()).toEqual([]);
+    const state = await readCrawlState();
+    expect(state?.failed).toEqual([`${ORIGIN}/prive`]);
+  });
+
+  it('applique les motifs qui portent sur la query', async () => {
+    await crawl({ start: `${ORIGIN}/a?print=1`, maxPages: 10, maxDepth: 0 });
+
+    expect(await visited()).toEqual([]);
+  });
+
   it('ne sort pas de l’origine de départ', async () => {
     await crawl({ start: `${ORIGIN}/`, maxPages: 10, maxDepth: 2 });
 
@@ -125,5 +141,29 @@ describe('crawl', () => {
     const state = await readCrawlState();
     expect(state?.stopped).toBe(true);
     expect(state?.scanned).toBeLessThan(3);
+  });
+});
+
+describe('boundedLimits', () => {
+  const start = `${ORIGIN}/`;
+
+  it('garde les limites saisies quand elles tiennent dans les bornes', () => {
+    expect(boundedLimits(start, '5', '1')).toEqual({ start, maxPages: 5, maxDepth: 1 });
+  });
+
+  it('remplace un champ vide par sa valeur par défaut', () => {
+    // `Number('')` vaut zéro, et `Number('abc')` vaut NaN : les deux feraient un
+    // crawl qui ne scanne rien sans jamais dire pourquoi.
+    expect(boundedLimits(start, '', '')).toEqual({ start, maxPages: 10, maxDepth: 2 });
+    expect(boundedLimits(start, 'abc', 'abc')).toEqual({ start, maxPages: 10, maxDepth: 2 });
+  });
+
+  it('ramène une valeur hors bornes dans les bornes', () => {
+    expect(boundedLimits(start, '999', '99')).toEqual({ start, maxPages: 50, maxDepth: 5 });
+    expect(boundedLimits(start, '0', '-3')).toEqual({ start, maxPages: 1, maxDepth: 0 });
+  });
+
+  it('arrondit une valeur fractionnaire', () => {
+    expect(boundedLimits(start, '3.7', '1.2')).toEqual({ start, maxPages: 3, maxDepth: 1 });
   });
 });
