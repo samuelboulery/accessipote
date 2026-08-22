@@ -70,6 +70,20 @@ function input(): HTMLInputElement {
   return screen.getByLabelText('Rapport de scan (JSON)') as HTMLInputElement;
 }
 
+describe('ScanImportPanel — compte rendu de l’import', () => {
+  it('annonce le résultat dans une région vivante', async () => {
+    // L'import écrit des dizaines de statuts d'un coup : sans annonce, un
+    // lecteur d'écran ne saura pas ce qui vient de se passer.
+    const { user } = setup();
+    await user.upload(input(), file(report));
+
+    const summary = await screen.findByRole('status');
+    expect(summary).toHaveTextContent(/2 écrits/i);
+    expect(summary).toHaveTextContent(/1 conforme proposé/i);
+    expect(summary).toHaveTextContent(/1 non évalué/i);
+  });
+});
+
 describe('ScanImportPanel', () => {
   beforeEach(() => vi.clearAllMocks());
 

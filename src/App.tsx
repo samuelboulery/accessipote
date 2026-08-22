@@ -192,6 +192,12 @@ function App() {
         const auto: Record<string, AutoVerdict> = { ...audit.auto };
 
         for (const entry of entries) {
+          // Un statut sans provenance vient de l'auditeur : le scan pré-remplit
+          // ce qui est vide, il ne défait pas une décision déjà prise.
+          if (progress[entry.criteriaId] !== undefined && auto[entry.criteriaId] === undefined) {
+            continue;
+          }
+
           progress[entry.criteriaId] = { status: entry.status };
           auto[entry.criteriaId] = {
             status: entry.status,
@@ -222,13 +228,20 @@ function App() {
       const data = event.data as { source?: unknown; report?: unknown } | null;
       if (!data || data.source !== 'accessipote-scan' || typeof data.report !== 'string') return;
 
+      // Sans audit classique ouvert, l'écran de revue n'existe pas : le rapport
+      // n'irait nulle part, et l'extension a déjà annoncé son envoi.
+      if (activeAudit?.mode !== 'classic') {
+        showToast('Rapport de scan reçu — ouvrez un audit classique pour l’importer.', 'info');
+        return;
+      }
+
       setIncomingScan(data.report);
       setIsScanImportOpen(true);
     };
 
     window.addEventListener('message', receive);
     return () => window.removeEventListener('message', receive);
-  }, []);
+  }, [activeAudit?.mode, showToast]);
 
   /** Annuler une ligne, c'est reprendre la main : le statut et sa provenance partent ensemble. */
   const handleScanUndo = useCallback(

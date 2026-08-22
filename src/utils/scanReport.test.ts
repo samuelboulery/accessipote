@@ -43,6 +43,40 @@ describe('parseScanReport', () => {
     expect(parsed.criteria['5.4'].verdict).toBe('na');
   });
 
+  it('plafonne les preuves d’un critère', () => {
+    // Un rapport vient du dehors, et finit dans localStorage : ce qu'il apporte
+    // se borne ici, comme le moteur le borne à la sortie.
+    const parsed = parseScanReport(
+      report({
+        '2.1': {
+          verdict: 'fail',
+          testVerdicts: { '2.1.1': 'fail' },
+          evidence: Array.from({ length: 40 }, () => ({ url: 'https://exemple.fr' })),
+        },
+      }),
+      KNOWN,
+    );
+
+    expect(parsed.criteria['2.1'].evidence).toHaveLength(3);
+  });
+
+  it('tronque un extrait démesuré', () => {
+    const parsed = parseScanReport(
+      report({
+        '2.1': {
+          verdict: 'fail',
+          testVerdicts: { '2.1.1': 'fail' },
+          evidence: [{ url: 'https://exemple.fr', selector: 'x'.repeat(9000), snippet: 'y'.repeat(9000) }],
+        },
+      }),
+      KNOWN,
+    );
+
+    const [evidence] = parsed.criteria['2.1'].evidence;
+    expect(evidence.snippet).toHaveLength(200);
+    expect(evidence.selector?.length).toBeLessThanOrEqual(200);
+  });
+
   it('rejette un fichier qui n’est pas du JSON', () => {
     expect(() => parseScanReport('pas du json', KNOWN)).toThrow(/JSON/i);
   });

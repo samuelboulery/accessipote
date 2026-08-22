@@ -431,6 +431,33 @@ describe('App — import d’un rapport de scan', () => {
     expect(audit.auto?.['2.1']).toBeUndefined();
   });
 
+  it('ne remplace pas un statut posé à la main', async () => {
+    // Le scan pré-remplit ce qui est vide ; il ne défait pas une décision
+    // d'auditeur, et surtout pas en silence.
+    seedAudit({ progress: { '2.1': { status: 'conforme' } } });
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    const audit = storedAudit();
+    expect(audit.progress['2.1']).toEqual({ status: 'conforme' });
+    expect(audit.auto?.['2.1']).toBeUndefined();
+    expect(audit.progress['5.4']).toEqual({ status: 'non-applicable' });
+  });
+
+  it('dit à l’écran que le critère a été laissé à l’auditeur', async () => {
+    seedAudit({ progress: { '2.1': { status: 'conforme' } } });
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    const row = screen.getByRole('listitem', { name: 'Critère 2.1' });
+    expect(within(row).getByText(/posé à la main/i)).toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: /appliquer/i })).not.toBeInTheDocument();
+  });
+
   it('ne propose pas l’import sur un audit en mode design system', async () => {
     seedAudit({ mode: 'design-system' });
     const user = userEvent.setup();
@@ -560,6 +587,20 @@ describe('App — rapport reçu de l’extension', () => {
     await act(async () => post({ source: 'autre-chose', report: JSON.stringify(scanReport) }));
 
     expect(storedAudit().progress).toEqual({});
+  });
+
+  it('dit qu’aucun audit n’attend le rapport, plutôt que de le perdre', async () => {
+    // L'extension a annoncé « envoyé » : sans audit ouvert, rien ne s'affiche et
+    // l'auditeur croit son scan perdu.
+    localStorage.setItem(
+      AUDITS_STORAGE_KEY,
+      JSON.stringify({ version: 2, audits: [], activeAuditId: null }),
+    );
+    render(<App />);
+
+    await act(async () => post(fromExtension(scanReport)));
+
+    expect(await screen.findByText(/ouvrez un audit/i)).toBeInTheDocument();
   });
 
   it('dit qu’un rapport illisible est refusé, et n’écrit rien', async () => {

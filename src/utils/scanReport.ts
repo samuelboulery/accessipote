@@ -12,6 +12,16 @@ import type {
 export const SCAN_SCHEMA = 3;
 
 /**
+ * Ce qu'une preuve pèse au plus, une fois entrée.
+ *
+ * Le moteur borne déjà ce qu'il écrit ; un fichier vient du dehors et n'est
+ * tenu par rien. Sans plafond ici, un rapport démesuré remplirait le quota de
+ * `localStorage` et l'audit ne se sauverait plus.
+ */
+const EVIDENCE_MAX = 3;
+const SNIPPET_MAX = 200;
+
+/**
  * Versions que cette application sait lire.
  *
  * Les anciennes restent acceptées : la 1 ignore la certitude, la 2 la porte
@@ -47,14 +57,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function clip(text: string): string {
+  return text.length > SNIPPET_MAX ? text.slice(0, SNIPPET_MAX) : text;
+}
+
 function parseEvidence(raw: unknown, criteriaId: string): Evidence {
   if (!isRecord(raw) || typeof raw.url !== 'string') {
     fail(`Preuve invalide sur le critère ${criteriaId} : une preuve doit porter sa page.`);
   }
   return {
-    url: raw.url as string,
-    ...(typeof raw.selector === 'string' ? { selector: raw.selector } : {}),
-    ...(typeof raw.snippet === 'string' ? { snippet: raw.snippet } : {}),
+    url: clip(raw.url as string),
+    ...(typeof raw.selector === 'string' ? { selector: clip(raw.selector) } : {}),
+    ...(typeof raw.snippet === 'string' ? { snippet: clip(raw.snippet) } : {}),
   };
 }
 
@@ -88,7 +102,7 @@ function parseOutcome(raw: unknown, criteriaId: string): ScanOutcome {
   }
 
   const evidence = Array.isArray(raw.evidence)
-    ? raw.evidence.map(item => parseEvidence(item, criteriaId))
+    ? raw.evidence.slice(0, EVIDENCE_MAX).map(item => parseEvidence(item, criteriaId))
     : [];
 
   return {

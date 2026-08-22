@@ -29,6 +29,11 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : 'Rapport illisible.';
 }
 
+/** « 1 écrit », « 3 écrits » : le pluriel se donne, il ne se devine pas. */
+function count(total: number, singular: string, plural: string): string {
+  return `${total} ${total > 1 ? plural : singular}`;
+}
+
 /**
  * Import d'un rapport de scan, puis revue de ce qu'il a produit.
  *
@@ -111,6 +116,15 @@ export default function ScanImportPanel({
 
   const isApplied = (criteriaId: string): boolean => audit.auto?.[criteriaId] !== undefined;
 
+  /**
+   * Statut posé par l'auditeur, que le scan ne touche pas.
+   *
+   * Un statut sans provenance vient de la main : le rapport le montre — c'est
+   * une divergence à connaître — mais ne propose pas de l'écraser.
+   */
+  const isManual = (criteriaId: string): boolean =>
+    audit.progress[criteriaId] !== undefined && audit.auto?.[criteriaId] === undefined;
+
   // Écrits tous les deux, mais ce ne sont pas les mêmes enjeux : un écart se
   // corrige, un critère sans objet s'écarte. L'auditeur veut d'abord les écarts.
   const failed = plan?.direct.filter(entry => entry.status === 'non-conforme') ?? [];
@@ -118,6 +132,7 @@ export default function ScanImportPanel({
 
   const row = (entry: ScanPlanEntry) => {
     const applied = isApplied(entry.criteriaId);
+    const manual = isManual(entry.criteriaId);
     return (
       <li
         key={entry.criteriaId}
@@ -128,15 +143,19 @@ export default function ScanImportPanel({
           <span className="font-mono text-meta text-ink-muted">{entry.criteriaId}</span>
           <span className="min-w-0 flex-1 text-body">{titleOf(entry.criteriaId)}</span>
           <StatusPill status={entry.status} mode="classic" />
-          <button
-            type="button"
-            onClick={() =>
-              applied ? onUndo(entry.criteriaId) : onApply([entry], scannedAt ?? '')
-            }
-            className="target-44 h-ctrl rounded-ctrl border-1 border-border bg-surface px-3 text-dense"
-          >
-            {applied ? 'Annuler' : 'Appliquer'}
-          </button>
+          {manual ? (
+            <span className="text-dense text-ink-muted">Posé à la main — laissé tel quel</span>
+          ) : (
+            <button
+              type="button"
+              onClick={() =>
+                applied ? onUndo(entry.criteriaId) : onApply([entry], scannedAt ?? '')
+              }
+              className="target-44 h-ctrl rounded-ctrl border-1 border-border bg-surface px-3 text-dense"
+            >
+              {applied ? 'Annuler' : 'Appliquer'}
+            </button>
+          )}
         </div>
 
         {entry.testIds.length > 0 && (
@@ -224,6 +243,15 @@ export default function ScanImportPanel({
 
         {plan && (
           <>
+            {/* L'import écrit des dizaines de statuts d'un coup : ce qu'il vient
+                de faire se dit, et pas seulement à ceux qui voient l'écran. */}
+            <p role="status" className="rounded-ctrl bg-sunk p-3 text-dense">
+              Rapport importé — {count(plan.direct.length, 'écrit', 'écrits')},{' '}
+              {plan.probable.length} à vérifier,{' '}
+              {count(plan.proposed.length, 'conforme proposé', 'conformes proposés')},{' '}
+              {count(plan.unscanned, 'non évalué', 'non évalués')}.
+            </p>
+
             <div role="group" aria-labelledby="scan-failed-title">
               <h3 id="scan-failed-title" className="text-body font-semibold">
                 Non conformes — {failed.length} critère{failed.length > 1 ? 's' : ''} prouvé
@@ -248,7 +276,9 @@ export default function ScanImportPanel({
                     type="button"
                     onClick={() =>
                       onApply(
-                        plan.probable.filter(entry => !isApplied(entry.criteriaId)),
+                        plan.probable.filter(
+                          entry => !isApplied(entry.criteriaId) && !isManual(entry.criteriaId),
+                        ),
                         scannedAt ?? '',
                       )
                     }
@@ -278,7 +308,9 @@ export default function ScanImportPanel({
                     type="button"
                     onClick={() =>
                       onApply(
-                        plan.proposed.filter(entry => !isApplied(entry.criteriaId)),
+                        plan.proposed.filter(
+                          entry => !isApplied(entry.criteriaId) && !isManual(entry.criteriaId),
+                        ),
                         scannedAt ?? '',
                       )
                     }
