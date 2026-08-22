@@ -11,7 +11,7 @@
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
-import type { Frame, Page } from 'playwright';
+import type { Browser, Frame, Page } from 'playwright';
 import type { AxeResults } from 'axe-core';
 import { aggregate } from '../scan/aggregate.ts';
 import { probeDocument } from '../scan/collect.ts';
@@ -45,7 +45,10 @@ function parseArgs(argv: string[]): Options {
 
   for (let i = 0; i < argv.length; i += 1) {
     if (argv[i] === '-o' || argv[i] === '--out') {
-      out = argv[i + 1] ?? null;
+      const value = argv[i + 1];
+      // Sans cette vérification, `scan -o` scanne tout puis n'écrit nulle part.
+      if (value === undefined) throw new Error('Option -o : un chemin de fichier est attendu.');
+      out = value;
       i += 1;
     } else {
       urls.push(argv[i]);
@@ -113,14 +116,21 @@ async function settle(page: Page): Promise<void> {
   await page.waitForTimeout(SETTLE_MS);
 }
 
-/** Réduit une page, et les cadres qu'elle contient, à ce dont le moteur a besoin. */
+/**
+ * Réduit une page, et les cadres qu'elle contient, à ce dont le moteur a besoin.
+ *
+ * Le navigateur est celui de la campagne : le relancer par page coûterait une
+ * seconde chaque fois, pour rien. Chaque page a en revanche son onglet, fermé
+ * ensuite — un état laissé derrière fausserait la suivante.
+ */
 async function scanPage(
+  browser: Browser,
   url: string,
   axeSource: string,
 ): Promise<{ page: PageScan; axeVersion: string; frames: number }> {
-  const browser = await chromium.launch();
+  const context = await browser.newContext();
   try {
-    const page = await browser.newPage();
+    const page = await context.newPage();
     await page.goto(url, { waitUntil: 'load', timeout: PAGE_TIMEOUT_MS });
     await settle(page);
 
@@ -193,7 +203,7 @@ async function scanPage(
       frames: frames.length,
     };
   } finally {
-    await browser.close();
+    await context.close();
   }
 }
 
@@ -223,20 +233,25 @@ async function main(): Promise<void> {
   let axeVersion: string | null = null;
   let frames = 0;
 
-  for (const url of urls) {
-    console.log(`→ ${url}`);
-    try {
-      const scanned = await scanPage(url, axeSource);
-      pages.push(scanned.page);
-      axeVersion = scanned.axeVersion;
-      frames += scanned.frames;
-    } catch (error) {
-      // Une page manquante rend tout « non applicable » indéfendable : l'absence
-      // constatée ne porterait plus sur l'échantillon entier. On s'arrête.
-      console.error(`\nÉchec sur ${url} : ${error instanceof Error ? error.message : error}`);
-      console.error("Scan interrompu — un échantillon incomplet ne prouve aucun non applicable.");
-      process.exit(1);
+  const browser = await chromium.launch();
+  try {
+    for (const url of urls) {
+      console.log(`→ ${url}`);
+      try {
+        const scanned = await scanPage(browser, url, axeSource);
+        pages.push(scanned.page);
+        axeVersion = scanned.axeVersion;
+        frames += scanned.frames;
+      } catch (error) {
+        // Une page manquante rend tout « non applicable » indéfendable : l'absence
+        // constatée ne porterait plus sur l'échantillon entier. On s'arrête.
+        console.error(`\nÉchec sur ${url} : ${error instanceof Error ? error.message : error}`);
+        console.error("Scan interrompu — un échantillon incomplet ne prouve aucun non applicable.");
+        process.exit(1);
+      }
     }
+  } finally {
+    await browser.close();
   }
 
   const criteria = aggregate(pages, RGAA_MAPPING);
@@ -274,4 +289,9 @@ async function main(): Promise<void> {
   }
 }
 
-await main();
+// Une erreur de pilotage se dit en une ligne : une trace d'appels n'apprend rien
+// à qui lance un scan.
+await main().catch((error: unknown) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+});
