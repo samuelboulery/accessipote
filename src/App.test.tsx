@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
 import { AUDITS_STORAGE_KEY } from './constants';
@@ -338,5 +338,280 @@ describe('App — mobile', () => {
     expect(screen.queryByRole('heading', { name: 'Cet audit' })).not.toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Navigation principale' })).toBeInTheDocument();
     expect(screen.getByText('Accessipote')).toBeInTheDocument();
+  });
+});
+
+/**
+ * Le chemin réel de l'import : un fichier lu, des statuts écrits dans le
+ * magasin, une provenance qui ne survit pas à une reprise en main. Les tests du
+ * panneau espionnent des callbacks ; ceux-ci vérifient ce qui finit sur disque.
+ */
+describe('App — import d’un rapport de scan', () => {
+  const report = {
+    schema: 1,
+    scannedAt: '2026-08-20T10:00:00.000Z',
+    urls: ['https://exemple.fr'],
+    criteria: {
+      '2.1': {
+        verdict: 'fail',
+        testVerdicts: { '2.1.1': 'fail' },
+        evidence: [{ url: 'https://exemple.fr', selector: 'iframe', snippet: '<iframe src="x">' }],
+      },
+      '5.4': { verdict: 'na', testVerdicts: { '5.4.1': 'na' }, evidence: [] },
+      '8.3': { verdict: 'pass', testVerdicts: { '8.3.1': 'pass' }, evidence: [] },
+      '9.1': {
+        verdict: 'suspect',
+        testVerdicts: { '9.1.1': 'suspect' },
+        evidence: [{ url: 'https://exemple.fr', selector: 'h3', snippet: '<h3>' }],
+      },
+    },
+  };
+
+  function storedAudit(): Audit {
+    const store = JSON.parse(localStorage.getItem(AUDITS_STORAGE_KEY) ?? '{}') as AuditStore;
+    return store.audits.find(audit => audit.id === AUDIT_ID)!;
+  }
+
+  async function importReport(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole('button', { name: /importer un scan/i }));
+    await user.upload(
+      screen.getByLabelText('Rapport de scan (JSON)'),
+      new File([JSON.stringify(report)], 'scan.json', { type: 'application/json' }),
+    );
+  }
+
+  beforeEach(() => {
+    localStorage.clear();
+    setViewport(false);
+  });
+
+  it('écrit les échecs et les non applicables prouvés, jamais les conforme proposés', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    const audit = storedAudit();
+    expect(audit.progress['2.1']).toEqual({ status: 'non-conforme' });
+    expect(audit.progress['5.4']).toEqual({ status: 'non-applicable' });
+    expect(audit.progress['8.3']).toBeUndefined();
+    expect(audit.auto?.['2.1'].evidence[0].selector).toBe('iframe');
+    expect(audit.auto?.['2.1'].testIds).toEqual(['2.1.1']);
+  });
+
+  it('n’écrit rien quand le rapport est refusé', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+
+    await user.click(screen.getByRole('button', { name: /importer un scan/i }));
+    await user.upload(
+      screen.getByLabelText('Rapport de scan (JSON)'),
+      new File(['{ pas du json'], 'scan.json', { type: 'application/json' }),
+    );
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(storedAudit().progress).toEqual({});
+  });
+
+  it('oublie la provenance dès que l’auditeur reprend la main sur le statut', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    const row = screen.getByRole('listitem', { name: 'Critère 2.1' });
+    await user.click(within(row).getByRole('button', { name: /annuler/i }));
+
+    const audit = storedAudit();
+    expect(audit.progress['2.1']).toBeUndefined();
+    expect(audit.auto?.['2.1']).toBeUndefined();
+  });
+
+  it('ne remplace pas un statut posé à la main', async () => {
+    // Le scan pré-remplit ce qui est vide ; il ne défait pas une décision
+    // d'auditeur, et surtout pas en silence.
+    seedAudit({ progress: { '2.1': { status: 'conforme' } } });
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    const audit = storedAudit();
+    expect(audit.progress['2.1']).toEqual({ status: 'conforme' });
+    expect(audit.auto?.['2.1']).toBeUndefined();
+    expect(audit.progress['5.4']).toEqual({ status: 'non-applicable' });
+  });
+
+  it('dit à l’écran que le critère a été laissé à l’auditeur', async () => {
+    seedAudit({ progress: { '2.1': { status: 'conforme' } } });
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    const row = screen.getByRole('listitem', { name: 'Critère 2.1' });
+    expect(within(row).getByText(/posé à la main/i)).toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: /appliquer/i })).not.toBeInTheDocument();
+  });
+
+  it('ne propose pas l’import sur un audit en mode design system', async () => {
+    seedAudit({ mode: 'design-system' });
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+
+    expect(screen.queryByRole('button', { name: /importer un scan/i })).not.toBeInTheDocument();
+  });
+
+  it('n’écrit pas un soupçon à l’import', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    const audit = storedAudit();
+    expect(audit.progress['9.1']).toBeUndefined();
+    expect(audit.auto?.['9.1']).toBeUndefined();
+  });
+
+  it('écrit un soupçon accepté, et sa provenance dit qu’il vient d’un indice', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    const section = screen.getByRole('group', { name: /à vérifier/i });
+    const row = within(section).getByRole('listitem', { name: 'Critère 9.1' });
+    await user.click(within(row).getByRole('button', { name: /appliquer/i }));
+
+    const audit = storedAudit();
+    expect(audit.progress['9.1']).toEqual({ status: 'non-conforme' });
+    expect(audit.auto?.['9.1'].fromHint).toBe(true);
+    expect(audit.auto?.['9.1'].evidence[0].selector).toBe('h3');
+  });
+
+  it('oublie la provenance d’un soupçon dès que l’auditeur reprend la main', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    const section = screen.getByRole('group', { name: /à vérifier/i });
+    const row = within(section).getByRole('listitem', { name: 'Critère 9.1' });
+    await user.click(within(row).getByRole('button', { name: /appliquer/i }));
+    await user.click(within(row).getByRole('button', { name: /annuler/i }));
+
+    expect(storedAudit().auto?.['9.1']).toBeUndefined();
+  });
+});
+
+/**
+ * L'extension ne parle pas au magasin : elle poste un message, l'app le valide
+ * comme elle validerait un fichier. Un message n'est jamais plus digne de
+ * confiance qu'un fichier déposé — c'est tout l'enjeu de ces tests.
+ */
+describe('App — rapport reçu de l’extension', () => {
+  function storedAudit(): Audit {
+    const store = JSON.parse(localStorage.getItem(AUDITS_STORAGE_KEY) ?? '{}') as AuditStore;
+    return store.audits.find(audit => audit.id === AUDIT_ID)!;
+  }
+
+  const scanReport = {
+    schema: 2,
+    scannedAt: '2026-08-21T10:00:00.000Z',
+    urls: ['https://exemple.fr'],
+    criteria: {
+      '2.1': {
+        verdict: 'fail',
+        testVerdicts: { '2.1.1': 'fail' },
+        evidence: [{ url: 'https://exemple.fr', selector: 'iframe', snippet: '<iframe>' }],
+      },
+      '5.4': { verdict: 'na', testVerdicts: { '5.4.1': 'na' }, evidence: [] },
+    },
+  };
+
+  function post(payload: unknown, origin = window.location.origin): void {
+    window.dispatchEvent(
+      new MessageEvent('message', { data: payload, origin, source: window }),
+    );
+  }
+
+  const fromExtension = (report: unknown) => ({
+    source: 'accessipote-scan',
+    report: typeof report === 'string' ? report : JSON.stringify(report),
+  });
+
+  beforeEach(() => {
+    localStorage.clear();
+    setViewport(false);
+  });
+
+  it('ouvre l’écran de revue et écrit ce qui est prouvé', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+
+    await act(async () => post(fromExtension(scanReport)));
+
+    expect(await screen.findByRole('group', { name: /non conformes/i })).toBeInTheDocument();
+    expect(storedAudit().progress['2.1']).toEqual({ status: 'non-conforme' });
+    expect(storedAudit().auto?.['2.1'].evidence[0].selector).toBe('iframe');
+  });
+
+  it('refuse un message venu d’une autre origine, sans rien écrire', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+
+    await act(async () => post(fromExtension(scanReport), 'https://malveillant.example'));
+
+    expect(screen.queryByRole('group', { name: /non conformes/i })).not.toBeInTheDocument();
+    expect(storedAudit().progress).toEqual({});
+  });
+
+  it('ignore un message qui ne vient pas du scan', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+
+    await act(async () => post({ source: 'autre-chose', report: JSON.stringify(scanReport) }));
+
+    expect(storedAudit().progress).toEqual({});
+  });
+
+  it('dit qu’aucun audit n’attend le rapport, plutôt que de le perdre', async () => {
+    // L'extension a annoncé « envoyé » : sans audit ouvert, rien ne s'affiche et
+    // l'auditeur croit son scan perdu.
+    localStorage.setItem(
+      AUDITS_STORAGE_KEY,
+      JSON.stringify({ version: 2, audits: [], activeAuditId: null }),
+    );
+    render(<App />);
+
+    await act(async () => post(fromExtension(scanReport)));
+
+    expect(await screen.findByText(/ouvrez un audit/i)).toBeInTheDocument();
+  });
+
+  it('dit qu’un rapport illisible est refusé, et n’écrit rien', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+
+    await act(async () => post(fromExtension('{ pas du json')));
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(storedAudit().progress).toEqual({});
   });
 });

@@ -26,6 +26,8 @@ const TOKENS: Array<[string, string]> = [
   ['{{taux}}', 'Taux, ou « non calculable »'],
   ['{{libelléTaux}}', 'Nom du taux selon le mode'],
   ['{{évalués}} / {{total}}', 'Critères évalués et total'],
+  ['{{préRemplis}}', 'Critères pré-remplis par le scan'],
+  ['{{dateScan}}', 'Date du dernier scan importé'],
   ['{{#critères}}…{{/critères}}', 'Répète le bloc sur les critères évalués'],
   ['{{#critères:ok}}…{{/critères}}', 'Conformes seulement'],
   ['{{#critères:ecarts}}…{{/critères}}', 'Écarts seulement'],
@@ -35,7 +37,7 @@ const TOKENS: Array<[string, string]> = [
 
 /** Jetons utilisables à l'intérieur d'un bloc de critères. */
 const CRITERIA_TOKENS =
-  '{{id}} · {{titre}} · {{statut}} · {{niveau}} · {{thème}} · {{description}} · {{note}} · {{urls}} · {{tests}}';
+  '{{id}} · {{titre}} · {{statut}} · {{niveau}} · {{thème}} · {{description}} · {{note}} · {{urls}} · {{tests}} · {{provenance}}';
 
 export default function ExportSettingsModal({ isOpen, mode, previewData, onClose }: ExportSettingsModalProps) {
   const { template, setTemplate, reset } = useMarkdownTemplate(mode);

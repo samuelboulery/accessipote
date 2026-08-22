@@ -25,5 +25,6 @@
     "noUncheckedSideEffectImports": true
   },
   "include": ["src"],
-  "exclude": []
+  "//": "src/scripts vit sous tsconfig.node.json : ces scripts tournent sous Node, pas dans le navigateur.",
+  "exclude": ["src/scripts"]
 }

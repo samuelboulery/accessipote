@@ -1,5 +1,7 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { FileUp } from 'lucide-react';
 import type {
+  AutoVerdict,
   AuditProgress,
   CriteriaFilters,
   CriteriaStatus,
@@ -24,6 +26,7 @@ import SummaryTab from './components/SummaryTab';
 import GlossaryScreen from './components/GlossaryScreen';
 import GlossaryPopover from './components/GlossaryPopover';
 import ExportButton from './components/ExportButton';
+import ScanImportPanel from './components/ScanImportPanel';
 import Toast from './components/Toast';
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 import ExportSettingsModal from './components/ExportSettingsModal';
@@ -31,6 +34,7 @@ import criteriaRawData from './data/criteria.json';
 import glossaryRawData from './data/glossary.json';
 import { transformCriteriaData } from './utils/transformCriteria';
 import { titleToSlug } from './utils/transformGlossary';
+import type { ScanPlanEntry } from './utils/scanReport';
 
 function App() {
   const criteriaList = useMemo(
@@ -63,6 +67,8 @@ function App() {
   const [view, setView] = useState<View>('home');
   const [isCreating, setIsCreating] = useState(false);
   const [isExportSettingsOpen, setIsExportSettingsOpen] = useState(false);
+  const [isScanImportOpen, setIsScanImportOpen] = useState(false);
+  const [incomingScan, setIncomingScan] = useState<string | null>(null);
   const [activeTheme, setActiveTheme] = useState(themes[0]);
   const [expandedCriteriaId, setExpandedCriteriaId] = useState<string | null>(null);
   const [filters, setFilters] = useState<CriteriaFilters>({ search: '', level: '', status: '' });
@@ -137,9 +143,16 @@ function App() {
         const next: Record<string, { status: CriteriaStatus }> = { ...audit.progress };
         if (status === '') delete next[criteriaId];
         else next[criteriaId] = { status };
+
+        // La provenance ne survit pas à une intervention humaine : le statut
+        // devient celui de l'auditeur. Sans cette règle, le marqueur finirait
+        // par attribuer au scan une décision prise à la main.
+        const auto = { ...audit.auto };
+        delete auto[criteriaId];
+
         // `AuditProgress` est une union indexée par le mode de l'audit ; le
         // typage ne peut pas corréler ce mode avec le statut reçu ici.
-        return { progress: next as AuditProgress };
+        return { progress: next as AuditProgress, auto };
       });
     },
     [patchAudit],
@@ -164,6 +177,76 @@ function App() {
       patchAudit(audit => ({ pages: { ...audit.pages, [criteriaId]: pages } }));
     },
     [patchAudit],
+  );
+
+  /**
+   * Écrit les verdicts d'un rapport de scan, avec leur provenance.
+   *
+   * Le patch se calcule depuis l'audit reçu : l'import écrit des dizaines de
+   * critères d'un coup, et repartir de `activeAudit` n'en garderait qu'un.
+   */
+  const handleScanApply = useCallback(
+    (entries: ScanPlanEntry[], scannedAt: string) => {
+      patchAudit(audit => {
+        const progress: Record<string, { status: CriteriaStatus }> = { ...audit.progress };
+        const auto: Record<string, AutoVerdict> = { ...audit.auto };
+
+        for (const entry of entries) {
+          // Un statut sans provenance vient de l'auditeur : le scan pré-remplit
+          // ce qui est vide, il ne défait pas une décision déjà prise.
+          if (progress[entry.criteriaId] !== undefined && auto[entry.criteriaId] === undefined) {
+            continue;
+          }
+
+          progress[entry.criteriaId] = { status: entry.status };
+          auto[entry.criteriaId] = {
+            status: entry.status,
+            testIds: entry.testIds,
+            scannedAt,
+            evidence: entry.evidence,
+            ...(entry.fromHint ? { fromHint: true } : {}),
+          };
+        }
+
+        return { progress: progress as AuditProgress, auto };
+      });
+    },
+    [patchAudit],
+  );
+
+  /**
+   * Rapport posté par l'extension dans cet onglet.
+   *
+   * Le message n'est pas une porte dérobée : il n'apporte que du texte, qui
+   * passe par la validation d'import comme le contenu d'un fichier. Deux
+   * vérifications avant même de le regarder — l'origine et la fenêtre — parce
+   * qu'un message peut venir de n'importe où, un fichier non.
+   */
+  useEffect(() => {
+    const receive = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin || event.source !== window) return;
+      const data = event.data as { source?: unknown; report?: unknown } | null;
+      if (!data || data.source !== 'accessipote-scan' || typeof data.report !== 'string') return;
+
+      // Sans audit classique ouvert, l'écran de revue n'existe pas : le rapport
+      // n'irait nulle part, et l'extension a déjà annoncé son envoi.
+      if (activeAudit?.mode !== 'classic') {
+        showToast('Rapport de scan reçu — ouvrez un audit classique pour l’importer.', 'info');
+        return;
+      }
+
+      setIncomingScan(data.report);
+      setIsScanImportOpen(true);
+    };
+
+    window.addEventListener('message', receive);
+    return () => window.removeEventListener('message', receive);
+  }, [activeAudit?.mode, showToast]);
+
+  /** Annuler une ligne, c'est reprendre la main : le statut et sa provenance partent ensemble. */
+  const handleScanUndo = useCallback(
+    (criteriaId: string) => handleStatusChange(criteriaId, ''),
+    [handleStatusChange],
   );
 
   const handleOpenAudit = useCallback(
@@ -235,6 +318,12 @@ function App() {
     [audits, criteriaList],
   );
 
+  /** Le référentiel entier : un rapport qui cite un id absent d'ici est étranger. */
+  const knownCriteriaIds = useMemo(
+    () => new Set(criteriaList.map(criterion => criterion.id)),
+    [criteriaList],
+  );
+
   const popoverTerm = useMemo(
     () =>
       selectedGlossaryTerm
@@ -245,6 +334,19 @@ function App() {
 
   const isThemeInAudit = auditThemes.includes(activeTheme);
   const currentTheme = isThemeInAudit ? activeTheme : auditThemes[0];
+
+  // Scanner un site live n'évalue pas un socle de composants : l'import n'a pas
+  // de sens en mode design system, et n'y est donc pas proposé.
+  const scanImportButton = activeAudit?.mode === 'classic' ? (
+    <button
+      type="button"
+      onClick={() => setIsScanImportOpen(true)}
+      className="target-44 flex h-ctrl flex-shrink-0 items-center gap-2 rounded-ctrl border-1 border-border bg-surface px-3 text-body"
+    >
+      <FileUp size={16} aria-hidden="true" />
+      Importer un scan
+    </button>
+  ) : null;
 
   const exportButton = activeAudit ? (
     <ExportButton
@@ -349,7 +451,12 @@ function App() {
               onPagesChange={handlePagesChange}
               onGlossaryClick={handleGlossaryClick}
               searchInputRef={searchInputRef}
-              toolbarActions={exportButton}
+              toolbarActions={
+                <>
+                  {scanImportButton}
+                  {exportButton}
+                </>
+              }
             />
           ) : (
             <NoAuditState
@@ -411,6 +518,22 @@ function App() {
         shortcuts={shortcuts}
         onClose={closeHelpModal}
       />
+
+      {activeAudit && activeAudit.mode === 'classic' && (
+        <ScanImportPanel
+          isOpen={isScanImportOpen}
+          audit={activeAudit}
+          criteriaList={auditCriteria}
+          knownCriteriaIds={knownCriteriaIds}
+          incoming={incomingScan}
+          onApply={handleScanApply}
+          onUndo={handleScanUndo}
+          onClose={() => {
+            setIsScanImportOpen(false);
+            setIncomingScan(null);
+          }}
+        />
+      )}
 
       <ExportSettingsModal
         isOpen={isExportSettingsOpen}

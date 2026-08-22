@@ -1,0 +1,37 @@
+{
+  "//": "L'extension tourne dans le navigateur, mais sous l'API des extensions : ni JSX, ni jetons de Vite, et `chrome` en plus.",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.extension.tsbuildinfo",
+    "target": "ES2022",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "types": [
+      "chrome"
+    ],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": [
+    "extension",
+    "src/scan",
+    "vite.extension.config.ts"
+  ],
+  "exclude": [
+    "**/*.test.ts"
+  ],
+  "//exclude": "Les tests de src/scan sont vérifiés par tsconfig.app.json, avec les jetons de Vite et de Vitest que ce projet-ci n'a pas."
+}

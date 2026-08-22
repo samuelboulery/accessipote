@@ -202,6 +202,7 @@ export default function AuditScreen({
             criterion={expanded}
             mode={audit.mode}
             currentStatus={progress[expanded.id]?.status}
+            auto={audit.auto?.[expanded.id]}
             checkedTests={audit.checkedTests[expanded.id] ?? []}
             note={audit.notes[expanded.id] ?? ''}
             pages={audit.pages[expanded.id] ?? []}
@@ -245,6 +246,7 @@ export default function AuditScreen({
           criteria={filteredCriteria}
           mode={audit.mode}
           progress={progress}
+          auto={audit.auto}
           onStatusChange={onStatusChange}
           onGlossaryClick={onGlossaryClick}
           onExpand={onExpand}

@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CriteriaDetail from './CriteriaDetail';
-import type { CriteriaRGAA } from '../types';
+import type { AutoVerdict, CriteriaRGAA } from '../types';
 
 const CRITERIA: CriteriaRGAA = {
   id: '1.1',
@@ -608,5 +608,24 @@ describe('CriteriaDetail', () => {
       textarea = screen.getByLabelText('Note d\'audit') as HTMLTextAreaElement;
       expect(textarea.value).toBe('Note critère 1.2');
     });
+  });
+});
+
+describe('CriteriaDetail — provenance du scan', () => {
+  const auto: AutoVerdict = {
+    status: 'non-conforme',
+    testIds: ['1.1.1'],
+    scannedAt: '2026-08-20T09:30:00.000Z',
+    evidence: [{ url: 'https://exemple.fr/', selector: 'header img' }],
+  };
+
+  it('affiche le marqueur quand le statut vient du scan', () => {
+    setup({ auto, currentStatus: 'non-conforme' });
+    expect(screen.getByText(/pré-rempli par le scan/i)).toBeInTheDocument();
+  });
+
+  it("n'affiche aucun marqueur sans provenance", () => {
+    setup();
+    expect(screen.queryByText(/pré-rempli par le scan/i)).not.toBeInTheDocument();
   });
 });

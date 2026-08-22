@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import CriteriaItem from './CriteriaItem';
-import type { CriteriaRGAA } from '../types';
+import type { AutoVerdict, CriteriaRGAA } from '../types';
 
 const baseCriterion: CriteriaRGAA = {
   id: '1.1',
@@ -137,5 +137,24 @@ describe('CriteriaItem', () => {
   it('reflète l\'état sélectionné', () => {
     render(<CriteriaItem {...defaultProps} isSelected />);
     expect(screen.getByRole('checkbox', { name: /Sélectionner le critère 1\.1/ })).toBeChecked();
+  });
+});
+
+describe('CriteriaItem — provenance du scan', () => {
+  const auto: AutoVerdict = {
+    status: 'non-conforme',
+    testIds: ['1.1.1'],
+    scannedAt: '2026-08-20T09:30:00.000Z',
+    evidence: [{ url: 'https://exemple.fr/', selector: 'header img' }],
+  };
+
+  it('affiche le marqueur quand le statut vient du scan', () => {
+    render(<CriteriaItem {...defaultProps} currentStatus="non-conforme" auto={auto} />);
+    expect(screen.getByText(/pré-rempli par le scan/i)).toBeInTheDocument();
+  });
+
+  it("n'affiche aucun marqueur sur un critère rempli à la main", () => {
+    render(<CriteriaItem {...defaultProps} currentStatus="non-conforme" />);
+    expect(screen.queryByText(/pré-rempli par le scan/i)).not.toBeInTheDocument();
   });
 });

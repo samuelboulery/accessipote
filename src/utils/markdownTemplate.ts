@@ -43,6 +43,21 @@ function modeLabel(mode: Mode): string {
   return mode === 'classic' ? 'Classic' : 'Design System';
 }
 
+/**
+ * « scan automatique du 20/08/2026 (tests 1.1.1) » — vide si l'humain a tranché.
+ *
+ * Un statut accepté sur un indice le dit : dans le document remis, la nature de
+ * la preuve compte autant que son origine.
+ */
+function provenanceOf(audit: Audit, criteriaId: string): string {
+  const auto = audit.auto?.[criteriaId];
+  if (!auto) return '';
+  const date = new Date(auto.scannedAt).toLocaleDateString('fr-FR');
+  const tests = auto.testIds.length > 0 ? ` (tests ${auto.testIds.join(', ')})` : '';
+  const origine = auto.fromHint ? 'indice du scan automatique' : 'scan automatique';
+  return `${origine} du ${date}${tests}`;
+}
+
 function statusOf(audit: Audit, criteriaId: string): CriteriaStatus | undefined {
   return audit.progress[criteriaId as keyof typeof audit.progress]?.status;
 }
@@ -67,11 +82,16 @@ function criteriaValues(audit: Audit, criteria: CriteriaRGAA): Record<string, st
     note: audit.notes[criteria.id] ?? '',
     urls: (audit.pages[criteria.id] ?? []).join(', '),
     tests: (audit.checkedTests[criteria.id] ?? []).join(', '),
+    provenance: provenanceOf(audit, criteria.id),
   };
 }
 
 function auditValues({ audit, criteria }: TemplateData): Record<string, string> {
   const view = toSummaryView(calculateSummaryStats(criteria, audit.progress, audit.mode), audit.mode);
+  // La provenance disparaît avec le statut repris en main : compter les entrées
+  // restantes suffit, il n'y a rien à réconcilier avec `progress`.
+  const auto = criteria.map(c => audit.auto?.[c.id]).filter(entry => entry !== undefined);
+  const scannedAt = auto.map(entry => entry.scannedAt).sort().at(-1);
   return {
     nomAudit: audit.name,
     périmètre: audit.scope ?? '',
@@ -81,6 +101,8 @@ function auditValues({ audit, criteria }: TemplateData): Record<string, string> 
     libelléTaux: view.rateLabel,
     évalués: String(view.evaluated),
     total: String(view.total),
+    préRemplis: String(auto.length),
+    dateScan: scannedAt === undefined ? '' : new Date(scannedAt).toLocaleDateString('fr-FR'),
   };
 }
 

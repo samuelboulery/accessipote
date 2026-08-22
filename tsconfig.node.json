@@ -2,7 +2,9 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "target": "ES2023",
-    "lib": ["ES2023"],
+    /* DOM sert aux fonctions passées à page.evaluate() : elles sont évaluées
+       dans le navigateur, pas dans Node. */
+    "lib": ["ES2023", "DOM"],
     "module": "ESNext",
     "types": ["node"],
     "skipLibCheck": true,
@@ -22,5 +24,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["vite.config.ts"]
+  "include": ["vite.config.ts", "src/scripts/**/*.ts"]
 }

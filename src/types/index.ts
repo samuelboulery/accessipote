@@ -97,6 +97,8 @@ export interface Audit {
   pages: Record<string, string[]>;
   /** criteriaId -> ids des tests cochés */
   checkedTests: Record<string, string[]>;
+  /** criteriaId -> provenance d'un statut posé par le scan automatique. */
+  auto?: Record<string, AutoVerdict>;
 }
 
 export interface AuditStore {
@@ -130,4 +132,85 @@ export interface KeyboardShortcut {
   description: string;
   category: 'navigation' | 'export' | 'help';
   action: string;
+}
+
+/* --- Scan automatique : rapport importé et provenance ------------------- */
+
+/** Ce qui a produit un verdict, dans la page réelle. */
+export interface Evidence {
+  url: string;
+  selector?: string;
+  snippet?: string;
+}
+
+/** Ce que le critère devient. */
+export type ScanVerdict = 'fail' | 'na' | 'pass' | 'unknown';
+
+/**
+ * Ce qui fonde le verdict, sur un axe séparé.
+ *
+ * `probable` se combine à n'importe quel verdict — un échec soupçonné, un non
+ * applicable dont le support n'apparaît peut-être qu'après un clic. Rien de
+ * probable ne s'écrit sans l'auditeur.
+ */
+export type ScanCertainty = 'proven' | 'probable';
+
+/** Résultat du scan pour un critère, sur l'échantillon entier. */
+export interface ScanOutcome {
+  verdict: ScanVerdict;
+  certainty: ScanCertainty;
+  testVerdicts: Record<string, ScanVerdict>;
+  evidence: Evidence[];
+}
+
+/**
+ * Rapport produit par `pnpm scan`, tel qu'il arrive dans l'application.
+ *
+ * Un fichier vient du dehors : sa forme se valide à la frontière, dans
+ * `utils/scanReport.ts`. Ce type décrit ce qui a passé la validation, jamais ce
+ * qu'on a reçu.
+ */
+export interface ScanReport {
+  /** Version du rapport reçu, telle qu'elle a été lue. */
+  schema: number;
+  scannedAt: string;
+  urls: string[];
+  /**
+   * Sélecteurs des zones sur lesquelles le scan a porté, s'il n'a pas porté sur
+   * des pages entières.
+   *
+   * Le reste de la page n'a alors pas été regardé : l'absence d'un support dans
+   * une zone ne dit rien du site, et tout non applicable en devient probable.
+   */
+  zones?: string[];
+  /**
+   * Échantillon constitué par un crawl, donc scanné à `load`.
+   *
+   * Personne n'a cliqué, déplié, ni connecté quoi que ce soit : l'absence d'un
+   * support n'y prouve rien de plus que dans une zone.
+   */
+  crawled?: boolean;
+  criteria: Record<string, ScanOutcome>;
+}
+
+/**
+ * Provenance d'un statut posé par le scan.
+ *
+ * N'existe que tant que `progress[id]` porte la valeur posée par le scan : dès
+ * que l'humain touche au statut, la provenance est supprimée. Sans cette règle,
+ * le marqueur finirait par attribuer à la machine une décision prise à la main.
+ */
+export interface AutoVerdict {
+  status: ClassicStatus;
+  /**
+   * Le statut a été accepté sur un indice, non sur une preuve.
+   *
+   * Sans cette distinction, le marqueur ferait passer un soupçon instruit par
+   * l'auditeur pour un constat de la machine.
+   */
+  fromHint?: boolean;
+  /** Tests RGAA qui ont tranché, ex. « 2.1.1 ». */
+  testIds: string[];
+  scannedAt: string;
+  evidence: Evidence[];
 }

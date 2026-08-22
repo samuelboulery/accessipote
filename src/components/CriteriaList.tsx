@@ -1,4 +1,4 @@
-import type { CriteriaRGAA, Mode, CriteriaStatus } from '../types';
+import type { AutoVerdict, CriteriaRGAA, Mode, CriteriaStatus } from '../types';
 import CriteriaItem from './CriteriaItem';
 import EmptyState from './EmptyState';
 
@@ -6,6 +6,8 @@ interface CriteriaListProps {
   criteria: CriteriaRGAA[];
   mode: Mode;
   progress: { [criteriaId: string]: { status: CriteriaStatus } };
+  /** criteriaId -> provenance du scan, absent sur les audits remplis à la main. */
+  auto?: Record<string, AutoVerdict>;
   onStatusChange: (criteriaId: string, status: CriteriaStatus | '') => void;
   onGlossaryClick: (slug: string) => void;
   onCriteriaClick?: (criteriaId: string) => void;
@@ -24,6 +26,7 @@ export default function CriteriaList({
   criteria,
   mode,
   progress,
+  auto,
   onStatusChange,
   onGlossaryClick,
   onCriteriaClick,
@@ -53,6 +56,7 @@ export default function CriteriaList({
             criterion={criterion}
             mode={mode}
             currentStatus={progress[criterion.id]?.status}
+            auto={auto?.[criterion.id]}
             onStatusChange={onStatusChange}
             onGlossaryClick={onGlossaryClick}
             onCriteriaClick={onCriteriaClick}

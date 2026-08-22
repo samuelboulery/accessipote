@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Accessipote — scan RGAA</title>
+    <link rel="stylesheet" href="./src/popup.css" />
+  </head>
+  <body>
+    <h1>Scan RGAA</h1>
+    <p id="page" class="page">—</p>
+
+    <button id="scan" type="button" class="primary">Ajouter cette page au panier</button>
+    <button id="zone" type="button">Ajouter une zone…</button>
+
+    <p id="status" role="status" class="status"></p>
+
+    <h2>Panier d’échantillon</h2>
+    <ul id="basket" class="basket" hidden></ul>
+    <ul id="tally" class="tally" hidden></ul>
+
+    <h2>Crawl</h2>
+    <p class="hint">Le crawl scanne les pages telles qu’elles se chargent : il ne conclut jamais à un non applicable.</p>
+    <label for="crawl-url">Adresse de départ</label>
+    <input id="crawl-url" type="url" placeholder="https://exemple.fr" />
+    <div class="limits">
+      <label for="crawl-pages">Pages</label>
+      <input id="crawl-pages" type="number" min="1" max="50" value="10" />
+      <label for="crawl-depth">Profondeur</label>
+      <input id="crawl-depth" type="number" min="0" max="5" value="2" />
+    </div>
+    <button id="crawl" type="button">Lancer le crawl</button>
+    <button id="crawl-stop" type="button" class="quiet" hidden>Arrêter le crawl</button>
+    <p id="crawl-status" role="status" class="status"></p>
+
+    <button id="send" type="button" hidden>Envoyer vers Accessipote</button>
+    <button id="empty" type="button" class="quiet" hidden>Vider le panier</button>
+
+    <script type="module" src="./src/popup.ts"></script>
+  </body>
+</html>
