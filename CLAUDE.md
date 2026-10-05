@@ -13,7 +13,7 @@ Cible : auditeurs accessibilité, équipes design, développeurs.
 URL dev : http://localhost:5173
 
 ## Stack technique
-- React 19 + TypeScript strict + Vite 7
+- React 19 + TypeScript strict + Vite 8
 - Tailwind CSS 4, échelle restreinte aux jetons du design (voir `src/tokens.css` et le bloc `@theme` de `src/index.css`)
 - Lucide React pour les icônes
 - jsPDF pour les exports PDF
