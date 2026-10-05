@@ -7,7 +7,8 @@ import { promisify } from 'node:util';
 import { chromium } from 'playwright';
 
 /**
- * Regénère les captures du README (`docs/screenshots/`). Trois temps :
+ * Regénère les captures du README (`docs/screenshots/`) et son parcours animé
+ * (`docs/parcours.gif`, ffmpeg requis). Trois temps :
  *
  * 1. Le vrai moteur de scan (`src/scripts/scan.ts`) passe sur une page de
  *    démonstration servie en local, truffée d'erreurs connues — le rapport
@@ -261,6 +262,77 @@ async function shot(page, name) {
   await nav(page, 'Audit');
   await shot(page, 'sombre');
   await page.close();
+}
+
+// Parcours du README : créer un audit, noter des critères, lire la synthèse.
+// Une image par étape plutôt qu'une vidéo : rendu identique d'une passe à
+// l'autre, et un GIF de quelques centaines de Ko.
+{
+  const frames = join(OUT, 'parcours/');
+  mkdirSync(frames);
+  let count = 0;
+  const frame = async (page, hold = 1) => {
+    await page.mouse.move(0, 0);
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(200);
+    const shot = await page.screenshot();
+    // Une étape qui doit se lire reste affichée plus longtemps : même image répétée.
+    for (let i = 0; i < hold; i++) {
+      writeFileSync(`${frames}${String(count++).padStart(2, '0')}.png`, shot);
+    }
+  };
+  const page = await browser.newPage({
+    viewport: { width: 1440, height: 900 },
+    colorScheme: 'light',
+    reducedMotion: 'reduce',
+    locale: 'fr-FR',
+  });
+  await page.clock.setFixedTime(NOW);
+  await page.addInitScript(store => {
+    if (sessionStorage.getItem('seeded')) return;
+    sessionStorage.setItem('seeded', '1');
+    localStorage.clear();
+    localStorage.setItem('rgaa-audits', JSON.stringify(store));
+    localStorage.setItem('theme', 'light');
+  }, { version: 2, audits, activeAuditId: vitrine.id });
+  await page.goto(BASE);
+  await page.getByRole('navigation', { name: 'Navigation principale' }).waitFor();
+  await nav(page, 'Accueil');
+  await frame(page, 2);
+
+  await page.getByRole('button', { name: 'Nouvel audit' }).click();
+  await page.locator('#audit-name').waitFor();
+  await frame(page);
+  await page.locator('#audit-name').fill('Intranet RH — recette');
+  await page.locator('#audit-scope').fill('https://intranet.exemple');
+  await frame(page, 2);
+  await page.getByRole('button', { name: "Créer l'audit" }).click();
+  await page.getByRole('radiogroup', { name: /^Statut du critère 1\.1 / }).waitFor();
+  await frame(page, 2);
+
+  const rate = async (id, status) => {
+    await page
+      .getByRole('radiogroup', { name: new RegExp(`^Statut du critère ${id.replace('.', '\\.')} `) })
+      .getByText(status, { exact: true })
+      .click();
+    await frame(page);
+  };
+  await rate('1.1', 'Conforme');
+  await rate('1.2', 'Non conforme');
+  await rate('1.3', 'Non applicable');
+
+  await nav(page, 'Synthèse');
+  await frame(page, 4);
+  await page.close();
+
+  // Palette calculée sur toutes les images, puis appliquée sans tramage : les
+  // aplats de l'interface restent nets et le fichier léger.
+  execFileSync('ffmpeg', [
+    '-v', 'error', '-y', '-framerate', '1/0.9', '-i', `${frames}%02d.png`,
+    '-vf', 'scale=1000:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=full[p];[b][p]paletteuse=dither=none',
+    '-loop', '0', join(ROOT, 'docs/parcours.gif'),
+  ]);
+  console.log('parcours.gif');
 }
 
 await browser.close();

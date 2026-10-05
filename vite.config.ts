@@ -63,6 +63,10 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     pool: 'forks',
+    // Node ≥ 25 expose un `localStorage` natif (Web Storage), indéfini sans
+    // `--localstorage-file`. Vitest ne recopie pas sur le global une clé de
+    // jsdom que le global possède déjà : le natif masquait celui de jsdom.
+    execArgv: ['--no-experimental-webstorage'],
     setupFiles: './src/test/setup.ts',
     css: true,
     coverage: {
