@@ -240,7 +240,7 @@ CLI et l'extension.
 ## Tests et qualité
 
 **954 tests** répartis sur 62 fichiers, **96 % de couverture** en lignes et
-91 % en branches. La CI les rejoue sur Node 22 et 24 à chaque poussée.
+91 % en branches. La CI les rejoue sur Node 22, 24 et 26 à chaque poussée.
 
 ```bash
 pnpm test          # mode surveillance
