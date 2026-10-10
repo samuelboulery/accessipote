@@ -468,3 +468,24 @@ describe('rgaaMapping — pistes pour l’auditeur', () => {
     expect(RGAA_LEADS.some(lead => lead.criteria.includes('1.3'))).toBe(true);
   });
 });
+
+describe('rgaaMapping — ordre de tabulation', () => {
+  const mappingOf = (testId: string) => RGAA_MAPPING.find(mapping => mapping.testId === testId);
+
+  it('soupçonne un tabindex positif, sans le condamner', () => {
+    // Un tabindex positif réordonne la tabulation : souvent incohérent, pas
+    // toujours. Le test demande un jugement de cohérence.
+    expect(mappingOf('12.8.1')).toMatchObject({
+      probableWhen: '[tabindex]:not([tabindex="0"]):not([tabindex^="-"])',
+      provesPass: false,
+    });
+    expect(mappingOf('12.8.1')?.failWhen).toBeUndefined();
+  });
+
+  it('le sélecteur ne retient que les valeurs positives', () => {
+    document.body.innerHTML =
+      '<a tabindex="3"></a><a tabindex="0"></a><a tabindex="-1"></a><a></a><a tabindex="12"></a>';
+    const selector = mappingOf('12.8.1')?.probableWhen ?? '';
+    expect(document.querySelectorAll(selector)).toHaveLength(2);
+  });
+});

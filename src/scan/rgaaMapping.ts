@@ -646,6 +646,17 @@ export const RGAA_MAPPING: RgaaMapping[] = [
     provesPass: false,
   },
 
+  // — 12.8 Ordre de tabulation ——————————————————————————————————————————————
+  // Un `tabindex` positif sort l'élément de l'ordre du document : c'est le
+  // premier suspect d'une tabulation incohérente, sans en être la preuve — la
+  // cohérence reste à juger. 12.8.2, l'ordre après un script, n'est pas mappé.
+  {
+    testId: '12.8.1',
+    criterionId: '12.8',
+    probableWhen: '[tabindex]:not([tabindex="0"]):not([tabindex^="-"])',
+    provesPass: false,
+  },
+
   // — Thème 13 Consultation ————————————————————————————————————————————————
   // 13.1.2 — le seul énoncé binaire du lot : la redirection `<meta>` est
   // immédiate, ou elle ne l'est pas.
