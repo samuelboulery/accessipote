@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { FileUp } from 'lucide-react';
 import type {
   AutoVerdict,
+  ScanLead,
   AuditProgress,
   CriteriaFilters,
   CriteriaStatus,
@@ -210,6 +211,24 @@ function App() {
 
         return { progress: progress as AuditProgress, auto };
       });
+    },
+    [patchAudit],
+  );
+
+  /**
+   * Pistes du scan, fusionnées critère par critère : un nouvel import remplace
+   * les pistes des critères qu'il couvre, et laisse les autres.
+   */
+  const handleScanLeads = useCallback(
+    (leads: Record<string, ScanLead[]>, scannedAt: string) => {
+      patchAudit(audit => ({
+        leads: {
+          ...audit.leads,
+          ...Object.fromEntries(
+            Object.entries(leads).map(([criteriaId, items]) => [criteriaId, { scannedAt, items }]),
+          ),
+        },
+      }));
     },
     [patchAudit],
   );
@@ -528,6 +547,7 @@ function App() {
           incoming={incomingScan}
           onApply={handleScanApply}
           onUndo={handleScanUndo}
+          onLeads={handleScanLeads}
           onClose={() => {
             setIsScanImportOpen(false);
             setIncomingScan(null);

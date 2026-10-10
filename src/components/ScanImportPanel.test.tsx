@@ -27,6 +27,15 @@ const report = {
     '2.1': { verdict: 'na', testVerdicts: { '2.1.1': 'na' }, evidence: [] },
     '8.3': { verdict: 'pass', testVerdicts: { '8.3.1': 'pass' }, evidence: [] },
   },
+  leads: {
+    '9.1': [
+      {
+        label: 'Titres : vérifier leur hiérarchie',
+        count: 7,
+        samples: [{ url: 'https://exemple.fr', selector: 'h3', snippet: '<h3>Nos offres</h3>' }],
+      },
+    ],
+  },
 };
 
 const audit: Audit = {
@@ -51,6 +60,7 @@ function setup(overrides: Partial<React.ComponentProps<typeof ScanImportPanel>> 
   const onApply = vi.fn<(entries: ScanPlanEntry[], scannedAt: string) => void>();
   const onUndo = vi.fn<(criteriaId: string) => void>();
   const onClose = vi.fn();
+  const onLeads = vi.fn();
   const view = render(
     <ScanImportPanel
       isOpen
@@ -59,11 +69,12 @@ function setup(overrides: Partial<React.ComponentProps<typeof ScanImportPanel>> 
       knownCriteriaIds={knownCriteriaIds}
       onApply={onApply}
       onUndo={onUndo}
+      onLeads={onLeads}
       onClose={onClose}
       {...overrides}
     />,
   );
-  return { ...view, onApply, onUndo, onClose, user: userEvent.setup() };
+  return { ...view, onApply, onUndo, onLeads, onClose, user: userEvent.setup() };
 }
 
 function input(): HTMLInputElement {
@@ -149,11 +160,32 @@ describe('ScanImportPanel', () => {
     expect(onUndo).toHaveBeenCalledWith('1.1');
   });
 
-  it('affiche le nombre de critères que le scan n’a pas regardés', async () => {
+  it('nomme les critères que le scan n’a pas tranchés, avec leurs pistes', async () => {
     const { user } = setup();
     await user.upload(input(), file(report));
 
-    expect(screen.getByRole('group', { name: /non évalué/i })).toHaveTextContent('1');
+    const section = screen.getByRole('group', { name: /non évalué/i });
+    const row = within(section).getByRole('listitem', { name: /9\.1/ });
+    expect(row).toHaveTextContent('Titres pertinents');
+    expect(row).toHaveTextContent('7 × Titres : vérifier leur hiérarchie');
+
+    await user.click(within(row).getByText(/7 ×/));
+    expect(within(row).getByText('<h3>Nos offres</h3>')).toBeVisible();
+  });
+
+  it('transmet les pistes une seule fois par import', async () => {
+    const { onLeads, user } = setup();
+    await user.upload(input(), file(report));
+
+    expect(onLeads).toHaveBeenCalledTimes(1);
+    expect(onLeads).toHaveBeenCalledWith(report.leads, report.scannedAt);
+  });
+
+  it('ne transmet rien quand le rapport ne porte aucune piste', async () => {
+    const { onLeads, user } = setup();
+    await user.upload(input(), file({ ...report, leads: undefined }));
+
+    expect(onLeads).not.toHaveBeenCalled();
   });
 
   it('rejette un fichier illisible sans toucher à l’audit', async () => {
