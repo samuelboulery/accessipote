@@ -1,4 +1,4 @@
-import type { RgaaMapping } from './types.ts';
+import type { LeadDefinition, RgaaMapping } from './types.ts';
 
 /**
  * Correspondance entre les tests RGAA et ce qui permet de les trancher.
@@ -721,6 +721,122 @@ export const RGAA_MAPPING: RgaaMapping[] = [
   },
 ];
 
+/**
+ * Pistes pour l'auditeur : là où la machine ne sait pas juger, elle sait au
+ * moins montrer quoi regarder.
+ *
+ * Volontairement courte. Une piste vaut si elle désigne ce que le critère
+ * demande d'examiner, pas si elle remplit l'écran : un `target="_blank"` n'est
+ * pas une piste pour 13.2, qui vise les ouvertures *sans* action de
+ * l'utilisateur ; un `accesskey` ne l'est pas pour 12.10, qui vise les
+ * raccourcis à une seule touche.
+ */
+export const RGAA_LEADS: LeadDefinition[] = [
+  {
+    criteria: ['1.2'],
+    label: 'Images marquées décoratives : confirmer qu’elles le sont',
+    selector: 'img[alt=""], img[role="presentation"], img[role="none"], svg[aria-hidden="true"]',
+  },
+  {
+    criteria: ['1.3'],
+    label: 'Images dotées d’une alternative : juger sa pertinence',
+    selector: [
+      'img[alt]:not([alt=""])',
+      '[role="img"][aria-label]',
+      '[role="img"][aria-labelledby]',
+      'area[alt]:not([alt=""])',
+      'input[type="image"][alt]',
+    ].join(', '),
+  },
+  {
+    criteria: ['3.3'],
+    label: 'Composants d’interface : contraste des bordures, icônes et états (3:1)',
+    selector: `${FIELD}, ${BUTTON}`,
+  },
+  {
+    criteria: ['6.1'],
+    label: 'Liens : intitulé explicite seul, ou par son contexte',
+    selector: 'a[href], [role="link"]',
+  },
+  {
+    criteria: ['7.5'],
+    label: 'Messages de statut déclarés : vérifier leur restitution',
+    selector: '[role="status"], [role="alert"], [role="log"], [role="progressbar"], [aria-live]',
+  },
+  {
+    criteria: ['8.6'],
+    label: 'Titre de la page : juger sa pertinence',
+    selector: 'head > title',
+    mainFrameOnly: true,
+  },
+  {
+    criteria: ['8.7'],
+    label: 'Changements de langue déjà signalés : chercher ceux qui manquent',
+    selector: '[lang]:not(html)',
+  },
+  {
+    criteria: ['8.10'],
+    label: 'Sens de lecture déclaré : vérifier qu’il suit le contenu',
+    selector: '[dir]',
+  },
+  {
+    criteria: ['9.1'],
+    label: 'Titres : vérifier leur hiérarchie et leur pertinence',
+    selector: 'h1, h2, h3, h4, h5, h6, [role="heading"]',
+  },
+  {
+    criteria: ['9.4'],
+    label: 'Citations balisées : chercher celles qui ne le sont pas',
+    selector: 'blockquote, q',
+  },
+  {
+    criteria: ['11.2'],
+    label: 'Champs : juger la pertinence de leur étiquette',
+    selector: FIELD,
+  },
+  {
+    criteria: ['11.5', '11.6'],
+    label: 'Regroupements de champs : vérifier leur nécessité et leur légende',
+    selector: 'fieldset, [role="group"], [role="radiogroup"]',
+  },
+  {
+    criteria: ['11.10'],
+    label: 'Contrôles de saisie : vérifier l’indication et les messages d’erreur',
+    selector: '[required], [aria-required="true"], [pattern], [aria-invalid]',
+  },
+  {
+    criteria: ['12.1', '12.2'],
+    label: 'Systèmes de navigation : vérifier qu’il y en a deux, à la même place',
+    selector: 'nav, [role="navigation"], [role="search"], input[type="search"]',
+  },
+  {
+    criteria: ['12.6'],
+    label: 'Zones de regroupement : vérifier qu’on peut les atteindre ou les éviter',
+    selector: [
+      'header',
+      'nav',
+      'main',
+      'aside',
+      'footer',
+      '[role="banner"]',
+      '[role="navigation"]',
+      '[role="main"]',
+      '[role="complementary"]',
+      '[role="contentinfo"]',
+    ].join(', '),
+  },
+  {
+    criteria: ['13.3', '13.4'],
+    label: 'Documents en téléchargement : chercher leur version accessible',
+    selector: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp']
+      .map(extension => `a[href$=".${extension}" i]`)
+      .join(', '),
+  },
+];
+
+const PAGE_LEADS = RGAA_LEADS.filter(lead => !lead.mainFrameOnly).map(lead => lead.selector);
+const MAIN_FRAME_LEADS = RGAA_LEADS.filter(lead => lead.mainFrameOnly).map(lead => lead.selector);
+
 /** Les critères que le mapping couvre. */
 export const MAPPED_CRITERIA: string[] = [
   ...new Set(RGAA_MAPPING.map(mapping => mapping.criterionId)),
@@ -728,7 +844,7 @@ export const MAPPED_CRITERIA: string[] = [
 
 /** Sélecteurs de support, à compter sur chaque page. */
 export const NA_SELECTORS: string[] = [
-  ...new Set(RGAA_MAPPING.flatMap(mapping => mapping.naWhen ?? [])),
+  ...new Set([...RGAA_MAPPING.flatMap(mapping => mapping.naWhen ?? []), ...PAGE_LEADS]),
 ];
 
 /**
@@ -742,14 +858,16 @@ export const FOUND_SELECTORS: string[] = [
     RGAA_MAPPING.filter(mapping => !mapping.mainFrameOnly).flatMap(mapping => [
       ...(mapping.failWhen ?? []),
       ...(mapping.probableWhen ?? []),
-    ]),
+    ]).concat(PAGE_LEADS),
   ),
 ];
 
 /** Sélecteurs de contre-exemple à ne chercher que dans le document principal. */
 export const MAIN_FRAME_FAIL_SELECTORS: string[] = [
   ...new Set(
-    RGAA_MAPPING.filter(mapping => mapping.mainFrameOnly).flatMap(mapping => mapping.failWhen ?? []),
+    RGAA_MAPPING.filter(mapping => mapping.mainFrameOnly)
+      .flatMap(mapping => mapping.failWhen ?? [])
+      .concat(MAIN_FRAME_LEADS),
   ),
 ];
 

@@ -6,6 +6,8 @@ import type {
   Certainty,
   CriterionOutcome,
   Evidence,
+  Lead,
+  LeadDefinition,
   PageScan,
   RgaaMapping,
   TestVerdict,
@@ -14,6 +16,8 @@ import type {
 /** Un rapport finit dans localStorage (~5 Mo) : les preuves se plafonnent. */
 export const EVIDENCE_MAX = 3;
 export const SNIPPET_MAX = 200;
+/** Plus que pour une preuve : cinq pages d'échantillon, cinq titres à relire. */
+export const LEAD_SAMPLES_MAX = 5;
 
 /** Un verdict et ce qui le fonde. Les deux voyagent toujours ensemble. */
 interface Judgement {
@@ -192,4 +196,44 @@ export function aggregate(
   }
 
   return outcomes;
+}
+
+/**
+ * Relève les pistes sur l'échantillon, critère par critère.
+ *
+ * Une piste sans élément n'en est pas une : elle est écartée, tout comme celle
+ * qu'aucune page n'a su évaluer. Le compte vient des supports comptés ; un
+ * sélecteur réservé au document principal n'est que récolté, et se compte par
+ * ses échantillons.
+ */
+export function collectLeads(
+  pages: PageScan[],
+  leads: LeadDefinition[],
+): Record<string, Lead[]> {
+  const byCriterion: Record<string, Lead[]> = {};
+
+  for (const definition of leads) {
+    let evaluated = false;
+    let count = 0;
+    const samples: Evidence[] = [];
+
+    for (const page of pages) {
+      const nodes = page.found[definition.selector];
+      const present = page.present[definition.selector] ?? nodes?.length;
+      if (present === undefined) continue;
+      evaluated = true;
+      count += present;
+      samples.push(
+        ...(nodes ?? []).map(node => ({ url: page.url, selector: node.selector, snippet: truncate(node.snippet) })),
+      );
+    }
+
+    if (!evaluated || count === 0) continue;
+    const lead: Lead = { label: definition.label, count, samples: samples.slice(0, LEAD_SAMPLES_MAX) };
+    for (const criterionId of definition.criteria) {
+      byCriterion[criterionId] = [...(byCriterion[criterionId] ?? []), lead];
+    }
+  }
+
+  return byCriterion;
 }

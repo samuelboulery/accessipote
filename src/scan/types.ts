@@ -92,6 +92,30 @@ export interface RgaaMapping {
 }
 
 /**
+ * Une piste : des éléments de la page qu'un critère manuel demande d'examiner.
+ *
+ * Ce n'est pas un verdict. « 12 images portent un alt » ne dit rien de la
+ * pertinence de ces alt — c'est précisément ce que l'auditeur doit juger, et la
+ * piste lui dit où regarder. Elle n'entre donc jamais dans `aggregate()`.
+ */
+export interface LeadDefinition {
+  /** Critères que la piste éclaire — un même repérage peut en servir plusieurs. */
+  criteria: string[];
+  /** Ce que l'auditeur doit faire de ces éléments, en une phrase. */
+  label: string;
+  selector: string;
+  /** Comme pour le mapping : ne chercher que dans le document principal. */
+  mainFrameOnly?: true;
+}
+
+/** Une piste relevée sur l'échantillon : combien d'éléments, et lesquels. */
+export interface Lead {
+  label: string;
+  count: number;
+  samples: Evidence[];
+}
+
+/**
  * Ce que la sonde doit chercher dans un document.
  *
  * Un seul argument sérialisable : c'est tout ce qu'un `evaluate` ou un

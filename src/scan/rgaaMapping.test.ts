@@ -4,6 +4,8 @@ import {
   MAPPED_CRITERIA,
   FOUND_SELECTORS,
   MAIN_FRAME_FAIL_SELECTORS,
+  NA_SELECTORS,
+  RGAA_LEADS,
 } from './rgaaMapping.ts';
 import criteriaData from '../data/criteria.json';
 import { transformCriteriaData } from '../utils/transformCriteria';
@@ -419,5 +421,37 @@ describe('rgaaMapping — lot consultation, navigation et présentation', () => 
         mapping.provesPass,
     );
     expect(bavards.map(mapping => mapping.testId)).toEqual([]);
+  });
+});
+
+describe('rgaaMapping — pistes pour l’auditeur', () => {
+  it('chaque critère cité par une piste existe dans criteria.json', () => {
+    const inconnus = RGAA_LEADS.flatMap(lead => lead.criteria).filter(id => !byId.has(id));
+    expect(inconnus).toEqual([]);
+  });
+
+  it('chaque sélecteur de piste est valide', () => {
+    const invalides = RGAA_LEADS.filter(lead => {
+      try {
+        document.querySelectorAll(lead.selector);
+        return false;
+      } catch {
+        return true;
+      }
+    });
+    expect(invalides.map(lead => lead.selector)).toEqual([]);
+  });
+
+  it('chaque piste est comptée et échantillonnée, dans le bon périmètre', () => {
+    const malRangees = RGAA_LEADS.filter(lead =>
+      lead.mainFrameOnly
+        ? !MAIN_FRAME_FAIL_SELECTORS.includes(lead.selector)
+        : !NA_SELECTORS.includes(lead.selector) || !FOUND_SELECTORS.includes(lead.selector),
+    );
+    expect(malRangees.map(lead => lead.label)).toEqual([]);
+  });
+
+  it('oriente l’auditeur sur la pertinence des alternatives d’images', () => {
+    expect(RGAA_LEADS.some(lead => lead.criteria.includes('1.3'))).toBe(true);
   });
 });

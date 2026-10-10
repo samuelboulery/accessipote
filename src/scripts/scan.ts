@@ -13,7 +13,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 import type { Browser, Frame, Page } from 'playwright';
 import type { AxeResults } from 'axe-core';
-import { aggregate } from '../scan/aggregate.ts';
+import { aggregate, collectLeads } from '../scan/aggregate.ts';
 import { probeDocument } from '../scan/collect.ts';
 import { mergePageScan } from '../scan/mergeFrames.ts';
 import {
@@ -21,6 +21,7 @@ import {
   FOUND_SELECTORS,
   MAIN_FRAME_FAIL_SELECTORS,
   NA_SELECTORS,
+  RGAA_LEADS,
   RGAA_MAPPING,
 } from '../scan/rgaaMapping.ts';
 import type { Certainty, FrameScan, PageScan, ProbeResult, TestVerdict } from '../scan/types.ts';
@@ -265,6 +266,9 @@ async function main(): Promise<void> {
     // que relativement à ce qui a été atteint.
     crawl: { networkIdle: true, scrolled: true, frames },
     criteria,
+    // Pistes pour ce que la machine ne tranche pas : à côté des critères,
+    // jamais dedans, sans quoi un critère manuel paraîtrait évalué.
+    leads: collectLeads(pages, RGAA_LEADS),
   };
 
   const counts: Record<TestVerdict, number> = { fail: 0, na: 0, pass: 0, unknown: 0 };
