@@ -475,23 +475,44 @@ export const RGAA_MAPPING: RgaaMapping[] = [
   // changement de contexte, message de statut. Trois fois, il faudrait savoir
   // ce que le script veut dire.
 
+  // — 8.1 Type de document ———————————————————————————————————————————————
+  // Présence, validité, position : trois faits de format pur, que la sonde lit
+  // sur le document principal. Un doctype écrit après `<html>` est ignoré par
+  // le navigateur, qui n'en garde aucune trace : il ressort donc en absence.
+  {
+    testId: '8.1.1',
+    criterionId: '8.1',
+    failWhen: '@doctype-missing',
+    mainFrameOnly: true,
+    provesPass: true,
+  },
+  {
+    testId: '8.1.2',
+    criterionId: '8.1',
+    failWhen: '@doctype-invalid',
+    mainFrameOnly: true,
+    provesPass: true,
+  },
+  {
+    testId: '8.1.3',
+    criterionId: '8.1',
+    failWhen: '@doctype-after-html',
+    mainFrameOnly: true,
+    provesPass: true,
+  },
+
   // — 8.2 Validité du code source ——————————————————————————————————————————
   // Le test énumère cinq conditions, dont « les valeurs d'attribut id sont
-  // uniques dans la page ». `duplicate-id-aria` ne couvre que les identifiants
-  // référencés par ARIA ou par un `<label>` : un sous-ensemble, dont la
-  // violation dirait l'échec du test. Ses deux voisines, `duplicate-id` et
-  // `duplicate-id-active`, sont dépréciées et désactivées dans axe 4.13 — les
-  // citer donnerait une couverture qui ne s'exécute pas.
-  //
-  // ponytail: indice et non preuve, parce que les résultats d'axe sont fusionnés
-  // tous cadres confondus : un `id` dupliqué dans un `<iframe>` appartient au
-  // document embarqué, pas à la page. Passer à la preuve demande des résultats
-  // axe rattachés à leur cadre, comme `mainFrameOnly` le fait déjà pour les
-  // sélecteurs.
+  // uniques dans la page ». Un doublon prouve donc l'échec ; son absence ne dit
+  // rien des quatre autres conditions. La sonde le cherche elle-même, sur le
+  // document principal seul : un `id` dupliqué dans un `<iframe>` appartient au
+  // document embarqué. `duplicate-id-aria` ne couvrait qu'un sous-ensemble, et
+  // ses résultats se fusionnaient tous cadres confondus.
   {
     testId: '8.2.1',
     criterionId: '8.2',
-    probableRules: ['duplicate-id-aria'],
+    failWhen: '@duplicate-id',
+    mainFrameOnly: true,
     provesPass: false,
   },
 

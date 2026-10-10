@@ -84,7 +84,7 @@ describe('rgaaMapping — portée des sélecteurs', () => {
 
   it('les critères « dans chaque page web » ignorent les documents embarqués', () => {
     const parPage = RGAA_MAPPING.filter(mapping => mapping.mainFrameOnly).map(m => m.testId);
-    expect(parPage).toEqual(['8.3.1', '8.5.1']);
+    expect(parPage).toEqual(['8.1.1', '8.1.2', '8.1.3', '8.2.1', '8.3.1', '8.5.1']);
   });
 });
 
@@ -236,11 +236,24 @@ describe('rgaaMapping — lot éléments obligatoires', () => {
     expect(ruleOf('8.8.1')).toEqual(['valid-lang']);
   });
 
-  it('signale les identifiants dupliqués sans les écrire', () => {
-    // Les résultats d'axe sont fusionnés tous cadres confondus : un `id`
-    // dupliqué dans un `<iframe>` n'est pas celui de la page.
-    expect(hintOf('8.2.1')).toEqual(['duplicate-id-aria']);
-    expect(ruleOf('8.2.1')).toEqual([]);
+  const mappingOf = (testId: string) => RGAA_MAPPING.find(mapping => mapping.testId === testId);
+
+  it('prouve un identifiant dupliqué, dans le document principal seul', () => {
+    // Un `id` dupliqué dans un `<iframe>` appartient au document embarqué,
+    // pas à la page.
+    expect(mappingOf('8.2.1')).toMatchObject({ failWhen: '@duplicate-id', mainFrameOnly: true });
+    expect(hintOf('8.2.1')).toEqual([]);
+  });
+
+  it('tranche les trois tests du doctype, et peut proposer 8.1 conforme', () => {
+    expect(['8.1.1', '8.1.2', '8.1.3'].map(testId => mappingOf(testId)?.failWhen)).toEqual([
+      '@doctype-missing',
+      '@doctype-invalid',
+      '@doctype-after-html',
+    ]);
+    expect(['8.1.1', '8.1.2', '8.1.3'].every(testId => mappingOf(testId)?.provesPass)).toBe(true);
+    expect(MAIN_FRAME_FAIL_SELECTORS).toEqual(expect.arrayContaining(['@doctype-missing', '@duplicate-id']));
+    expect(FOUND_SELECTORS).not.toContain('@duplicate-id');
   });
 
   it('ne retient qu’un indice là où la règle parle d’autre chose que le test', () => {

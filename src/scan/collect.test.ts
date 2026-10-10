@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect } from 'vitest';
 import { collectLinks, probeDocument } from './collect.ts';
 
 function mount(html: string): void {
@@ -144,5 +144,54 @@ describe('collectLinks', () => {
     `);
 
     expect(collectLinks()).toEqual([`${location.origin}/contact`]);
+  });
+});
+
+describe('probeDocument — contrôles nommés', () => {
+  const probe = (failSelectors: string[], root?: string) =>
+    probeDocument({ root, naSelectors: [], failSelectors, snippetMax: 200, nodesPerSelector: 5 });
+
+  const original = document.doctype;
+  const setDoctype = (doctype: DocumentType | null) => {
+    document.doctype?.remove();
+    if (doctype) document.insertBefore(doctype, document.documentElement);
+  };
+  afterEach(() => setDoctype(original ?? document.implementation.createDocumentType('html', '', '')));
+
+  it('un doctype html5 est présent et valide', () => {
+    setDoctype(document.implementation.createDocumentType('html', '', ''));
+    const { found } = probe(['@doctype-missing', '@doctype-invalid', '@doctype-after-html']);
+
+    expect(found).toEqual({ '@doctype-missing': [], '@doctype-invalid': [], '@doctype-after-html': [] });
+  });
+
+  it('signale un doctype absent', () => {
+    setDoctype(null);
+    expect(probe(['@doctype-missing']).found['@doctype-missing']).toHaveLength(1);
+  });
+
+  it('accepte un doctype W3C historique, refuse un doctype inconnu', () => {
+    setDoctype(document.implementation.createDocumentType('html', '-//W3C//DTD HTML 4.01//EN', ''));
+    expect(probe(['@doctype-invalid']).found['@doctype-invalid']).toEqual([]);
+
+    setDoctype(document.implementation.createDocumentType('svg', '', ''));
+    const [node] = probe(['@doctype-invalid']).found['@doctype-invalid'];
+    expect(node.snippet).toBe('<!DOCTYPE svg>');
+  });
+
+  it('relève chaque identifiant en double, pas sa première occurrence', () => {
+    mount('<p id="a"></p><p id="a"></p><p id="b"></p><p id="a"></p>');
+    const nodes = probe(['@duplicate-id']).found['@duplicate-id'];
+
+    expect(nodes.map(node => node.selector)).toEqual(['p#a', 'p#a']);
+  });
+
+  it('cherche les doublons dans la zone scannée seulement', () => {
+    mount('<header id="zone"><p id="a"></p></header><p id="a"></p>');
+    expect(probe(['@duplicate-id'], '#zone').found['@duplicate-id']).toEqual([]);
+  });
+
+  it('laisse un contrôle inconnu non renseigné', () => {
+    expect('@inconnu' in probe(['@inconnu']).found).toBe(false);
   });
 });

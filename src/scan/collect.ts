@@ -44,8 +44,51 @@ export function probeDocument(options: ProbeOptions): ProbeResult {
     }
   }
 
+  // Contrôles nommés : ce qu'un sélecteur CSS ne sait pas dire. Leur clé
+  // commence par `@`, qu'aucun sélecteur valide ne commence ; une clé inconnue
+  // n'est pas renseignée, comme un sélecteur qui lève.
+  const named = (key: string): Array<{ selector: string; snippet: string }> | null => {
+    const doctype = document.doctype;
+    const shown = doctype
+      ? [{ selector: 'doctype', snippet: `<!DOCTYPE ${doctype.name}${doctype.publicId ? ` PUBLIC "${doctype.publicId}"` : ''}>` }]
+      : [];
+    switch (key) {
+      case '@doctype-missing':
+        return doctype ? [] : [{ selector: 'html', snippet: 'Aucune déclaration doctype' }];
+      case '@doctype-invalid': {
+        // HTML5, ou l'une des DTD du W3C : le RGAA valide selon le type déclaré.
+        const valid =
+          doctype?.name.toLowerCase() === 'html' &&
+          (doctype.publicId === '' || doctype.publicId.startsWith('-//W3C//DTD '));
+        return doctype && !valid ? shown : [];
+      }
+      case '@doctype-after-html':
+        return doctype &&
+          !(doctype.compareDocumentPosition(document.documentElement) & Node.DOCUMENT_POSITION_FOLLOWING)
+          ? shown
+          : [];
+      case '@duplicate-id': {
+        const seen = new Set<string>();
+        return queryAll('[id]')
+          .filter(element => {
+            const duplicate = seen.has(element.id);
+            seen.add(element.id);
+            return duplicate;
+          })
+          .map(element => ({ selector: label(element), snippet: element.outerHTML.slice(0, snippetMax) }));
+      }
+      default:
+        return null;
+    }
+  };
+
   const found: Record<string, Array<{ selector: string; snippet: string }>> = {};
   for (const selector of missing ? [] : failSelectors) {
+    if (selector.startsWith('@')) {
+      const nodes = named(selector);
+      if (nodes) found[selector] = nodes.slice(0, nodesPerSelector);
+      continue;
+    }
     try {
       found[selector] = queryAll(selector)
         .slice(0, nodesPerSelector)
