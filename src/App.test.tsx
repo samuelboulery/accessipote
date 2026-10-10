@@ -416,6 +416,24 @@ describe('App — import d’un rapport de scan', () => {
     });
   });
 
+  it('filtre la liste sur les critères qui portent des pistes', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+    await user.click(screen.getByRole('button', { name: 'Terminer' }));
+
+    await user.click(screen.getByRole('button', { name: /filtrer/i }));
+    await user.selectOptions(screen.getByLabelText('Scan'), 'leads');
+
+    const listed = screen
+      .getAllByRole('checkbox')
+      .map(box => box.getAttribute('aria-label'))
+      .filter(label => label?.startsWith('Sélectionner le critère '));
+    expect(listed).toEqual(['Sélectionner le critère 1.3']);
+  });
+
   it('fusionne les pistes critère par critère d’un import à l’autre', async () => {
     seedAudit();
     const user = userEvent.setup();

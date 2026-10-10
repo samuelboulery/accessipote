@@ -118,8 +118,13 @@ export interface AuditStore {
 export interface CriteriaFilters {
   search: string;
   level: string;
+  /** Un statut, ou `a-evaluer` pour les critères qui n'en ont pas. */
   status: string;
+  /** Ce que le scan a laissé : pré-rempli (`auto`) ou pistes (`leads`). Absent vaut tous. */
+  scan?: ScanFilter;
 }
+
+export type ScanFilter = '' | 'auto' | 'leads';
 
 export interface GlossaryTerm {
   title: string;

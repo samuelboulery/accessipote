@@ -194,7 +194,7 @@ describe('AuditScreen', () => {
     const clearButton = screen.getByRole('button', { name: 'Effacer les filtres' });
     await user.click(clearButton);
 
-    expect(onFiltersChange).toHaveBeenCalledWith({ search: '', level: '', status: '' });
+    expect(onFiltersChange).toHaveBeenCalledWith({ search: '', level: '', status: '', scan: '' });
   });
 
   it('affiche la case maîtresse pour sélectionner tous les critères affichés', () => {

@@ -158,3 +158,37 @@ describe('useFilters', () => {
     expect(result.current.filteredCriteria).toHaveLength(3);
   });
 });
+
+describe('useFilters — ce qui reste à évaluer, ce que le scan a laissé', () => {
+  const none: CriteriaFilters = { search: '', level: '', status: '' };
+  const progress = { '1.1': { status: 'conforme' } };
+  const marks = {
+    auto: { '1.1': {} },
+    leads: { '2.1': {} },
+  };
+  const ids = (filters: CriteriaFilters) =>
+    renderHook(() => useFilters(mockCriteria, filters, progress, marks)).result.current.filteredCriteria.map(
+      criterion => criterion.id,
+    );
+
+  it('« À évaluer » retient les critères sans statut', () => {
+    expect(ids({ ...none, status: 'a-evaluer' })).toEqual(['2.1', '3.1']);
+  });
+
+  it('retient les critères pré-remplis par le scan', () => {
+    expect(ids({ ...none, scan: 'auto' })).toEqual(['1.1']);
+  });
+
+  it('retient les critères qui portent des pistes du scan', () => {
+    expect(ids({ ...none, scan: 'leads' })).toEqual(['2.1']);
+  });
+
+  it('se combine au statut : à évaluer, avec pistes', () => {
+    expect(ids({ ...none, status: 'a-evaluer', scan: 'leads' })).toEqual(['2.1']);
+  });
+
+  it('sans marques du scan, le filtre Scan ne retient rien', () => {
+    const { result } = renderHook(() => useFilters(mockCriteria, { ...none, scan: 'leads' }, {}));
+    expect(result.current.filteredCriteria).toEqual([]);
+  });
+});

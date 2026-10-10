@@ -629,3 +629,23 @@ describe('CriteriaDetail — provenance du scan', () => {
     expect(screen.queryByText(/pré-rempli par le scan/i)).not.toBeInTheDocument();
   });
 });
+
+describe('CriteriaDetail — pistes du scan', () => {
+  it('montre les pistes du dernier scan, datées', () => {
+    setup({
+      leads: {
+        scannedAt: '2026-10-10T10:00:00.000Z',
+        items: [{ label: 'Images dotées d’une alternative', count: 12, samples: [] }],
+      },
+    });
+
+    const section = screen.getByRole('region', { name: /pistes du scan du 10\/10\/2026/i });
+    expect(section).toHaveTextContent('12 × Images dotées d’une alternative');
+  });
+
+  it('ne montre rien sans pistes', () => {
+    setup();
+    expect(screen.queryByRole('region', { name: /pistes du scan/i })).not.toBeInTheDocument();
+  });
+});
+

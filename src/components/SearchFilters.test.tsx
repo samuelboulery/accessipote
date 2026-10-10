@@ -127,7 +127,7 @@ describe('SearchFilters', () => {
     render(<SearchFilters {...defaultProps} filters={filtersWithLevel} onFiltersChange={onFiltersChange} />);
     fireEvent.click(screen.getByText('Filtrer'));
     fireEvent.click(screen.getByText('Effacer les filtres'));
-    expect(onFiltersChange).toHaveBeenCalledWith({ search: '', level: '', status: '' });
+    expect(onFiltersChange).toHaveBeenCalledWith({ search: '', level: '', status: '', scan: '' });
   });
 
   it('devrait afficher les libellés de statut du mode classic', () => {
@@ -144,5 +144,30 @@ describe('SearchFilters', () => {
     const statusSelect = screen.getByDisplayValue('Tous les statuts');
     expect(statusSelect).toHaveTextContent('Conforme par défaut');
     expect(statusSelect).toHaveTextContent('À mettre en place');
+  });
+
+  it('propose « À évaluer » parmi les statuts', () => {
+    render(<SearchFilters {...defaultProps} />);
+    fireEvent.click(screen.getByText('Filtrer'));
+    expect(screen.getByLabelText('Statut')).toHaveTextContent('À évaluer');
+  });
+
+  it('propose de filtrer sur ce que le scan a laissé, en audit classique', () => {
+    const onFiltersChange = vi.fn();
+    render(<SearchFilters {...defaultProps} onFiltersChange={onFiltersChange} />);
+    fireEvent.click(screen.getByText('Filtrer'));
+    fireEvent.change(screen.getByLabelText('Scan'), { target: { value: 'leads' } });
+    expect(onFiltersChange).toHaveBeenCalledWith({ ...defaultFilters, scan: 'leads' });
+  });
+
+  it('ne propose pas le filtre Scan en mode design system', () => {
+    render(<SearchFilters {...defaultProps} mode="design-system" />);
+    fireEvent.click(screen.getByText('Filtrer'));
+    expect(screen.queryByLabelText('Scan')).not.toBeInTheDocument();
+  });
+
+  it('compte le filtre Scan parmi les filtres actifs', () => {
+    render(<SearchFilters {...defaultProps} filters={{ ...defaultFilters, scan: 'auto' }} />);
+    expect(screen.getByText('1')).toBeInTheDocument();
   });
 });
