@@ -1,5 +1,5 @@
-import { afterEach, describe, it, expect } from 'vitest';
-import { collectLinks, measureReflow, probeDocument } from './collect.ts';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import { collectLinks, inspectFocus, measureReflow, probeDocument } from './collect.ts';
 
 function mount(html: string): void {
   document.body.innerHTML = html;
@@ -239,6 +239,70 @@ describe('measureReflow — défilement horizontal à 320 px', () => {
 
   it('ne référence aucune liaison extérieure à son corps', () => {
     const source = measureReflow.toString();
+    expect(source).not.toMatch(/\bimport\b|\brequire\b/);
+    expect(source).not.toMatch(/_[a-zA-Z]+\.\w+\(/);
+  });
+});
+
+describe('inspectFocus — prise de focus visible', () => {
+  const options = { snippetMax: 200 };
+
+  function styled(css: string, html: string) {
+    document.head.innerHTML = `<style>${css}</style>`;
+    mount(html);
+  }
+
+  afterEach(() => {
+    document.head.innerHTML = '';
+    delete (window as { accessipoteFocusSeen?: unknown }).accessipoteFocusSeen;
+  });
+
+  it('un focus qui change le style de l’élément est visible', () => {
+    // jsdom n'applique pas `:focus` au style calculé : le contour se simule.
+    mount('<a id="l" href="#">Lien</a>');
+    const link = document.getElementById('l')!;
+    const real = window.getComputedStyle.bind(window);
+    const spy = vi.spyOn(window, 'getComputedStyle').mockImplementation(element => {
+      const style = real(element);
+      return {
+        getPropertyValue: (property: string) =>
+          property === 'outline-style' && document.activeElement === link ? 'solid' : style.getPropertyValue(property),
+      } as CSSStyleDeclaration;
+    });
+    link.focus();
+
+    expect(inspectFocus(options)).toEqual({ done: false, invisible: null });
+    spy.mockRestore();
+  });
+
+  it('un focus qui ne change rien est relevé, et l’élément garde le focus', () => {
+    styled('a:focus { outline: none; }', '<a id="l" href="#">Lien</a>');
+    const link = document.getElementById('l')!;
+    link.focus();
+
+    expect(inspectFocus(options)).toEqual({
+      done: false,
+      invisible: { selector: 'a#l', snippet: '<a id="l" href="#">Lien</a>' },
+    });
+    expect(document.activeElement).toBe(link);
+  });
+
+  it('s’arrête quand le focus revient sur le document', () => {
+    mount('<a href="#">Lien</a>');
+    (document.activeElement as HTMLElement | null)?.blur();
+    expect(inspectFocus(options).done).toBe(true);
+  });
+
+  it('s’arrête quand le focus repasse sur un élément déjà vu', () => {
+    styled('a:focus { outline: 2px solid; }', '<a id="l" href="#">Lien</a>');
+    document.getElementById('l')!.focus();
+    inspectFocus(options);
+
+    expect(inspectFocus(options).done).toBe(true);
+  });
+
+  it('ne référence aucune liaison extérieure à son corps', () => {
+    const source = inspectFocus.toString();
     expect(source).not.toMatch(/\bimport\b|\brequire\b/);
     expect(source).not.toMatch(/_[a-zA-Z]+\.\w+\(/);
   });

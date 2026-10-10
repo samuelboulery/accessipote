@@ -178,3 +178,68 @@ export function measureReflow(options: {
     snippet: element.outerHTML.slice(0, options.snippetMax),
   }));
 }
+
+/**
+ * Regarde si l'élément qui a le focus le montre.
+ *
+ * **Injectée dans la page comme `probeDocument`**, après chaque appui sur Tab
+ * du pilote : même contrainte, son corps se suffit à lui-même.
+ *
+ * Le style calculé de l'élément focalisé est comparé à celui du même élément
+ * sans le focus, puis le focus lui est rendu pour que la tabulation reprenne
+ * d'où elle était. Aucune différence : la prise de focus est soupçonnée
+ * invisible — un indicateur porté par un parent ou un pseudo-élément échappe à
+ * la comparaison, d'où le soupçon et non la preuve.
+ *
+ * `done` dit au pilote d'arrêter : le focus est revenu au document, ou repasse
+ * sur un élément déjà vu.
+ */
+export function inspectFocus(options: { snippetMax: number }): {
+  done: boolean;
+  invisible: { selector: string; snippet: string } | null;
+} {
+  const element = document.activeElement;
+  if (!element || element === document.body || element === document.documentElement) {
+    return { done: true, invisible: null };
+  }
+
+  // Le registre vit sur la fenêtre, pas dans le DOM : marquer les éléments
+  // changerait les extraits rapportés.
+  const registry = window as unknown as { accessipoteFocusSeen?: WeakSet<Element> };
+  registry.accessipoteFocusSeen ??= new WeakSet();
+  if (registry.accessipoteFocusSeen.has(element)) return { done: true, invisible: null };
+  registry.accessipoteFocusSeen.add(element);
+
+  // Un cadre garde son focus pour lui : ce qu'il contient n'est pas regardé ici.
+  if (element.tagName === 'IFRAME' || element.tagName === 'FRAME') return { done: false, invisible: null };
+
+  const properties = [
+    'outline-style',
+    'outline-width',
+    'outline-color',
+    'box-shadow',
+    'border-top-color',
+    'border-right-color',
+    'border-bottom-color',
+    'border-left-color',
+    'background-color',
+    'color',
+    'text-decoration-line',
+  ];
+  const snapshot = (): string =>
+    properties.map(property => getComputedStyle(element).getPropertyValue(property)).join('|');
+
+  const focused = snapshot();
+  (element as HTMLElement).blur();
+  const unfocused = snapshot();
+  (element as HTMLElement).focus({ preventScroll: true });
+
+  if (focused !== unfocused) return { done: false, invisible: null };
+  return {
+    done: false,
+    invisible: {
+      selector: element.tagName.toLowerCase() + (element.id ? `#${element.id}` : ''),
+      snippet: element.outerHTML.slice(0, options.snippetMax),
+    },
+  };
+}

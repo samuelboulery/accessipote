@@ -8,6 +8,7 @@ import {
   RGAA_LEADS,
   DRIVER_CHECKS,
   REFLOW_CHECK,
+  FOCUS_CHECK,
 } from './rgaaMapping.ts';
 import criteriaData from '../data/criteria.json';
 import { transformCriteriaData } from '../utils/transformCriteria';
@@ -500,6 +501,16 @@ describe('rgaaMapping — contrôles réservés au pilote', () => {
       probableWhen: REFLOW_CHECK,
       provesPass: false,
     });
+  });
+
+  it('soupçonne une prise de focus invisible', () => {
+    // Un indicateur porté par un parent ou un pseudo-élément échappe à la
+    // comparaison : l'absence de changement est un indice.
+    expect(RGAA_MAPPING.find(mapping => mapping.testId === '10.7.1')).toMatchObject({
+      probableWhen: FOCUS_CHECK,
+      provesPass: false,
+    });
+    expect(DRIVER_CHECKS).toContain(FOCUS_CHECK);
   });
 
   it('ne demande jamais ces contrôles à la sonde ordinaire', () => {

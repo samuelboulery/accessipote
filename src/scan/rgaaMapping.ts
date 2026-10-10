@@ -169,6 +169,8 @@ function volatileNaBySupport(
 
 /** Débordement horizontal à 320 px, mesuré par le pilote — voir `measureReflow`. */
 export const REFLOW_CHECK = '@reflow-overflow-x';
+/** Prise de focus sans effet visible, relevée au clavier par le pilote — voir `inspectFocus`. */
+export const FOCUS_CHECK = '@focus-invisible';
 
 export const RGAA_MAPPING: RgaaMapping[] = [
   // — Thème 1 Images ——————————————————————————————————————————————————————
@@ -629,6 +631,18 @@ export const RGAA_MAPPING: RgaaMapping[] = [
   // environnant. Le test n'y soumet que les liens « dont la nature n'est pas
   // évidente », ce qu'aucune machine ne juge.
   { testId: '10.6.1', criterionId: '10.6', probableRules: ['link-in-text-block'], provesPass: false },
+  // — 10.7 Prise de focus visible ——————————————————————————————————————————
+  // Mesuré par la CLI seule, qui tabule dans la page : l'extension ne sait pas
+  // presser une touche sans la permission `debugger`. Indice et non preuve :
+  // un indicateur porté par un parent, un enfant ou un pseudo-élément échappe
+  // à la comparaison des styles.
+  {
+    testId: '10.7.1',
+    criterionId: '10.7',
+    probableWhen: FOCUS_CHECK,
+    provesPass: false,
+  },
+
   // — 10.11 Reflow ————————————————————————————————————————————————————————
   // Mesuré par la CLI seule, fenêtre réduite à 320 px. Indice et non preuve :
   // cartes, tableaux de données, barres d'outils sont des cas particuliers que
@@ -889,7 +903,7 @@ const MAIN_FRAME_LEADS = RGAA_LEADS.filter(lead => lead.mainFrameOnly).map(lead 
  * « vérifierait » dans un état où ils ne veulent rien dire. Absents d'un
  * rapport, ils laissent leur test à « non évalué ».
  */
-export const DRIVER_CHECKS: string[] = [REFLOW_CHECK];
+export const DRIVER_CHECKS: string[] = [REFLOW_CHECK, FOCUS_CHECK];
 
 /** Les critères que le mapping couvre. */
 export const MAPPED_CRITERIA: string[] = [
