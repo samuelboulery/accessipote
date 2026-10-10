@@ -167,6 +167,9 @@ function volatileNaBySupport(
     .filter(mapping => !except.includes(mapping.testId));
 }
 
+/** Débordement horizontal à 320 px, mesuré par le pilote — voir `measureReflow`. */
+export const REFLOW_CHECK = '@reflow-overflow-x';
+
 export const RGAA_MAPPING: RgaaMapping[] = [
   // — Thème 1 Images ——————————————————————————————————————————————————————
   // Le support d'image est volatil : galerie chargée au défilement, visuel
@@ -626,6 +629,17 @@ export const RGAA_MAPPING: RgaaMapping[] = [
   // environnant. Le test n'y soumet que les liens « dont la nature n'est pas
   // évidente », ce qu'aucune machine ne juge.
   { testId: '10.6.1', criterionId: '10.6', probableRules: ['link-in-text-block'], provesPass: false },
+  // — 10.11 Reflow ————————————————————————————————————————————————————————
+  // Mesuré par la CLI seule, fenêtre réduite à 320 px. Indice et non preuve :
+  // cartes, tableaux de données, barres d'outils sont des cas particuliers que
+  // le référentiel admet. 10.11.2, le sens de lecture vertical, n'est pas mappé.
+  {
+    testId: '10.11.1',
+    criterionId: '10.11',
+    probableWhen: REFLOW_CHECK,
+    provesPass: false,
+  },
+
   // 10.12.1 — un espacement figé en style en ligne empêche l'utilisateur de le
   // modifier. « Hors cas particuliers » : indice.
   {
@@ -869,6 +883,14 @@ export const RGAA_LEADS: LeadDefinition[] = [
 const PAGE_LEADS = RGAA_LEADS.filter(lead => !lead.mainFrameOnly).map(lead => lead.selector);
 const MAIN_FRAME_LEADS = RGAA_LEADS.filter(lead => lead.mainFrameOnly).map(lead => lead.selector);
 
+/**
+ * Contrôles qu'un pilote seul sait mener : il faut redimensionner la fenêtre,
+ * presser des touches. Ils n'entrent jamais dans les listes de la sonde, qui les
+ * « vérifierait » dans un état où ils ne veulent rien dire. Absents d'un
+ * rapport, ils laissent leur test à « non évalué ».
+ */
+export const DRIVER_CHECKS: string[] = [REFLOW_CHECK];
+
 /** Les critères que le mapping couvre. */
 export const MAPPED_CRITERIA: string[] = [
   ...new Set(RGAA_MAPPING.map(mapping => mapping.criterionId)),
@@ -890,7 +912,9 @@ export const FOUND_SELECTORS: string[] = [
     RGAA_MAPPING.filter(mapping => !mapping.mainFrameOnly).flatMap(mapping => [
       ...(mapping.failWhen ?? []),
       ...(mapping.probableWhen ?? []),
-    ]).concat(PAGE_LEADS),
+    ])
+      .filter(selector => !DRIVER_CHECKS.includes(selector))
+      .concat(PAGE_LEADS),
   ),
 ];
 

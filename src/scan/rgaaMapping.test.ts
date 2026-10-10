@@ -6,6 +6,8 @@ import {
   MAIN_FRAME_FAIL_SELECTORS,
   NA_SELECTORS,
   RGAA_LEADS,
+  DRIVER_CHECKS,
+  REFLOW_CHECK,
 } from './rgaaMapping.ts';
 import criteriaData from '../data/criteria.json';
 import { transformCriteriaData } from '../utils/transformCriteria';
@@ -487,5 +489,23 @@ describe('rgaaMapping — ordre de tabulation', () => {
       '<a tabindex="3"></a><a tabindex="0"></a><a tabindex="-1"></a><a></a><a tabindex="12"></a>';
     const selector = mappingOf('12.8.1')?.probableWhen ?? '';
     expect(document.querySelectorAll(selector)).toHaveLength(2);
+  });
+});
+
+describe('rgaaMapping — contrôles réservés au pilote', () => {
+  it('soupçonne un défilement horizontal à 320 px', () => {
+    // Cartes, tableaux de données, barres d'outils : le référentiel admet des
+    // cas particuliers. Un débordement est un indice.
+    expect(RGAA_MAPPING.find(mapping => mapping.testId === '10.11.1')).toMatchObject({
+      probableWhen: REFLOW_CHECK,
+      provesPass: false,
+    });
+  });
+
+  it('ne demande jamais ces contrôles à la sonde ordinaire', () => {
+    // À largeur normale, la sonde « vérifierait » le reflow et n'y trouverait
+    // rien : un faux négatif qui a l'air d'une mesure.
+    const derived = [...FOUND_SELECTORS, ...NA_SELECTORS, ...MAIN_FRAME_FAIL_SELECTORS];
+    expect(DRIVER_CHECKS.filter(check => derived.includes(check))).toEqual([]);
   });
 });

@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect } from 'vitest';
-import { collectLinks, probeDocument } from './collect.ts';
+import { collectLinks, measureReflow, probeDocument } from './collect.ts';
 
 function mount(html: string): void {
   document.body.innerHTML = html;
@@ -193,5 +193,53 @@ describe('probeDocument — contrôles nommés', () => {
 
   it('laisse un contrôle inconnu non renseigné', () => {
     expect('@inconnu' in probe(['@inconnu']).found).toBe(false);
+  });
+});
+
+describe('measureReflow — défilement horizontal à 320 px', () => {
+  const options = { snippetMax: 200, nodesPerSelector: 5 };
+
+  /** jsdom ne calcule aucune mise en page : la largeur se pose à la main. */
+  function layout(pageWidth: number, rights: Record<string, number>) {
+    const root = document.documentElement;
+    Object.defineProperty(root, 'clientWidth', { configurable: true, value: 320 });
+    Object.defineProperty(root, 'scrollWidth', { configurable: true, value: pageWidth });
+    for (const [id, right] of Object.entries(rights)) {
+      const element = document.getElementById(id)!;
+      element.getBoundingClientRect = () => ({ right }) as DOMRect;
+    }
+  }
+
+  afterEach(() => {
+    delete (document.documentElement as { clientWidth?: number }).clientWidth;
+    delete (document.documentElement as { scrollWidth?: number }).scrollWidth;
+  });
+
+  it('ne relève rien quand la page tient dans la largeur', () => {
+    mount('<div id="a"></div>');
+    layout(320, { a: 300 });
+    expect(measureReflow(options)).toEqual([]);
+  });
+
+  it('relève l’élément qui déborde le plus haut, pas ses descendants', () => {
+    mount('<main id="m"><table id="t"><tr><td id="c">x</td></tr></table></main>');
+    layout(900, { m: 320, t: 900, c: 900 });
+
+    expect(measureReflow(options).map(node => node.selector)).toEqual(['table#t']);
+  });
+
+  it('écarte ce qui déborde dans un conteneur qui défile lui-même', () => {
+    // Un tableau dans une zone à défilement propre ne fait pas défiler la page :
+    // c'est un cas particulier que le référentiel admet.
+    mount('<div id="s" style="overflow-x: auto"><table id="t"></table></div><img id="i">');
+    layout(700, { s: 320, t: 900, i: 700 });
+
+    expect(measureReflow(options).map(node => node.selector)).toEqual(['img#i']);
+  });
+
+  it('ne référence aucune liaison extérieure à son corps', () => {
+    const source = measureReflow.toString();
+    expect(source).not.toMatch(/\bimport\b|\brequire\b/);
+    expect(source).not.toMatch(/_[a-zA-Z]+\.\w+\(/);
   });
 });

@@ -131,3 +131,50 @@ export function collectLinks(): string[] {
 
   return [...links];
 }
+
+/**
+ * Relève ce qui fait défiler la page horizontalement, à la largeur courante.
+ *
+ * **Injectée dans la page comme `probeDocument`** : même contrainte, son corps
+ * se suffit à lui-même. Le pilote réduit d'abord la fenêtre à 320 px — c'est
+ * lui qui donne son sens à la mesure, d'où son absence de l'extension.
+ *
+ * Seul l'élément le plus haut qui déborde est retenu : ses descendants
+ * débordent avec lui. Ce qui déborde dans un conteneur à défilement propre ne
+ * fait pas défiler la page, et le référentiel admet ce cas.
+ */
+export function measureReflow(options: {
+  snippetMax: number;
+  nodesPerSelector: number;
+}): Array<{ selector: string; snippet: string }> {
+  const root = document.documentElement;
+  const width = root.clientWidth;
+  if (root.scrollWidth <= width) return [];
+
+  const overflows = (element: Element): boolean => element.getBoundingClientRect().right > width + 1;
+  const scrollsItself = (element: Element): boolean =>
+    ['auto', 'scroll', 'hidden', 'clip'].includes(getComputedStyle(element).overflowX);
+
+  const offenders: Element[] = [];
+  for (const element of document.body.querySelectorAll('*')) {
+    if (offenders.length >= options.nodesPerSelector) break;
+    if (!overflows(element)) continue;
+
+    let ancestor = element.parentElement;
+    while (ancestor && ancestor !== document.body && !overflows(ancestor) && !scrollsItself(ancestor)) {
+      ancestor = ancestor.parentElement;
+    }
+    if (ancestor === null || ancestor === document.body) offenders.push(element);
+  }
+
+  // La page défile sans coupable désigné — marge, pseudo-élément : le constat
+  // reste, sans quoi l'absence de coupable passerait pour une absence de défilement.
+  if (offenders.length === 0) {
+    return [{ selector: 'html', snippet: `La page défile horizontalement : ${root.scrollWidth} px pour ${width}.` }];
+  }
+
+  return offenders.map(element => ({
+    selector: element.tagName.toLowerCase() + (element.id ? `#${element.id}` : ''),
+    snippet: element.outerHTML.slice(0, options.snippetMax),
+  }));
+}
