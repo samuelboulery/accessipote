@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AlertTriangle, ChevronLeft, ChevronRight, ExternalLink, Info, Plus, Trash2 } from 'lucide-react';
 import { getWcagCriteriaUrl, getTechniqueUrl, parseWcagReference } from '../utils/generateWcagLinks';
-import type { AutoVerdict, CriteriaRGAA, Mode, CriteriaStatus } from '../types';
+import type { AuditLeads, AutoVerdict, CriteriaRGAA, Mode, CriteriaStatus } from '../types';
 import { parseMarkdownLinks } from '../utils/parseMarkdown';
 import { parseInlineCode } from '../utils/parseInlineCode';
 import { cleanCriteriaTitle } from '../utils/stripMarkdown';
 import StatusButtons from './StatusButtons';
 import AutoBadge from './AutoBadge';
+import ScanLeads from './ScanLeads';
 import CriteriaNotice from './CriteriaNotice';
 import { getSelectableStatuses } from '../utils/statusPresentation';
 
@@ -16,6 +17,8 @@ interface CriteriaDetailProps {
   currentStatus?: CriteriaStatus;
   /** Provenance du scan, tant que l'humain n'a pas repris la main sur le statut. */
   auto?: AutoVerdict;
+  /** Pistes du scan : ce qu'il a repéré pour ce critère sans pouvoir le trancher. */
+  leads?: AuditLeads;
   checkedTests: string[];
   note: string;
   pages: string[];
@@ -34,6 +37,7 @@ export default function CriteriaDetail({
   mode,
   currentStatus,
   auto,
+  leads,
   checkedTests,
   note,
   pages,
@@ -213,6 +217,15 @@ export default function CriteriaDetail({
           />
 
           <AutoBadge auto={auto} />
+
+          {leads && (
+            <section aria-labelledby={`leads-${criteriaId}`} className="flex flex-col gap-2">
+              <h3 id={`leads-${criteriaId}`} className="text-body font-semibold">
+                Pistes du scan du {new Date(leads.scannedAt).toLocaleDateString('fr-FR')}
+              </h3>
+              <ScanLeads leads={leads.items} />
+            </section>
+          )}
 
           <StatusButtons
             criteriaId={criteriaId}

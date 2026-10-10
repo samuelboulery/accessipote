@@ -194,7 +194,7 @@ describe('AuditScreen', () => {
     const clearButton = screen.getByRole('button', { name: 'Effacer les filtres' });
     await user.click(clearButton);
 
-    expect(onFiltersChange).toHaveBeenCalledWith({ search: '', level: '', status: '' });
+    expect(onFiltersChange).toHaveBeenCalledWith({ search: '', level: '', status: '', scan: '' });
   });
 
   it('affiche la case maîtresse pour sélectionner tous les critères affichés', () => {
@@ -358,5 +358,17 @@ describe('AuditScreen', () => {
     // Le critère 1.1 n'est plus affiché : la barre ne doit ni le compter ni
     // pouvoir le modifier.
     expect(screen.queryByText(/critère sélectionné/)).not.toBeInTheDocument();
+  });
+
+  it('ignore le filtre Scan dans un audit design system, où il n’a pas de commande', () => {
+    // Le filtre survit au changement d'audit ; caché, il viderait la liste
+    // sans que rien à l'écran ne dise pourquoi.
+    setup({
+      audit: { ...AUDIT, mode: 'design-system' },
+      filters: { ...FILTERS, scan: 'leads' },
+    });
+
+    expect(screen.getByRole('button', { name: /filtrer/i })).not.toHaveTextContent(/\d/);
+    expect(screen.queryByText('Aucun critère ne correspond')).not.toBeInTheDocument();
   });
 });

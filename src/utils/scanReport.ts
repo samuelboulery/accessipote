@@ -3,6 +3,7 @@ import type {
   CriteriaRGAA,
   Evidence,
   ScanCertainty,
+  ScanLead,
   ScanOutcome,
   ScanReport,
   ScanVerdict,
@@ -20,6 +21,9 @@ export const SCAN_SCHEMA = 3;
  */
 const EVIDENCE_MAX = 3;
 const SNIPPET_MAX = 200;
+/** Mêmes raisons : une piste montre quelques éléments, jamais toute la page. */
+const LEAD_SAMPLES_MAX = 5;
+const LEADS_PER_CRITERION_MAX = 10;
 
 /**
  * Versions que cette application sait lire.
@@ -113,6 +117,40 @@ function parseOutcome(raw: unknown, criteriaId: string): ScanOutcome {
   };
 }
 
+function parseLead(raw: unknown, criteriaId: string): ScanLead {
+  const samples = isRecord(raw) && Array.isArray(raw.samples) ? raw.samples : [];
+  // Un compte nul n'est pas une piste ; un compte démesuré, ou inférieur à ce
+  // qu'on montre, s'afficherait tel quel et mentirait à l'auditeur.
+  if (
+    !isRecord(raw) ||
+    typeof raw.label !== 'string' ||
+    typeof raw.count !== 'number' ||
+    !Number.isSafeInteger(raw.count) ||
+    raw.count < Math.max(1, samples.length)
+  ) {
+    fail(`Piste invalide sur le critère ${criteriaId} : il lui faut un libellé et un compte.`);
+  }
+  return {
+    label: clip(raw.label as string),
+    count: raw.count as number,
+    samples: samples.slice(0, LEAD_SAMPLES_MAX).map(item => parseEvidence(item, criteriaId)),
+  };
+}
+
+/** Les pistes sont facultatives : un rapport d'avant elles n'en porte aucune. */
+function parseLeads(raw: unknown, knownCriteriaIds: ReadonlySet<string>): Record<string, ScanLead[]> {
+  if (raw === undefined) return {};
+  if (!isRecord(raw)) fail('Rapport illisible : le champ « leads » doit associer des pistes aux critères.');
+
+  const leads: Record<string, ScanLead[]> = {};
+  for (const [criteriaId, items] of Object.entries(raw)) {
+    if (!knownCriteriaIds.has(criteriaId)) fail(`Critère inconnu dans les pistes : « ${criteriaId} ».`);
+    if (!Array.isArray(items)) fail(`Pistes illisibles pour le critère ${criteriaId}.`);
+    leads[criteriaId] = items.slice(0, LEADS_PER_CRITERION_MAX).map(item => parseLead(item, criteriaId));
+  }
+  return leads;
+}
+
 /**
  * Ce qu'un échantillon partiel permet de conclure, et ce qu'il ne permet pas.
  *
@@ -166,6 +204,10 @@ export function parseScanReport(text: string, knownCriteriaIds: ReadonlySet<stri
   if (!Array.isArray(raw.urls) || raw.urls.some(url => typeof url !== 'string')) {
     fail('Rapport incomplet : le champ « urls » doit être une liste d’adresses.');
   }
+  // La date finit affichée sur chaque piste et rangée dans l'audit.
+  if (Number.isNaN(Date.parse(raw.scannedAt))) {
+    fail('Rapport illisible : le champ « scannedAt » n’est pas une date.');
+  }
 
   if (
     raw.zones !== undefined &&
@@ -196,6 +238,7 @@ export function parseScanReport(text: string, knownCriteriaIds: ReadonlySet<stri
     ...(zones ? { zones } : {}),
     ...(crawled ? { crawled } : {}),
     criteria,
+    leads: parseLeads(raw.leads, knownCriteriaIds),
   };
 }
 
@@ -230,9 +273,11 @@ export interface ScanPlan {
   /**
    * Critères du périmètre que le scan n'a pas tranchés.
    *
-   * Compté et affiché : un audit qui tait ses angles morts trompe son lecteur.
+   * Nommés et affichés : un audit qui tait ses angles morts trompe son lecteur.
    */
-  unscanned: number;
+  unscanned: string[];
+  /** Pistes du rapport, limitées au périmètre de l'audit. */
+  leads: Record<string, ScanLead[]>;
 }
 
 function entryFrom(criteriaId: string, outcome: ScanOutcome, status: ClassicStatus): ScanPlanEntry {
@@ -253,12 +298,15 @@ function entryFrom(criteriaId: string, outcome: ScanOutcome, status: ClassicStat
  * ni appliqué, ni compté comme non regardé.
  */
 export function planScanApplication(report: ScanReport, criteria: CriteriaRGAA[]): ScanPlan {
-  const plan: ScanPlan = { direct: [], probable: [], proposed: [], unscanned: 0 };
+  const plan: ScanPlan = { direct: [], probable: [], proposed: [], unscanned: [], leads: {} };
 
   for (const criterion of criteria) {
+    const leads = report.leads[criterion.id];
+    if (leads) plan.leads[criterion.id] = leads;
+
     const outcome = report.criteria[criterion.id];
     if (!outcome) {
-      plan.unscanned += 1;
+      plan.unscanned.push(criterion.id);
       continue;
     }
 
@@ -270,7 +318,7 @@ export function planScanApplication(report: ScanReport, criteria: CriteriaRGAA[]
 
     const status = DIRECT_STATUS[outcome.verdict];
     if (status === undefined) {
-      plan.unscanned += 1;
+      plan.unscanned.push(criterion.id);
     } else if (outcome.certainty === 'proven') {
       plan.direct.push(entryFrom(criterion.id, outcome, status));
     } else {

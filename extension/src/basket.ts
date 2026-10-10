@@ -9,9 +9,9 @@
  * Le panier vit dans `chrome.storage.local` : il survit à la fermeture du
  * popup, et rien ne sort du poste.
  */
-import { aggregate } from '../../src/scan/aggregate.ts';
-import { RGAA_MAPPING } from '../../src/scan/rgaaMapping.ts';
-import type { PageScan } from '../../src/scan/types.ts';
+import { aggregate, collectLeads } from '../../src/scan/aggregate.ts';
+import { RGAA_LEADS, RGAA_MAPPING } from '../../src/scan/rgaaMapping.ts';
+import type { Lead, PageScan } from '../../src/scan/types.ts';
 
 export const BASKET_KEY = 'sample-basket';
 const SCHEMA = 3;
@@ -50,6 +50,8 @@ export interface ExtensionReport {
   axeVersion: string | null;
   crawl: { networkIdle: boolean; scrolled: boolean; frames: number };
   criteria: ReturnType<typeof aggregate>;
+  /** Pistes pour les critères que la machine ne tranche pas. Jamais des verdicts. */
+  leads: Record<string, Lead[]>;
 }
 
 export async function readBasket(): Promise<BasketEntry[]> {
@@ -111,6 +113,10 @@ export function reportOf(basket: BasketEntry[]): ExtensionReport {
         RGAA_MAPPING,
       ),
       zones.length > 0 || crawled,
+    ),
+    leads: collectLeads(
+      basket.map(entry => entry.page),
+      RGAA_LEADS,
     ),
   };
 }

@@ -1,4 +1,4 @@
-import type { RgaaMapping } from './types.ts';
+import type { LeadDefinition, RgaaMapping } from './types.ts';
 
 /**
  * Correspondance entre les tests RGAA et ce qui permet de les trancher.
@@ -166,6 +166,11 @@ function volatileNaBySupport(
     }))
     .filter(mapping => !except.includes(mapping.testId));
 }
+
+/** Débordement horizontal à 320 px, mesuré par le pilote — voir `measureReflow`. */
+export const REFLOW_CHECK = '@reflow-overflow-x';
+/** Prise de focus sans effet visible, relevée au clavier par le pilote — voir `inspectFocus`. */
+export const FOCUS_CHECK = '@focus-invisible';
 
 export const RGAA_MAPPING: RgaaMapping[] = [
   // — Thème 1 Images ——————————————————————————————————————————————————————
@@ -475,23 +480,44 @@ export const RGAA_MAPPING: RgaaMapping[] = [
   // changement de contexte, message de statut. Trois fois, il faudrait savoir
   // ce que le script veut dire.
 
+  // — 8.1 Type de document ———————————————————————————————————————————————
+  // Présence, validité, position : trois faits de format pur, que la sonde lit
+  // sur le document principal. Un doctype écrit après `<html>` est ignoré par
+  // le navigateur, qui n'en garde aucune trace : il ressort donc en absence.
+  {
+    testId: '8.1.1',
+    criterionId: '8.1',
+    failWhen: '@doctype-missing',
+    mainFrameOnly: true,
+    provesPass: true,
+  },
+  {
+    testId: '8.1.2',
+    criterionId: '8.1',
+    failWhen: '@doctype-invalid',
+    mainFrameOnly: true,
+    provesPass: true,
+  },
+  {
+    testId: '8.1.3',
+    criterionId: '8.1',
+    failWhen: '@doctype-after-html',
+    mainFrameOnly: true,
+    provesPass: true,
+  },
+
   // — 8.2 Validité du code source ——————————————————————————————————————————
   // Le test énumère cinq conditions, dont « les valeurs d'attribut id sont
-  // uniques dans la page ». `duplicate-id-aria` ne couvre que les identifiants
-  // référencés par ARIA ou par un `<label>` : un sous-ensemble, dont la
-  // violation dirait l'échec du test. Ses deux voisines, `duplicate-id` et
-  // `duplicate-id-active`, sont dépréciées et désactivées dans axe 4.13 — les
-  // citer donnerait une couverture qui ne s'exécute pas.
-  //
-  // ponytail: indice et non preuve, parce que les résultats d'axe sont fusionnés
-  // tous cadres confondus : un `id` dupliqué dans un `<iframe>` appartient au
-  // document embarqué, pas à la page. Passer à la preuve demande des résultats
-  // axe rattachés à leur cadre, comme `mainFrameOnly` le fait déjà pour les
-  // sélecteurs.
+  // uniques dans la page ». Un doublon prouve donc l'échec ; son absence ne dit
+  // rien des quatre autres conditions. La sonde le cherche elle-même, sur le
+  // document principal seul : un `id` dupliqué dans un `<iframe>` appartient au
+  // document embarqué. `duplicate-id-aria` ne couvrait qu'un sous-ensemble, et
+  // ses résultats se fusionnaient tous cadres confondus.
   {
     testId: '8.2.1',
     criterionId: '8.2',
-    probableRules: ['duplicate-id-aria'],
+    failWhen: '@duplicate-id',
+    mainFrameOnly: true,
     provesPass: false,
   },
 
@@ -605,6 +631,29 @@ export const RGAA_MAPPING: RgaaMapping[] = [
   // environnant. Le test n'y soumet que les liens « dont la nature n'est pas
   // évidente », ce qu'aucune machine ne juge.
   { testId: '10.6.1', criterionId: '10.6', probableRules: ['link-in-text-block'], provesPass: false },
+  // — 10.7 Prise de focus visible ——————————————————————————————————————————
+  // Mesuré par la CLI seule, qui tabule dans la page : l'extension ne sait pas
+  // presser une touche sans la permission `debugger`. Indice et non preuve :
+  // un indicateur porté par un parent, un enfant ou un pseudo-élément échappe
+  // à la comparaison des styles.
+  {
+    testId: '10.7.1',
+    criterionId: '10.7',
+    probableWhen: FOCUS_CHECK,
+    provesPass: false,
+  },
+
+  // — 10.11 Reflow ————————————————————————————————————————————————————————
+  // Mesuré par la CLI seule, fenêtre réduite à 320 px. Indice et non preuve :
+  // cartes, tableaux de données, barres d'outils sont des cas particuliers que
+  // le référentiel admet. 10.11.2, le sens de lecture vertical, n'est pas mappé.
+  {
+    testId: '10.11.1',
+    criterionId: '10.11',
+    probableWhen: REFLOW_CHECK,
+    provesPass: false,
+  },
+
   // 10.12.1 — un espacement figé en style en ligne empêche l'utilisateur de le
   // modifier. « Hors cas particuliers » : indice.
   {
@@ -622,6 +671,17 @@ export const RGAA_MAPPING: RgaaMapping[] = [
     testId: '12.7.1',
     criterionId: '12.7',
     probableRules: ['bypass', 'skip-link'],
+    provesPass: false,
+  },
+
+  // — 12.8 Ordre de tabulation ——————————————————————————————————————————————
+  // Un `tabindex` positif sort l'élément de l'ordre du document : c'est le
+  // premier suspect d'une tabulation incohérente, sans en être la preuve — la
+  // cohérence reste à juger. 12.8.2, l'ordre après un script, n'est pas mappé.
+  {
+    testId: '12.8.1',
+    criterionId: '12.8',
+    probableWhen: '[tabindex]:not([tabindex="0"]):not([tabindex^="-"])',
     provesPass: false,
   },
 
@@ -721,6 +781,130 @@ export const RGAA_MAPPING: RgaaMapping[] = [
   },
 ];
 
+/**
+ * Pistes pour l'auditeur : là où la machine ne sait pas juger, elle sait au
+ * moins montrer quoi regarder.
+ *
+ * Volontairement courte. Une piste vaut si elle désigne ce que le critère
+ * demande d'examiner, pas si elle remplit l'écran : un `target="_blank"` n'est
+ * pas une piste pour 13.2, qui vise les ouvertures *sans* action de
+ * l'utilisateur ; un `accesskey` ne l'est pas pour 12.10, qui vise les
+ * raccourcis à une seule touche.
+ */
+export const RGAA_LEADS: LeadDefinition[] = [
+  {
+    criteria: ['1.2'],
+    label: 'Images marquées décoratives : confirmer qu’elles le sont',
+    selector: 'img[alt=""], img[role="presentation"], img[role="none"], svg[aria-hidden="true"]',
+  },
+  {
+    criteria: ['1.3'],
+    label: 'Images dotées d’une alternative : juger sa pertinence',
+    selector: [
+      'img[alt]:not([alt=""])',
+      '[role="img"][aria-label]',
+      '[role="img"][aria-labelledby]',
+      'area[alt]:not([alt=""])',
+      'input[type="image"][alt]',
+    ].join(', '),
+  },
+  {
+    criteria: ['3.3'],
+    label: 'Composants d’interface : contraste des bordures, icônes et états (3:1)',
+    selector: `${FIELD}, ${BUTTON}`,
+  },
+  {
+    criteria: ['6.1'],
+    label: 'Liens : intitulé explicite seul, ou par son contexte',
+    selector: 'a[href], [role="link"]',
+  },
+  {
+    criteria: ['7.5'],
+    label: 'Messages de statut déclarés : vérifier leur restitution',
+    selector: '[role="status"], [role="alert"], [role="log"], [role="progressbar"], [aria-live]',
+  },
+  {
+    criteria: ['8.6'],
+    label: 'Titre de la page : juger sa pertinence',
+    selector: 'head > title',
+    mainFrameOnly: true,
+  },
+  {
+    criteria: ['8.7'],
+    label: 'Changements de langue déjà signalés : chercher ceux qui manquent',
+    selector: '[lang]:not(html)',
+  },
+  {
+    criteria: ['8.10'],
+    label: 'Sens de lecture déclaré : vérifier qu’il suit le contenu',
+    selector: '[dir]',
+  },
+  {
+    criteria: ['9.1'],
+    label: 'Titres : vérifier leur hiérarchie et leur pertinence',
+    selector: 'h1, h2, h3, h4, h5, h6, [role="heading"]',
+  },
+  {
+    criteria: ['9.4'],
+    label: 'Citations balisées : chercher celles qui ne le sont pas',
+    selector: 'blockquote, q',
+  },
+  {
+    criteria: ['11.2'],
+    label: 'Champs : juger la pertinence de leur étiquette',
+    selector: FIELD,
+  },
+  {
+    criteria: ['11.5', '11.6'],
+    label: 'Regroupements de champs : vérifier leur nécessité et leur légende',
+    selector: 'fieldset, [role="group"], [role="radiogroup"]',
+  },
+  {
+    criteria: ['11.10'],
+    label: 'Contrôles de saisie : vérifier l’indication et les messages d’erreur',
+    selector: '[required], [aria-required="true"], [pattern], [aria-invalid]',
+  },
+  {
+    criteria: ['12.1', '12.2'],
+    label: 'Systèmes de navigation : vérifier qu’il y en a deux, à la même place',
+    selector: 'nav, [role="navigation"], [role="search"], input[type="search"]',
+  },
+  {
+    criteria: ['12.6'],
+    label: 'Zones de regroupement : vérifier qu’on peut les atteindre ou les éviter',
+    selector: [
+      'header',
+      'nav',
+      'main',
+      'aside',
+      'footer',
+      '[role="banner"]',
+      '[role="navigation"]',
+      '[role="main"]',
+      '[role="complementary"]',
+      '[role="contentinfo"]',
+    ].join(', '),
+  },
+  {
+    criteria: ['13.3', '13.4'],
+    label: 'Documents en téléchargement : chercher leur version accessible',
+    selector: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp']
+      .map(extension => `a[href$=".${extension}" i]`)
+      .join(', '),
+  },
+];
+
+const PAGE_LEADS = RGAA_LEADS.filter(lead => !lead.mainFrameOnly).map(lead => lead.selector);
+const MAIN_FRAME_LEADS = RGAA_LEADS.filter(lead => lead.mainFrameOnly).map(lead => lead.selector);
+
+/**
+ * Contrôles qu'un pilote seul sait mener : il faut redimensionner la fenêtre,
+ * presser des touches. Ils n'entrent jamais dans les listes de la sonde, qui les
+ * « vérifierait » dans un état où ils ne veulent rien dire. Absents d'un
+ * rapport, ils laissent leur test à « non évalué ».
+ */
+export const DRIVER_CHECKS: string[] = [REFLOW_CHECK, FOCUS_CHECK];
+
 /** Les critères que le mapping couvre. */
 export const MAPPED_CRITERIA: string[] = [
   ...new Set(RGAA_MAPPING.map(mapping => mapping.criterionId)),
@@ -728,7 +912,7 @@ export const MAPPED_CRITERIA: string[] = [
 
 /** Sélecteurs de support, à compter sur chaque page. */
 export const NA_SELECTORS: string[] = [
-  ...new Set(RGAA_MAPPING.flatMap(mapping => mapping.naWhen ?? [])),
+  ...new Set([...RGAA_MAPPING.flatMap(mapping => mapping.naWhen ?? []), ...PAGE_LEADS]),
 ];
 
 /**
@@ -742,14 +926,18 @@ export const FOUND_SELECTORS: string[] = [
     RGAA_MAPPING.filter(mapping => !mapping.mainFrameOnly).flatMap(mapping => [
       ...(mapping.failWhen ?? []),
       ...(mapping.probableWhen ?? []),
-    ]),
+    ])
+      .filter(selector => !DRIVER_CHECKS.includes(selector))
+      .concat(PAGE_LEADS),
   ),
 ];
 
 /** Sélecteurs de contre-exemple à ne chercher que dans le document principal. */
 export const MAIN_FRAME_FAIL_SELECTORS: string[] = [
   ...new Set(
-    RGAA_MAPPING.filter(mapping => mapping.mainFrameOnly).flatMap(mapping => mapping.failWhen ?? []),
+    RGAA_MAPPING.filter(mapping => mapping.mainFrameOnly)
+      .flatMap(mapping => mapping.failWhen ?? [])
+      .concat(MAIN_FRAME_LEADS),
   ),
 ];
 

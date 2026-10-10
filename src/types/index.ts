@@ -99,6 +99,13 @@ export interface Audit {
   checkedTests: Record<string, string[]>;
   /** criteriaId -> provenance d'un statut posé par le scan automatique. */
   auto?: Record<string, AutoVerdict>;
+  /**
+   * criteriaId -> pistes du scan.
+   *
+   * À part de `auto` : la provenance tombe dès que l'auditeur tranche, la piste
+   * reste utile après — c'est elle qui dit où il a regardé.
+   */
+  leads?: Record<string, AuditLeads>;
 }
 
 export interface AuditStore {
@@ -111,8 +118,13 @@ export interface AuditStore {
 export interface CriteriaFilters {
   search: string;
   level: string;
+  /** Un statut, ou `a-evaluer` pour les critères qui n'en ont pas. */
   status: string;
+  /** Ce que le scan a laissé : pré-rempli (`auto`) ou pistes (`leads`). Absent vaut tous. */
+  scan?: ScanFilter;
 }
+
+export type ScanFilter = '' | 'auto' | 'leads';
 
 export interface GlossaryTerm {
   title: string;
@@ -191,6 +203,26 @@ export interface ScanReport {
    */
   crawled?: boolean;
   criteria: Record<string, ScanOutcome>;
+  /** Pistes pour les critères que le scan ne tranche pas. Vide pour un rapport qui n'en porte pas. */
+  leads: Record<string, ScanLead[]>;
+}
+
+/**
+ * Une piste du scan : des éléments de la page qu'un critère demande d'examiner.
+ *
+ * Pas un verdict — « 12 images portent un alt » ne dit rien de la pertinence de
+ * ces alt. Elle dit à l'auditeur où regarder.
+ */
+export interface ScanLead {
+  label: string;
+  count: number;
+  samples: Evidence[];
+}
+
+/** Les pistes d'un critère, telles que le dernier scan qui en portait les a laissées. */
+export interface AuditLeads {
+  scannedAt: string;
+  items: ScanLead[];
 }
 
 /**

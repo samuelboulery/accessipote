@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { collectLinks, probeDocument } from './collect.ts';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import { collectLinks, inspectFocus, measureReflow, probeDocument } from './collect.ts';
 
 function mount(html: string): void {
   document.body.innerHTML = html;
@@ -144,5 +144,166 @@ describe('collectLinks', () => {
     `);
 
     expect(collectLinks()).toEqual([`${location.origin}/contact`]);
+  });
+});
+
+describe('probeDocument — contrôles nommés', () => {
+  const probe = (failSelectors: string[], root?: string) =>
+    probeDocument({ root, naSelectors: [], failSelectors, snippetMax: 200, nodesPerSelector: 5 });
+
+  const original = document.doctype;
+  const setDoctype = (doctype: DocumentType | null) => {
+    document.doctype?.remove();
+    if (doctype) document.insertBefore(doctype, document.documentElement);
+  };
+  afterEach(() => setDoctype(original ?? document.implementation.createDocumentType('html', '', '')));
+
+  it('un doctype html5 est présent et valide', () => {
+    setDoctype(document.implementation.createDocumentType('html', '', ''));
+    const { found } = probe(['@doctype-missing', '@doctype-invalid', '@doctype-after-html']);
+
+    expect(found).toEqual({ '@doctype-missing': [], '@doctype-invalid': [], '@doctype-after-html': [] });
+  });
+
+  it('signale un doctype absent', () => {
+    setDoctype(null);
+    expect(probe(['@doctype-missing']).found['@doctype-missing']).toHaveLength(1);
+  });
+
+  it('accepte un doctype W3C historique, refuse un doctype inconnu', () => {
+    setDoctype(document.implementation.createDocumentType('html', '-//W3C//DTD HTML 4.01//EN', ''));
+    expect(probe(['@doctype-invalid']).found['@doctype-invalid']).toEqual([]);
+
+    setDoctype(document.implementation.createDocumentType('svg', '', ''));
+    const [node] = probe(['@doctype-invalid']).found['@doctype-invalid'];
+    expect(node.snippet).toBe('<!DOCTYPE svg>');
+  });
+
+  it('relève chaque identifiant en double, pas sa première occurrence', () => {
+    mount('<p id="a"></p><p id="a"></p><p id="b"></p><p id="a"></p>');
+    const nodes = probe(['@duplicate-id']).found['@duplicate-id'];
+
+    expect(nodes.map(node => node.selector)).toEqual(['p#a', 'p#a']);
+  });
+
+  it('cherche les doublons dans la zone scannée seulement', () => {
+    mount('<header id="zone"><p id="a"></p></header><p id="a"></p>');
+    expect(probe(['@duplicate-id'], '#zone').found['@duplicate-id']).toEqual([]);
+  });
+
+  it('laisse un contrôle inconnu non renseigné', () => {
+    expect('@inconnu' in probe(['@inconnu']).found).toBe(false);
+  });
+});
+
+describe('measureReflow — défilement horizontal à 320 px', () => {
+  const options = { snippetMax: 200, nodesPerSelector: 5 };
+
+  /** jsdom ne calcule aucune mise en page : la largeur se pose à la main. */
+  function layout(pageWidth: number, rights: Record<string, number>) {
+    const root = document.documentElement;
+    Object.defineProperty(root, 'clientWidth', { configurable: true, value: 320 });
+    Object.defineProperty(root, 'scrollWidth', { configurable: true, value: pageWidth });
+    for (const [id, right] of Object.entries(rights)) {
+      const element = document.getElementById(id)!;
+      element.getBoundingClientRect = () => ({ right }) as DOMRect;
+    }
+  }
+
+  afterEach(() => {
+    delete (document.documentElement as { clientWidth?: number }).clientWidth;
+    delete (document.documentElement as { scrollWidth?: number }).scrollWidth;
+  });
+
+  it('ne relève rien quand la page tient dans la largeur', () => {
+    mount('<div id="a"></div>');
+    layout(320, { a: 300 });
+    expect(measureReflow(options)).toEqual([]);
+  });
+
+  it('relève l’élément qui déborde le plus haut, pas ses descendants', () => {
+    mount('<main id="m"><table id="t"><tr><td id="c">x</td></tr></table></main>');
+    layout(900, { m: 320, t: 900, c: 900 });
+
+    expect(measureReflow(options).map(node => node.selector)).toEqual(['table#t']);
+  });
+
+  it('écarte ce qui déborde dans un conteneur qui défile lui-même', () => {
+    // Un tableau dans une zone à défilement propre ne fait pas défiler la page :
+    // c'est un cas particulier que le référentiel admet.
+    mount('<div id="s" style="overflow-x: auto"><table id="t"></table></div><img id="i">');
+    layout(700, { s: 320, t: 900, i: 700 });
+
+    expect(measureReflow(options).map(node => node.selector)).toEqual(['img#i']);
+  });
+
+  it('ne référence aucune liaison extérieure à son corps', () => {
+    const source = measureReflow.toString();
+    expect(source).not.toMatch(/\bimport\b|\brequire\b/);
+    expect(source).not.toMatch(/_[a-zA-Z]+\.\w+\(/);
+  });
+});
+
+describe('inspectFocus — prise de focus visible', () => {
+  const options = { snippetMax: 200 };
+
+  function styled(css: string, html: string) {
+    document.head.innerHTML = `<style>${css}</style>`;
+    mount(html);
+  }
+
+  afterEach(() => {
+    document.head.innerHTML = '';
+    delete (window as { accessipoteFocusSeen?: unknown }).accessipoteFocusSeen;
+  });
+
+  it('un focus qui change le style de l’élément est visible', () => {
+    // jsdom n'applique pas `:focus` au style calculé : le contour se simule.
+    mount('<a id="l" href="#">Lien</a>');
+    const link = document.getElementById('l')!;
+    const real = window.getComputedStyle.bind(window);
+    const spy = vi.spyOn(window, 'getComputedStyle').mockImplementation(element => {
+      const style = real(element);
+      return {
+        getPropertyValue: (property: string) =>
+          property === 'outline-style' && document.activeElement === link ? 'solid' : style.getPropertyValue(property),
+      } as CSSStyleDeclaration;
+    });
+    link.focus();
+
+    expect(inspectFocus(options)).toEqual({ done: false, invisible: null });
+    spy.mockRestore();
+  });
+
+  it('un focus qui ne change rien est relevé, et l’élément garde le focus', () => {
+    styled('a:focus { outline: none; }', '<a id="l" href="#">Lien</a>');
+    const link = document.getElementById('l')!;
+    link.focus();
+
+    expect(inspectFocus(options)).toEqual({
+      done: false,
+      invisible: { selector: 'a#l', snippet: '<a id="l" href="#">Lien</a>' },
+    });
+    expect(document.activeElement).toBe(link);
+  });
+
+  it('s’arrête quand le focus revient sur le document', () => {
+    mount('<a href="#">Lien</a>');
+    (document.activeElement as HTMLElement | null)?.blur();
+    expect(inspectFocus(options).done).toBe(true);
+  });
+
+  it('s’arrête quand le focus repasse sur un élément déjà vu', () => {
+    styled('a:focus { outline: 2px solid; }', '<a id="l" href="#">Lien</a>');
+    document.getElementById('l')!.focus();
+    inspectFocus(options);
+
+    expect(inspectFocus(options).done).toBe(true);
+  });
+
+  it('ne référence aucune liaison extérieure à son corps', () => {
+    const source = inspectFocus.toString();
+    expect(source).not.toMatch(/\bimport\b|\brequire\b/);
+    expect(source).not.toMatch(/_[a-zA-Z]+\.\w+\(/);
   });
 });

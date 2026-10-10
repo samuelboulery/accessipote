@@ -365,6 +365,9 @@ describe('App — import d’un rapport de scan', () => {
         evidence: [{ url: 'https://exemple.fr', selector: 'h3', snippet: '<h3>' }],
       },
     },
+    leads: {
+      '1.3': [{ label: 'Images dotées d’une alternative', count: 4, samples: [] }],
+    },
   };
 
   function storedAudit(): Audit {
@@ -398,6 +401,61 @@ describe('App — import d’un rapport de scan', () => {
     expect(audit.progress['8.3']).toBeUndefined();
     expect(audit.auto?.['2.1'].evidence[0].selector).toBe('iframe');
     expect(audit.auto?.['2.1'].testIds).toEqual(['2.1.1']);
+  });
+
+  it('range les pistes du scan dans l’audit, datées', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    expect(storedAudit().leads?.['1.3']).toEqual({
+      scannedAt: report.scannedAt,
+      items: report.leads['1.3'],
+    });
+  });
+
+  it('filtre la liste sur les critères qui portent des pistes', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+    await user.click(screen.getByRole('button', { name: 'Terminer' }));
+
+    await user.click(screen.getByRole('button', { name: /filtrer/i }));
+    await user.selectOptions(screen.getByLabelText('Scan'), 'leads');
+
+    const listed = screen
+      .getAllByRole('checkbox')
+      .map(box => box.getAttribute('aria-label'))
+      .filter(label => label?.startsWith('Sélectionner le critère '));
+    expect(listed).toEqual(['Sélectionner le critère 1.3']);
+  });
+
+  it('remplace les pistes du périmètre à chaque import, sans en laisser de périmées', async () => {
+    seedAudit();
+    const user = userEvent.setup();
+    render(<App />);
+    await openAudit(user);
+    await importReport(user);
+
+    const second = {
+      ...report,
+      scannedAt: '2026-08-21T10:00:00.000Z',
+      leads: { '9.1': [{ label: 'Titres', count: 3, samples: [] }] },
+    };
+    await user.upload(
+      screen.getByLabelText('Rapport de scan (JSON)'),
+      new File([JSON.stringify(second)], 'scan.json', { type: 'application/json' }),
+    );
+
+    const leads = storedAudit().leads ?? {};
+    // 1.3 n'a plus de piste dans le second scan : l'ancienne, datée du premier,
+    // ferait croire qu'elle tient encore.
+    expect(Object.keys(leads)).toEqual(['9.1']);
+    expect(leads['9.1'].scannedAt).toBe('2026-08-21T10:00:00.000Z');
   });
 
   it('n’écrit rien quand le rapport est refusé', async () => {

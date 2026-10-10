@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { FileUp } from 'lucide-react';
 import type {
   AutoVerdict,
+  ScanLead,
   AuditProgress,
   CriteriaFilters,
   CriteriaStatus,
@@ -10,6 +11,7 @@ import type {
 } from './types';
 import { useAudits, type NewAuditInput } from './hooks/useAudits';
 import { useDebounce } from './hooks/useDebounce';
+import { EMPTY_FILTERS } from './hooks/useFilters';
 import useToast from './hooks/useToast';
 import { useDarkMode } from './hooks/useDarkMode';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -71,15 +73,15 @@ function App() {
   const [incomingScan, setIncomingScan] = useState<string | null>(null);
   const [activeTheme, setActiveTheme] = useState(themes[0]);
   const [expandedCriteriaId, setExpandedCriteriaId] = useState<string | null>(null);
-  const [filters, setFilters] = useState<CriteriaFilters>({ search: '', level: '', status: '' });
+  const [filters, setFilters] = useState<CriteriaFilters>(EMPTY_FILTERS);
 
   const [selectedGlossaryTerm, setSelectedGlossaryTerm] = useState<string | undefined>();
   const [popoverAnchor, setPopoverAnchor] = useState<DOMRect | null>(null);
 
   const debouncedSearch = useDebounce(filters.search, 300);
   const debouncedFilters = useMemo(
-    () => ({ search: debouncedSearch, level: filters.level, status: filters.status }),
-    [debouncedSearch, filters.level, filters.status],
+    () => ({ ...filters, search: debouncedSearch }),
+    [debouncedSearch, filters],
   );
 
   /**
@@ -209,6 +211,26 @@ function App() {
         }
 
         return { progress: progress as AuditProgress, auto };
+      });
+    },
+    [patchAudit],
+  );
+
+  /**
+   * Pistes du scan : chaque import remplace celles de son périmètre. Un critère
+   * sans piste dans le nouveau scan perd l'ancienne — datée d'un autre
+   * échantillon, elle ferait croire qu'elle tient encore.
+   */
+  const handleScanLeads = useCallback(
+    (leads: Record<string, ScanLead[]>, scannedAt: string, scope: string[]) => {
+      patchAudit(audit => {
+        const next = { ...audit.leads };
+        for (const criteriaId of scope) {
+          const items = leads[criteriaId];
+          if (items) next[criteriaId] = { scannedAt, items };
+          else delete next[criteriaId];
+        }
+        return { leads: next };
       });
     },
     [patchAudit],
@@ -528,6 +550,7 @@ function App() {
           incoming={incomingScan}
           onApply={handleScanApply}
           onUndo={handleScanUndo}
+          onLeads={handleScanLeads}
           onClose={() => {
             setIsScanImportOpen(false);
             setIncomingScan(null);

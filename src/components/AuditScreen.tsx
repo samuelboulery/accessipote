@@ -8,7 +8,7 @@ import CriteriaDetail from './CriteriaDetail';
 import SegmentedGauge from './SegmentedGauge';
 import EmptyState from './EmptyState';
 import BulkActions from './BulkActions';
-import { useFilters } from '../hooks/useFilters';
+import { EMPTY_FILTERS, useFilters } from '../hooks/useFilters';
 import { getStatusPresentation } from '../utils/statusPresentation';
 import { cleanCriteriaTitle } from '../utils/stripMarkdown';
 
@@ -56,7 +56,15 @@ export default function AuditScreen({
     [criteriaList, activeTheme],
   );
 
-  const { filteredCriteria, uniqueLevels } = useFilters(themeCriteria, filters, progress);
+  // Le filtre Scan n'a de commande qu'en audit classique. Il survit pourtant au
+  // changement d'audit : ailleurs, il est ignoré plutôt que de vider la liste
+  // en silence.
+  const activeFilters = useMemo(
+    () => (audit.mode === 'classic' || !filters.scan ? filters : { ...filters, scan: '' as const }),
+    [audit.mode, filters],
+  );
+  const scanMarks = useMemo(() => ({ auto: audit.auto, leads: audit.leads }), [audit.auto, audit.leads]);
+  const { filteredCriteria, uniqueLevels } = useFilters(themeCriteria, activeFilters, progress, scanMarks);
 
   const themeProgress = useMemo(
     () =>
@@ -146,7 +154,7 @@ export default function AuditScreen({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
         <SearchFilters
-          filters={filters}
+          filters={activeFilters}
           onFiltersChange={onFiltersChange}
           levels={uniqueLevels}
           mode={audit.mode}
@@ -203,6 +211,7 @@ export default function AuditScreen({
             mode={audit.mode}
             currentStatus={progress[expanded.id]?.status}
             auto={audit.auto?.[expanded.id]}
+            leads={audit.leads?.[expanded.id]}
             checkedTests={audit.checkedTests[expanded.id] ?? []}
             note={audit.notes[expanded.id] ?? ''}
             pages={audit.pages[expanded.id] ?? []}
@@ -263,7 +272,7 @@ export default function AuditScreen({
               actions={
                 <button
                   type="button"
-                  onClick={() => onFiltersChange({ search: '', level: '', status: '' })}
+                  onClick={() => onFiltersChange(EMPTY_FILTERS)}
                   className="target-44 h-ctrl rounded-ctrl border-1 border-border bg-surface px-3 text-body"
                 >
                   Effacer les filtres

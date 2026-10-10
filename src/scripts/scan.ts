@@ -13,14 +13,17 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 import type { Browser, Frame, Page } from 'playwright';
 import type { AxeResults } from 'axe-core';
-import { aggregate } from '../scan/aggregate.ts';
-import { probeDocument } from '../scan/collect.ts';
+import { aggregate, collectLeads } from '../scan/aggregate.ts';
+import { inspectFocus, measureReflow, probeDocument } from '../scan/collect.ts';
 import { mergePageScan } from '../scan/mergeFrames.ts';
 import {
   AXE_RULES,
+  FOCUS_CHECK,
   FOUND_SELECTORS,
   MAIN_FRAME_FAIL_SELECTORS,
   NA_SELECTORS,
+  REFLOW_CHECK,
+  RGAA_LEADS,
   RGAA_MAPPING,
 } from '../scan/rgaaMapping.ts';
 import type { Certainty, FrameScan, PageScan, ProbeResult, TestVerdict } from '../scan/types.ts';
@@ -33,6 +36,11 @@ const NETWORK_IDLE_MS = 20_000;
 const AXE_TIMEOUT_MS = 60_000;
 const SCROLL_STEP_MS = 250;
 const SETTLE_MS = 2_000;
+/** Largeur et hauteur du test 10.11 : 1280 px à 400 %, selon WCAG. */
+const REFLOW_VIEWPORT = { width: 320, height: 256 };
+const REFLOW_SETTLE_MS = 1_000;
+/** Assez pour traverser une page ordinaire ; au-delà, l'échantillon suffit à instruire. */
+const FOCUS_MAX_TABS = 60;
 
 interface Options {
   urls: string[];
@@ -197,6 +205,22 @@ async function scanPage(
 
     const mainFrame = await collect(page.mainFrame(), [], MAIN_FRAME_FAIL_SELECTORS);
 
+    const focus = await walkFocus(page);
+    if (focus !== null) {
+      collected.push({ violations: [], incomplete: [], passes: [], present: {}, found: { [FOCUS_CHECK]: focus } });
+    }
+
+    // 10.11 en dernier : la fenêtre réduite change la mise en page, et rien ne
+    // doit plus être sondé ensuite. L'onglet se ferme, il n'y a rien à rétablir.
+    await page.setViewportSize(REFLOW_VIEWPORT);
+    await page.waitForTimeout(REFLOW_SETTLE_MS);
+    const overflow = await page
+      .evaluate(measureReflow, { snippetMax: SNIPPET_MAX, nodesPerSelector: NODES_PER_SELECTOR })
+      .catch(() => null);
+    if (overflow !== null) {
+      collected.push({ violations: [], incomplete: [], passes: [], present: {}, found: { [REFLOW_CHECK]: overflow } });
+    }
+
     return {
       page: mergePageScan(url, collected, mainFrame ?? undefined),
       axeVersion: axe.version,
@@ -205,6 +229,29 @@ async function scanPage(
   } finally {
     await context.close();
   }
+}
+
+/**
+ * Tabule dans la page et relève les prises de focus sans effet visible (10.7).
+ *
+ * Un vrai appui sur Tab, que seul un pilote sait faire : l'extension n'en a pas
+ * le moyen sans la permission `debugger`. Rend `null` si aucun pas n'a pu être
+ * regardé — « pas vérifié » n'est pas « rien trouvé ».
+ */
+async function walkFocus(page: Page): Promise<Array<{ selector: string; snippet: string }> | null> {
+  const invisible: Array<{ selector: string; snippet: string }> = [];
+  let evaluated = false;
+
+  for (let tab = 0; tab < FOCUS_MAX_TABS; tab += 1) {
+    await page.keyboard.press('Tab');
+    const step = await page.evaluate(inspectFocus, { snippetMax: SNIPPET_MAX }).catch(() => null);
+    if (step === null) break;
+    evaluated = true;
+    if (step.done) break;
+    if (step.invisible && invisible.length < NODES_PER_SELECTOR) invisible.push(step.invisible);
+  }
+
+  return evaluated ? invisible : null;
 }
 
 const LABELS: Record<TestVerdict, string> = {
@@ -265,6 +312,9 @@ async function main(): Promise<void> {
     // que relativement à ce qui a été atteint.
     crawl: { networkIdle: true, scrolled: true, frames },
     criteria,
+    // Pistes pour ce que la machine ne tranche pas : à côté des critères,
+    // jamais dedans, sans quoi un critère manuel paraîtrait évalué.
+    leads: collectLeads(pages, RGAA_LEADS),
   };
 
   const counts: Record<TestVerdict, number> = { fail: 0, na: 0, pass: 0, unknown: 0 };

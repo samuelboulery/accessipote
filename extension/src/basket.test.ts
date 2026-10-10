@@ -97,6 +97,22 @@ describe('panier d’échantillon', () => {
 });
 
 describe('rapport du panier', () => {
+  it('porte les pistes pour l’auditeur, à côté des critères', () => {
+    const report = reportOf([
+      entry('https://exemple.fr/a', {
+        present: { 'blockquote, q': 2 },
+        found: { 'blockquote, q': [{ selector: 'q', snippet: '<q>Bonjour</q>' }] },
+      }),
+    ]);
+
+    expect(report.leads['9.4']?.[0].count).toBe(2);
+    expect(report.criteria['9.4']).toBeUndefined();
+  });
+
+  it('un panier sans pistes récoltées n’en porte aucune', () => {
+    expect(reportOf([entry('https://exemple.fr/a')]).leads).toEqual({});
+  });
+
   it('porte toutes les adresses et la somme des cadres', () => {
     const report = reportOf([entry('https://exemple.fr/a'), { ...entry('https://exemple.fr/b'), frames: 3 }]);
 

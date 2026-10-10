@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { aggregate } from './aggregate.ts';
-import type { PageScan, RgaaMapping } from './types.ts';
+import { aggregate, collectLeads, LEAD_SAMPLES_MAX } from './aggregate.ts';
+import type { LeadDefinition, PageScan, RgaaMapping } from './types.ts';
 
 const page = (url: string, over: Partial<PageScan> = {}): PageScan => ({
   url,
@@ -371,5 +371,73 @@ describe('aggregate — certitude', () => {
       }),
     ];
     expect(aggregate(pages, [FRAME])['2.1'].certainty).toBe('proven');
+  });
+});
+
+describe('collectLeads — pistes pour l’auditeur', () => {
+  const ALT: LeadDefinition = { criteria: ['1.3'], label: 'Images avec alt', selector: 'img[alt]' };
+  const node = (n: number) => ({ selector: `img#i${n}`, snippet: `<img id="i${n}" alt="x">` });
+
+  it('additionne le compte de toutes les pages et joint les échantillons', () => {
+    const pages = [
+      page('/a', { present: { 'img[alt]': 2 }, found: { 'img[alt]': [node(1), node(2)] } }),
+      page('/b', { present: { 'img[alt]': 1 }, found: { 'img[alt]': [node(3)] } }),
+    ];
+    const leads = collectLeads(pages, [ALT]);
+
+    expect(leads['1.3']).toEqual([
+      {
+        label: 'Images avec alt',
+        count: 3,
+        samples: [
+          { url: '/a', selector: 'img#i1', snippet: '<img id="i1" alt="x">' },
+          { url: '/a', selector: 'img#i2', snippet: '<img id="i2" alt="x">' },
+          { url: '/b', selector: 'img#i3', snippet: '<img id="i3" alt="x">' },
+        ],
+      },
+    ]);
+  });
+
+  it('écarte une piste sans élément, et une piste jamais évaluée', () => {
+    expect(collectLeads([page('/a', { present: { 'img[alt]': 0 } })], [ALT])).toEqual({});
+    expect(collectLeads([page('/a')], [ALT])).toEqual({});
+  });
+
+  it('plafonne les échantillons, pas le compte', () => {
+    const nodes = Array.from({ length: 4 }, (_, n) => node(n));
+    const pages = [
+      page('/a', { present: { 'img[alt]': 40 }, found: { 'img[alt]': nodes } }),
+      page('/b', { present: { 'img[alt]': 40 }, found: { 'img[alt]': nodes } }),
+    ];
+    const [lead] = collectLeads(pages, [ALT])['1.3'];
+
+    expect(lead.count).toBe(80);
+    expect(lead.samples).toHaveLength(LEAD_SAMPLES_MAX);
+  });
+
+  it('une piste peut nourrir plusieurs critères', () => {
+    const groupes: LeadDefinition = { criteria: ['11.5', '11.6'], label: 'Groupes', selector: 'fieldset' };
+    const leads = collectLeads([page('/a', { present: { fieldset: 1 }, found: { fieldset: [] } })], [groupes]);
+
+    expect(Object.keys(leads)).toEqual(['11.5', '11.6']);
+  });
+
+  it('compte une piste du document principal par ses échantillons', () => {
+    // Le document principal n'est pas compté, seulement récolté : son titre
+    // n'existe qu'une fois.
+    const titre: LeadDefinition = { criteria: ['8.6'], label: 'Titre', selector: 'head > title', mainFrameOnly: true };
+    const leads = collectLeads(
+      [page('/a', { found: { 'head > title': [{ selector: 'title', snippet: '<title>Accueil</title>' }] } })],
+      [titre],
+    );
+
+    expect(leads['8.6'][0].count).toBe(1);
+  });
+
+  it('tronque les extraits comme le reste du rapport', () => {
+    const long = { selector: 'img', snippet: `<img alt="${'x'.repeat(500)}">` };
+    const leads = collectLeads([page('/a', { present: { 'img[alt]': 1 }, found: { 'img[alt]': [long] } })], [ALT]);
+
+    expect(leads['1.3'][0].samples[0].snippet?.length).toBe(200);
   });
 });

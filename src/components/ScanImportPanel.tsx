@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import type { Audit, CriteriaRGAA } from '../types';
+import type { Audit, CriteriaRGAA, ScanLead } from '../types';
 import { parseScanReport, planScanApplication } from '../utils/scanReport';
 import type { ScanPlan, ScanPlanEntry } from '../utils/scanReport';
 import { cleanCriteriaTitle } from '../utils/stripMarkdown';
+import ScanLeads from './ScanLeads';
 import StatusPill from './StatusPill';
 
 interface ScanImportPanelProps {
@@ -22,6 +23,11 @@ interface ScanImportPanelProps {
   incoming?: string | null;
   onApply: (entries: ScanPlanEntry[], scannedAt: string) => void;
   onUndo: (criteriaId: string) => void;
+  /**
+   * Pistes du rapport, et le périmètre qu'elles remplacent — appelé une fois par
+   * import, même sans pistes : les anciennes ne décrivent plus l'échantillon.
+   */
+  onLeads: (leads: Record<string, ScanLead[]>, scannedAt: string, scope: string[]) => void;
   onClose: () => void;
 }
 
@@ -52,6 +58,7 @@ export default function ScanImportPanel({
   incoming,
   onApply,
   onUndo,
+  onLeads,
   onClose,
 }: ScanImportPanelProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -86,6 +93,11 @@ export default function ScanImportPanel({
         setZones(report.zones ?? null);
         setCrawled(report.crawled === true);
         onApply(next.direct, report.scannedAt);
+        onLeads(
+          next.leads,
+          report.scannedAt,
+          criteriaList.map(criterion => criterion.id),
+        );
       } catch (caught) {
         // L'audit reste intact : rien n'a été écrit avant que tout soit validé.
         setError(messageOf(caught));
@@ -95,7 +107,7 @@ export default function ScanImportPanel({
         setCrawled(false);
       }
     },
-    [criteriaList, knownCriteriaIds, onApply],
+    [criteriaList, knownCriteriaIds, onApply, onLeads],
   );
 
   // Un rapport reçu de l'extension emprunte exactement le chemin d'un fichier.
@@ -249,7 +261,7 @@ export default function ScanImportPanel({
               Rapport importé — {count(plan.direct.length, 'écrit', 'écrits')},{' '}
               {plan.probable.length} à vérifier,{' '}
               {count(plan.proposed.length, 'conforme proposé', 'conformes proposés')},{' '}
-              {count(plan.unscanned, 'non évalué', 'non évalués')}.
+              {count(plan.unscanned.length, 'non évalué', 'non évalués')}.
             </p>
 
             <div role="group" aria-labelledby="scan-failed-title">
@@ -343,9 +355,25 @@ export default function ScanImportPanel({
                 Non évalué par le scan
               </h3>
               <p className="text-dense text-ink-muted">
-                {plan.unscanned} critère{plan.unscanned > 1 ? 's' : ''} du périmètre restent à
-                évaluer à la main — le scan ne les a pas tranchés.
+                {plan.unscanned.length} critère{plan.unscanned.length > 1 ? 's' : ''} du périmètre
+                restent à évaluer à la main — le scan ne les a pas tranchés. Là où il a repéré des
+                éléments à examiner, il les montre.
               </p>
+              <ul>
+                {plan.unscanned.map(criteriaId => (
+                  <li
+                    key={criteriaId}
+                    aria-label={`Critère ${criteriaId}`}
+                    className="flex flex-col gap-2 border-b border-separator py-3 last:border-0"
+                  >
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="font-mono text-meta text-ink-muted">{criteriaId}</span>
+                      <span className="min-w-0 flex-1 text-body">{titleOf(criteriaId)}</span>
+                    </div>
+                    {plan.leads[criteriaId] && <ScanLeads leads={plan.leads[criteriaId]} />}
+                  </li>
+                ))}
+              </ul>
             </div>
           </>
         )}

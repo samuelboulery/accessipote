@@ -4,6 +4,11 @@ import {
   MAPPED_CRITERIA,
   FOUND_SELECTORS,
   MAIN_FRAME_FAIL_SELECTORS,
+  NA_SELECTORS,
+  RGAA_LEADS,
+  DRIVER_CHECKS,
+  REFLOW_CHECK,
+  FOCUS_CHECK,
 } from './rgaaMapping.ts';
 import criteriaData from '../data/criteria.json';
 import { transformCriteriaData } from '../utils/transformCriteria';
@@ -82,7 +87,7 @@ describe('rgaaMapping — portée des sélecteurs', () => {
 
   it('les critères « dans chaque page web » ignorent les documents embarqués', () => {
     const parPage = RGAA_MAPPING.filter(mapping => mapping.mainFrameOnly).map(m => m.testId);
-    expect(parPage).toEqual(['8.3.1', '8.5.1']);
+    expect(parPage).toEqual(['8.1.1', '8.1.2', '8.1.3', '8.2.1', '8.3.1', '8.5.1']);
   });
 });
 
@@ -234,11 +239,24 @@ describe('rgaaMapping — lot éléments obligatoires', () => {
     expect(ruleOf('8.8.1')).toEqual(['valid-lang']);
   });
 
-  it('signale les identifiants dupliqués sans les écrire', () => {
-    // Les résultats d'axe sont fusionnés tous cadres confondus : un `id`
-    // dupliqué dans un `<iframe>` n'est pas celui de la page.
-    expect(hintOf('8.2.1')).toEqual(['duplicate-id-aria']);
-    expect(ruleOf('8.2.1')).toEqual([]);
+  const mappingOf = (testId: string) => RGAA_MAPPING.find(mapping => mapping.testId === testId);
+
+  it('prouve un identifiant dupliqué, dans le document principal seul', () => {
+    // Un `id` dupliqué dans un `<iframe>` appartient au document embarqué,
+    // pas à la page.
+    expect(mappingOf('8.2.1')).toMatchObject({ failWhen: '@duplicate-id', mainFrameOnly: true });
+    expect(hintOf('8.2.1')).toEqual([]);
+  });
+
+  it('tranche les trois tests du doctype, et peut proposer 8.1 conforme', () => {
+    expect(['8.1.1', '8.1.2', '8.1.3'].map(testId => mappingOf(testId)?.failWhen)).toEqual([
+      '@doctype-missing',
+      '@doctype-invalid',
+      '@doctype-after-html',
+    ]);
+    expect(['8.1.1', '8.1.2', '8.1.3'].every(testId => mappingOf(testId)?.provesPass)).toBe(true);
+    expect(MAIN_FRAME_FAIL_SELECTORS).toEqual(expect.arrayContaining(['@doctype-missing', '@duplicate-id']));
+    expect(FOUND_SELECTORS).not.toContain('@duplicate-id');
   });
 
   it('ne retient qu’un indice là où la règle parle d’autre chose que le test', () => {
@@ -419,5 +437,86 @@ describe('rgaaMapping — lot consultation, navigation et présentation', () => 
         mapping.provesPass,
     );
     expect(bavards.map(mapping => mapping.testId)).toEqual([]);
+  });
+});
+
+describe('rgaaMapping — pistes pour l’auditeur', () => {
+  it('chaque critère cité par une piste existe dans criteria.json', () => {
+    const inconnus = RGAA_LEADS.flatMap(lead => lead.criteria).filter(id => !byId.has(id));
+    expect(inconnus).toEqual([]);
+  });
+
+  it('chaque sélecteur de piste est valide', () => {
+    const invalides = RGAA_LEADS.filter(lead => {
+      try {
+        document.querySelectorAll(lead.selector);
+        return false;
+      } catch {
+        return true;
+      }
+    });
+    expect(invalides.map(lead => lead.selector)).toEqual([]);
+  });
+
+  it('chaque piste est comptée et échantillonnée, dans le bon périmètre', () => {
+    const malRangees = RGAA_LEADS.filter(lead =>
+      lead.mainFrameOnly
+        ? !MAIN_FRAME_FAIL_SELECTORS.includes(lead.selector)
+        : !NA_SELECTORS.includes(lead.selector) || !FOUND_SELECTORS.includes(lead.selector),
+    );
+    expect(malRangees.map(lead => lead.label)).toEqual([]);
+  });
+
+  it('oriente l’auditeur sur la pertinence des alternatives d’images', () => {
+    expect(RGAA_LEADS.some(lead => lead.criteria.includes('1.3'))).toBe(true);
+  });
+});
+
+describe('rgaaMapping — ordre de tabulation', () => {
+  const mappingOf = (testId: string) => RGAA_MAPPING.find(mapping => mapping.testId === testId);
+
+  it('soupçonne un tabindex positif, sans le condamner', () => {
+    // Un tabindex positif réordonne la tabulation : souvent incohérent, pas
+    // toujours. Le test demande un jugement de cohérence.
+    expect(mappingOf('12.8.1')).toMatchObject({
+      probableWhen: '[tabindex]:not([tabindex="0"]):not([tabindex^="-"])',
+      provesPass: false,
+    });
+    expect(mappingOf('12.8.1')?.failWhen).toBeUndefined();
+  });
+
+  it('le sélecteur ne retient que les valeurs positives', () => {
+    document.body.innerHTML =
+      '<a tabindex="3"></a><a tabindex="0"></a><a tabindex="-1"></a><a></a><a tabindex="12"></a>';
+    const selector = mappingOf('12.8.1')?.probableWhen ?? '';
+    expect(document.querySelectorAll(selector)).toHaveLength(2);
+  });
+});
+
+describe('rgaaMapping — contrôles réservés au pilote', () => {
+  it('soupçonne un défilement horizontal à 320 px', () => {
+    // Cartes, tableaux de données, barres d'outils : le référentiel admet des
+    // cas particuliers. Un débordement est un indice.
+    expect(RGAA_MAPPING.find(mapping => mapping.testId === '10.11.1')).toMatchObject({
+      probableWhen: REFLOW_CHECK,
+      provesPass: false,
+    });
+  });
+
+  it('soupçonne une prise de focus invisible', () => {
+    // Un indicateur porté par un parent ou un pseudo-élément échappe à la
+    // comparaison : l'absence de changement est un indice.
+    expect(RGAA_MAPPING.find(mapping => mapping.testId === '10.7.1')).toMatchObject({
+      probableWhen: FOCUS_CHECK,
+      provesPass: false,
+    });
+    expect(DRIVER_CHECKS).toContain(FOCUS_CHECK);
+  });
+
+  it('ne demande jamais ces contrôles à la sonde ordinaire', () => {
+    // À largeur normale, la sonde « vérifierait » le reflow et n'y trouverait
+    // rien : un faux négatif qui a l'air d'une mesure.
+    const derived = [...FOUND_SELECTORS, ...NA_SELECTORS, ...MAIN_FRAME_FAIL_SELECTORS];
+    expect(DRIVER_CHECKS.filter(check => derived.includes(check))).toEqual([]);
   });
 });

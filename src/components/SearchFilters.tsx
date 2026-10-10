@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import type { CriteriaFilters, Mode } from '../types';
-import { getSelectableStatuses } from '../utils/statusPresentation';
+import type { CriteriaFilters, Mode, ScanFilter } from '../types';
+import { getSelectableStatuses, UNSET_STATUS } from '../utils/statusPresentation';
 import { MAX_SEARCH_LENGTH } from '../constants';
 
 interface SearchFiltersProps {
@@ -45,7 +45,8 @@ export default function SearchFilters({
   }, [isOpen]);
 
   const update = (patch: Partial<CriteriaFilters>) => onFiltersChange({ ...filters, ...patch });
-  const activeCount = (filters.level === '' ? 0 : 1) + (filters.status === '' ? 0 : 1);
+  const activeCount =
+    (filters.level === '' ? 0 : 1) + (filters.status === '' ? 0 : 1) + (filters.scan ? 1 : 0);
 
   return (
     <div className="flex items-center gap-3">
@@ -127,13 +128,33 @@ export default function SearchFilters({
                     {label}
                   </option>
                 ))}
+                <option value={UNSET_STATUS}>À évaluer</option>
               </select>
             </div>
+
+            {/* Le scan n'existe qu'en audit classique : ailleurs, le filtre ne retiendrait rien. */}
+            {mode === 'classic' && (
+              <div>
+                <label htmlFor="filter-scan" className="mb-2 block text-body font-semibold">
+                  Scan
+                </label>
+                <select
+                  id="filter-scan"
+                  value={filters.scan ?? ''}
+                  onChange={event => update({ scan: event.target.value as ScanFilter })}
+                  className="h-touch w-full rounded-ctrl border-1 border-border bg-surface px-2 text-body"
+                >
+                  <option value="">Tous</option>
+                  <option value="auto">Pré-remplis par le scan</option>
+                  <option value="leads">Avec pistes du scan</option>
+                </select>
+              </div>
+            )}
 
             {activeCount > 0 && (
               <button
                 type="button"
-                onClick={() => update({ level: '', status: '' })}
+                onClick={() => update({ level: '', status: '', scan: '' })}
                 className="target-44 h-ctrl rounded-ctrl border-1 border-border text-body"
               >
                 Effacer les filtres

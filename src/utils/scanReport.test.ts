@@ -140,6 +140,7 @@ const parsed: ScanReport = {
   scannedAt: '2026-08-20T10:00:00.000Z',
   urls: ['https://exemple.fr'],
   criteria: outcomes,
+  leads: {},
 };
 
 describe('planScanApplication', () => {
@@ -169,14 +170,14 @@ describe('planScanApplication', () => {
       ...criteriaList,
       { id: '10.1', title: 'CSS', url: 'u', theme: 'Présentation', level: 'A' },
     ]);
-    expect(plan.unscanned).toBe(2);
+    expect(plan.unscanned).toEqual(['5.4', '10.1']);
   });
 
   it('ignore un critère hors du périmètre de l’audit', () => {
     const plan = planScanApplication(parsed, [criteriaList[0]]);
     expect(plan.direct).toHaveLength(1);
     expect(plan.proposed).toHaveLength(0);
-    expect(plan.unscanned).toBe(0);
+    expect(plan.unscanned).toEqual([]);
   });
 });
 
@@ -268,7 +269,7 @@ describe('planScanApplication — tri par certitude', () => {
     expect(plan.direct.map(entry => entry.criteriaId)).toEqual(['2.1', '5.4']);
     expect(plan.probable.map(entry => entry.criteriaId)).toEqual(['1.1']);
     expect(plan.proposed.map(entry => entry.criteriaId)).toEqual(['8.3']);
-    expect(plan.unscanned).toBe(0);
+    expect(plan.unscanned).toEqual([]);
   });
 
   it('propose un soupçon en non conforme, jamais en conforme', () => {
@@ -288,7 +289,7 @@ describe('planScanApplication — tri par certitude', () => {
 
   it('ne compte pas un soupçon parmi les critères non évalués', () => {
     const plan = planScanApplication(parsed(), criteria);
-    expect(plan.unscanned).toBe(0);
+    expect(plan.unscanned).toEqual([]);
   });
 });
 
@@ -445,5 +446,98 @@ describe('parseScanReport — rapport de crawl', () => {
 
   it('rejette un champ « crawled » qui n’est pas un booléen', () => {
     expect(() => parseScanReport(crawlReport('oui'), KNOWN)).toThrow(/crawled/);
+  });
+});
+
+/**
+ * Les pistes : ce que la machine montre là où elle ne tranche pas. Elles
+ * viennent du dehors comme le reste du rapport, et passent la même frontière.
+ */
+describe('parseScanReport — pistes', () => {
+  const withLeads = (leads: unknown, schema = 3) =>
+    JSON.stringify({
+      schema,
+      scannedAt: '2026-10-10T10:00:00.000Z',
+      urls: ['https://exemple.fr'],
+      criteria: {},
+      leads,
+    });
+
+  it('lit les pistes, critère par critère', () => {
+    const parsed = parseScanReport(
+      withLeads({
+        '1.1': [
+          {
+            label: 'Images dotées d’une alternative',
+            count: 12,
+            samples: [{ url: 'https://exemple.fr', selector: 'img#logo', snippet: '<img alt="Logo">' }],
+          },
+        ],
+      }),
+      KNOWN,
+    );
+
+    expect(parsed.leads['1.1']).toEqual([
+      {
+        label: 'Images dotées d’une alternative',
+        count: 12,
+        samples: [{ url: 'https://exemple.fr', selector: 'img#logo', snippet: '<img alt="Logo">' }],
+      },
+    ]);
+  });
+
+  it.each([1, 2, 3])('un rapport de schéma %i sans pistes en a zéro', schema => {
+    const text = JSON.stringify({ schema, scannedAt: '2026-10-10T10:00:00.000Z', urls: [], criteria: {} });
+    expect(parseScanReport(text, KNOWN).leads).toEqual({});
+  });
+
+  it('refuse des pistes illisibles', () => {
+    expect(() => parseScanReport(withLeads([]), KNOWN)).toThrow(/pistes/i);
+    expect(() => parseScanReport(withLeads({ '1.1': 'beaucoup' }), KNOWN)).toThrow(/1\.1/);
+    expect(() => parseScanReport(withLeads({ '1.1': [{ label: 'x', count: -1 }] }), KNOWN)).toThrow(/1\.1/);
+    expect(() => parseScanReport(withLeads({ '1.1': [{ label: 'x', count: 1.5 }] }), KNOWN)).toThrow(/1\.1/);
+    expect(() => parseScanReport(withLeads({ '1.1': [{ count: 1 }] }), KNOWN)).toThrow(/1\.1/);
+  });
+
+  it('refuse un compte nul, démesuré, ou inférieur aux échantillons', () => {
+    const sample = { url: 'https://exemple.fr' };
+    expect(() => parseScanReport(withLeads({ '1.1': [{ label: 'x', count: 0 }] }), KNOWN)).toThrow(/1\.1/);
+    expect(() => parseScanReport(withLeads({ '1.1': [{ label: 'x', count: 1e21 }] }), KNOWN)).toThrow(/1\.1/);
+    expect(() =>
+      parseScanReport(withLeads({ '1.1': [{ label: 'x', count: 1, samples: [sample, sample] }] }), KNOWN),
+    ).toThrow(/1\.1/);
+  });
+
+  it('refuse une date de scan illisible : elle finit affichée et stockée', () => {
+    const text = JSON.stringify({ schema: 3, scannedAt: 'hier', urls: [], criteria: {} });
+    expect(() => parseScanReport(text, KNOWN)).toThrow(/scannedAt/);
+  });
+
+  it('refuse une piste sur un critère inconnu du référentiel', () => {
+    expect(() => parseScanReport(withLeads({ '99.9': [] }), KNOWN)).toThrow(/99\.9/);
+  });
+
+  it('borne ce qu’une piste pèse une fois entrée', () => {
+    const sample = { url: 'https://exemple.fr', snippet: 'x'.repeat(1000) };
+    const parsed = parseScanReport(
+      withLeads({ '1.1': [{ label: 'y'.repeat(1000), count: 50, samples: Array(20).fill(sample) }] }),
+      KNOWN,
+    );
+    const [lead] = parsed.leads['1.1'];
+
+    expect(lead.label).toHaveLength(200);
+    expect(lead.samples).toHaveLength(5);
+    expect(lead.samples[0].snippet).toHaveLength(200);
+  });
+});
+
+describe('planScanApplication — pistes', () => {
+  it('ne garde que les pistes du périmètre de l’audit', () => {
+    const lead = { label: 'Titres', count: 2, samples: [] };
+    const plan = planScanApplication(
+      { ...parsed, leads: { '1.1': [lead], '9.1': [lead] } },
+      criteriaList,
+    );
+    expect(plan.leads).toEqual({ '1.1': [lead] });
   });
 });
