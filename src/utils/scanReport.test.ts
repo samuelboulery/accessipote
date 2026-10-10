@@ -487,7 +487,7 @@ describe('parseScanReport — pistes', () => {
   });
 
   it.each([1, 2, 3])('un rapport de schéma %i sans pistes en a zéro', schema => {
-    const text = JSON.stringify({ schema, scannedAt: 'x', urls: [], criteria: {} });
+    const text = JSON.stringify({ schema, scannedAt: '2026-10-10T10:00:00.000Z', urls: [], criteria: {} });
     expect(parseScanReport(text, KNOWN).leads).toEqual({});
   });
 
@@ -497,6 +497,20 @@ describe('parseScanReport — pistes', () => {
     expect(() => parseScanReport(withLeads({ '1.1': [{ label: 'x', count: -1 }] }), KNOWN)).toThrow(/1\.1/);
     expect(() => parseScanReport(withLeads({ '1.1': [{ label: 'x', count: 1.5 }] }), KNOWN)).toThrow(/1\.1/);
     expect(() => parseScanReport(withLeads({ '1.1': [{ count: 1 }] }), KNOWN)).toThrow(/1\.1/);
+  });
+
+  it('refuse un compte nul, démesuré, ou inférieur aux échantillons', () => {
+    const sample = { url: 'https://exemple.fr' };
+    expect(() => parseScanReport(withLeads({ '1.1': [{ label: 'x', count: 0 }] }), KNOWN)).toThrow(/1\.1/);
+    expect(() => parseScanReport(withLeads({ '1.1': [{ label: 'x', count: 1e21 }] }), KNOWN)).toThrow(/1\.1/);
+    expect(() =>
+      parseScanReport(withLeads({ '1.1': [{ label: 'x', count: 1, samples: [sample, sample] }] }), KNOWN),
+    ).toThrow(/1\.1/);
+  });
+
+  it('refuse une date de scan illisible : elle finit affichée et stockée', () => {
+    const text = JSON.stringify({ schema: 3, scannedAt: 'hier', urls: [], criteria: {} });
+    expect(() => parseScanReport(text, KNOWN)).toThrow(/scannedAt/);
   });
 
   it('refuse une piste sur un critère inconnu du référentiel', () => {

@@ -8,6 +8,8 @@ export interface ScanMarks {
   leads?: Record<string, unknown>;
 }
 
+const NO_MARKS: ScanMarks = {};
+
 export const EMPTY_FILTERS: CriteriaFilters = { search: '', level: '', status: '', scan: '' };
 
 /**
@@ -21,7 +23,7 @@ export function useFilters(
   criteriaList: CriteriaRGAA[],
   filters: CriteriaFilters,
   currentProgress: { [criteriaId: string]: { status: string } },
-  scanMarks: ScanMarks = {},
+  scanMarks: ScanMarks = NO_MARKS,
 ) {
   const filteredCriteria = useMemo(() => {
     const search = filters.search.toLowerCase();

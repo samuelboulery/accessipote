@@ -56,8 +56,15 @@ export default function AuditScreen({
     [criteriaList, activeTheme],
   );
 
+  // Le filtre Scan n'a de commande qu'en audit classique. Il survit pourtant au
+  // changement d'audit : ailleurs, il est ignoré plutôt que de vider la liste
+  // en silence.
+  const activeFilters = useMemo(
+    () => (audit.mode === 'classic' || !filters.scan ? filters : { ...filters, scan: '' as const }),
+    [audit.mode, filters],
+  );
   const scanMarks = useMemo(() => ({ auto: audit.auto, leads: audit.leads }), [audit.auto, audit.leads]);
-  const { filteredCriteria, uniqueLevels } = useFilters(themeCriteria, filters, progress, scanMarks);
+  const { filteredCriteria, uniqueLevels } = useFilters(themeCriteria, activeFilters, progress, scanMarks);
 
   const themeProgress = useMemo(
     () =>
@@ -147,7 +154,7 @@ export default function AuditScreen({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
         <SearchFilters
-          filters={filters}
+          filters={activeFilters}
           onFiltersChange={onFiltersChange}
           levels={uniqueLevels}
           mode={audit.mode}

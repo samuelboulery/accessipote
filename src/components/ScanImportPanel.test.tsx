@@ -173,19 +173,19 @@ describe('ScanImportPanel', () => {
     expect(within(row).getByText('<h3>Nos offres</h3>')).toBeVisible();
   });
 
-  it('transmet les pistes une seule fois par import', async () => {
+  it('transmet les pistes une seule fois par import, avec le périmètre qu’elles remplacent', async () => {
     const { onLeads, user } = setup();
     await user.upload(input(), file(report));
 
     expect(onLeads).toHaveBeenCalledTimes(1);
-    expect(onLeads).toHaveBeenCalledWith(report.leads, report.scannedAt);
+    expect(onLeads).toHaveBeenCalledWith(report.leads, report.scannedAt, ['1.1', '2.1', '8.3', '9.1']);
   });
 
-  it('ne transmet rien quand le rapport ne porte aucune piste', async () => {
+  it('transmet aussi un import sans pistes : les anciennes ne valent plus', async () => {
     const { onLeads, user } = setup();
     await user.upload(input(), file({ ...report, leads: undefined }));
 
-    expect(onLeads).not.toHaveBeenCalled();
+    expect(onLeads).toHaveBeenCalledWith({}, report.scannedAt, ['1.1', '2.1', '8.3', '9.1']);
   });
 
   it('rejette un fichier illisible sans toucher à l’audit', async () => {

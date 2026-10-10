@@ -23,8 +23,11 @@ interface ScanImportPanelProps {
   incoming?: string | null;
   onApply: (entries: ScanPlanEntry[], scannedAt: string) => void;
   onUndo: (criteriaId: string) => void;
-  /** Pistes du rapport pour le périmètre de l'audit — appelé une fois par import, s'il en porte. */
-  onLeads: (leads: Record<string, ScanLead[]>, scannedAt: string) => void;
+  /**
+   * Pistes du rapport, et le périmètre qu'elles remplacent — appelé une fois par
+   * import, même sans pistes : les anciennes ne décrivent plus l'échantillon.
+   */
+  onLeads: (leads: Record<string, ScanLead[]>, scannedAt: string, scope: string[]) => void;
   onClose: () => void;
 }
 
@@ -90,7 +93,11 @@ export default function ScanImportPanel({
         setZones(report.zones ?? null);
         setCrawled(report.crawled === true);
         onApply(next.direct, report.scannedAt);
-        if (Object.keys(next.leads).length > 0) onLeads(next.leads, report.scannedAt);
+        onLeads(
+          next.leads,
+          report.scannedAt,
+          criteriaList.map(criterion => criterion.id),
+        );
       } catch (caught) {
         // L'audit reste intact : rien n'a été écrit avant que tout soit validé.
         setError(messageOf(caught));

@@ -434,7 +434,7 @@ describe('App — import d’un rapport de scan', () => {
     expect(listed).toEqual(['Sélectionner le critère 1.3']);
   });
 
-  it('fusionne les pistes critère par critère d’un import à l’autre', async () => {
+  it('remplace les pistes du périmètre à chaque import, sans en laisser de périmées', async () => {
     seedAudit();
     const user = userEvent.setup();
     render(<App />);
@@ -452,7 +452,9 @@ describe('App — import d’un rapport de scan', () => {
     );
 
     const leads = storedAudit().leads ?? {};
-    expect(Object.keys(leads).sort()).toEqual(['1.3', '9.1']);
+    // 1.3 n'a plus de piste dans le second scan : l'ancienne, datée du premier,
+    // ferait croire qu'elle tient encore.
+    expect(Object.keys(leads)).toEqual(['9.1']);
     expect(leads['9.1'].scannedAt).toBe('2026-08-21T10:00:00.000Z');
   });
 

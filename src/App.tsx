@@ -217,19 +217,21 @@ function App() {
   );
 
   /**
-   * Pistes du scan, fusionnées critère par critère : un nouvel import remplace
-   * les pistes des critères qu'il couvre, et laisse les autres.
+   * Pistes du scan : chaque import remplace celles de son périmètre. Un critère
+   * sans piste dans le nouveau scan perd l'ancienne — datée d'un autre
+   * échantillon, elle ferait croire qu'elle tient encore.
    */
   const handleScanLeads = useCallback(
-    (leads: Record<string, ScanLead[]>, scannedAt: string) => {
-      patchAudit(audit => ({
-        leads: {
-          ...audit.leads,
-          ...Object.fromEntries(
-            Object.entries(leads).map(([criteriaId, items]) => [criteriaId, { scannedAt, items }]),
-          ),
-        },
-      }));
+    (leads: Record<string, ScanLead[]>, scannedAt: string, scope: string[]) => {
+      patchAudit(audit => {
+        const next = { ...audit.leads };
+        for (const criteriaId of scope) {
+          const items = leads[criteriaId];
+          if (items) next[criteriaId] = { scannedAt, items };
+          else delete next[criteriaId];
+        }
+        return { leads: next };
+      });
     },
     [patchAudit],
   );

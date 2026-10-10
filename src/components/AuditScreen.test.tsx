@@ -359,4 +359,16 @@ describe('AuditScreen', () => {
     // pouvoir le modifier.
     expect(screen.queryByText(/critère sélectionné/)).not.toBeInTheDocument();
   });
+
+  it('ignore le filtre Scan dans un audit design system, où il n’a pas de commande', () => {
+    // Le filtre survit au changement d'audit ; caché, il viderait la liste
+    // sans que rien à l'écran ne dise pourquoi.
+    setup({
+      audit: { ...AUDIT, mode: 'design-system' },
+      filters: { ...FILTERS, scan: 'leads' },
+    });
+
+    expect(screen.getByRole('button', { name: /filtrer/i })).not.toHaveTextContent(/\d/);
+    expect(screen.queryByText('Aucun critère ne correspond')).not.toBeInTheDocument();
+  });
 });

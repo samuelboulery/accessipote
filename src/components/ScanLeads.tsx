@@ -27,7 +27,9 @@ export default function ScanLeads({ leads }: ScanLeadsProps) {
                     <p className="break-all font-mono text-ink-muted">{sample.selector}</p>
                   )}
                   {sample.snippet && (
-                    <pre className="mt-1 overflow-x-auto font-mono text-ink-muted">{sample.snippet}</pre>
+                    <pre className="mt-1 whitespace-pre-wrap break-all font-mono text-ink-muted">
+                      {sample.snippet}
+                    </pre>
                   )}
                 </div>
               ))}

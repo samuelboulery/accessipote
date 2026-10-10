@@ -118,16 +118,18 @@ function parseOutcome(raw: unknown, criteriaId: string): ScanOutcome {
 }
 
 function parseLead(raw: unknown, criteriaId: string): ScanLead {
+  const samples = isRecord(raw) && Array.isArray(raw.samples) ? raw.samples : [];
+  // Un compte nul n'est pas une piste ; un compte démesuré, ou inférieur à ce
+  // qu'on montre, s'afficherait tel quel et mentirait à l'auditeur.
   if (
     !isRecord(raw) ||
     typeof raw.label !== 'string' ||
     typeof raw.count !== 'number' ||
-    !Number.isInteger(raw.count) ||
-    raw.count < 0
+    !Number.isSafeInteger(raw.count) ||
+    raw.count < Math.max(1, samples.length)
   ) {
     fail(`Piste invalide sur le critère ${criteriaId} : il lui faut un libellé et un compte.`);
   }
-  const samples = Array.isArray(raw.samples) ? raw.samples : [];
   return {
     label: clip(raw.label as string),
     count: raw.count as number,
@@ -201,6 +203,10 @@ export function parseScanReport(text: string, knownCriteriaIds: ReadonlySet<stri
   if (typeof raw.scannedAt !== 'string') fail('Rapport incomplet : le champ « scannedAt » manque.');
   if (!Array.isArray(raw.urls) || raw.urls.some(url => typeof url !== 'string')) {
     fail('Rapport incomplet : le champ « urls » doit être une liste d’adresses.');
+  }
+  // La date finit affichée sur chaque piste et rangée dans l'audit.
+  if (Number.isNaN(Date.parse(raw.scannedAt))) {
+    fail('Rapport illisible : le champ « scannedAt » n’est pas une date.');
   }
 
   if (
